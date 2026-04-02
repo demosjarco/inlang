@@ -1,11 +1,13 @@
-<p align="center">
-  <a href="https://github.com/opral/inlang">  </a>
+[![NPM Downloads](https://img.shields.io/npm/dw/%40inlang%2Fsdk?logo=npm&logoColor=red&label=npm%20downloads)](https://www.npmjs.com/package/@inlang/sdk)
+[![GitHub Issues](https://img.shields.io/github/issues-closed/opral/inlang?logo=github&color=purple)](https://github.com/opral/inlang/issues)
+[![Contributors](https://img.shields.io/github/contributors/opral/inlang?logo=github)](https://github.com/opral/inlang/graphs/contributors)
+[![Discord](https://img.shields.io/discord/897438559458430986?logo=discord&logoColor=white&label=discord)](https://discord.gg/gdMPPWy57R)
 
-  <img src="https://github.com/opral/inlang/blob/main/assets/logo_rounded.png?raw=true" alt="inlang icon" width="90px">
-  
-  <h2 align="center">
-    The open project format for localization tooling.
-  </h2>
+<h1 align="center"><img src="https://github.com/opral/inlang/blob/main/assets/logo_rounded.png?raw=true" alt="inlang icon" height="32" align="absmiddle">&nbsp;inlang</h1>
+
+<h3 align="center">
+  The open file format for localizing software (i18n).
+</h3>
 
   <p align="center">
     <br>
@@ -20,6 +22,23 @@
 </p>
 
 <br>
+
+<p align="center">
+  <sub>Used by</sub><br/><br/>
+  <a href="https://www.disney.co.jp/"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/disney.svg?raw=true" alt="Disney" height="18"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://brave.com/"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/brave.svg?raw=true" alt="Brave" height="18"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://www.bose.com/"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/bose.svg?raw=true" alt="Bose" height="18"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://www.kraftheinz.com/"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/kraft-heinz.png?raw=true" alt="Kraft Heinz" height="18"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://ethz.ch/de.html"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/eth-zurich.svg?raw=true" alt="ETH Zurich" height="18"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://www.minecraft.net/"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/minecraft.png?raw=true" alt="Minecraft" height="18"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://www.idealista.com/"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/idealista.svg?raw=true" alt="idealista" height="18"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://www.architonic.com/"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/architonic.png?raw=true" alt="Architonic" height="18"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://www.michelin.com/"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/michelin.svg?raw=true" alt="Michelin" height="18"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://www.finanzen100.de/"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/finanzen100.png?raw=true" alt="Finanzen100" height="18"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://0.email/"><img src="https://github.com/opral/inlang/blob/main/assets/used-by/zero-email.svg?raw=true" alt="0.email" height="18"></a>
+</p>
+
+---
 
 Inlang is an open project format and SDK for localization tooling.
 
@@ -65,7 +84,6 @@ Inlang adds those database semantics in a shared project format while keeping yo
 - Queryable storage for translations, settings, and edits
 - Plugins to import/export formats like JSON, ICU1, i18next, and XLIFF so that file-format support can be shared instead of reimplemented in every tool
 - Versioning and collaboration primitives via [lix](https://github.com/opral/lix)
-
 
 ```
 ┌──────────┐        ┌───────────┐         ┌────────────┐
