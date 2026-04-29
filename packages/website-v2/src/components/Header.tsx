@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { getGithubStars } from "../github-stars-cache";
 
-const ecosystemLinks = [
+const builtOnInlangLinks = [
   {
     label: "Tools",
     to: "/c/tools",
@@ -242,14 +242,14 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Subheader: Ecosystem categories */}
+      {/* Subheader: format categories */}
       <div className="bg-slate-50 border-b border-slate-200">
         <div className="mx-auto hidden max-w-7xl items-center gap-1 px-4 py-2 sm:flex sm:px-6">
           <span className="mr-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Ecosystem
+            Built on .inlang
           </span>
           <nav className="flex items-center gap-5 text-sm font-medium text-slate-600">
-            {ecosystemLinks.map((link) => {
+            {builtOnInlangLinks.map((link) => {
               const isCurrentCategory =
                 !link.external && location.pathname === link.to;
 
@@ -288,9 +288,9 @@ export default function Header() {
         <div className="bg-slate-50 border-b border-slate-200 px-4 pb-4 sm:hidden">
           <nav className="flex flex-col">
             <span className="pb-2 pt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Ecosystem
+              Built on .inlang
             </span>
-            {ecosystemLinks.map((link) => {
+            {builtOnInlangLinks.map((link) => {
               const isActive = !link.external && location.pathname === link.to;
 
               return link.external ? (

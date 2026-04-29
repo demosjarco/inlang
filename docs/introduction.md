@@ -2,29 +2,37 @@
 
 ## What is inlang?
 
-Inlang is an open project format and SDK for localization tooling.
+Inlang is an open project file format for localization.
 
-It is not a new message syntax or a SaaS translation backend. Instead, it gives editors, CLIs, IDE extensions, and runtimes a shared, queryable source of truth for localization data.
+An `.inlang` project is canonically a single binary file: a SQLite database with version control via [lix](https://lix.dev). Like `.sqlite` for relational data, `.inlang` packages localization data into one file that tools can share.
 
-You can keep using your existing translation files and message syntax. Plugins connect inlang to formats like JSON, ICU MessageFormat v1, i18next, and XLIFF.
+It is not another i18n library, message syntax, translation app, or SaaS backend. Instead, it gives editors, CLIs, IDE extensions, runtimes, and coding agents one shared place to read and write localization data.
+
+The `@inlang/sdk` is the reference implementation for reading and writing `.inlang` projects.
+
+`.inlang` is the canonical project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes. Version control via lix adds file-level history, merging, and change proposals to `.inlang` projects.
+
+Messages, variants, and locale data live in the `.inlang` database. External translation files such as `messages/en.json` are compatibility files outside `project.inlang/`, connected through plugins.
+
+For Git repositories, the binary file can be unpacked into a directory of plain files so changes can be reviewed alongside code. The packed file is the canonical format; the unpacked directory is the Git-friendly representation.
 
 The SDK has two main parts:
 
-- **Storage + data model** for translations, settings, and structured edits
+- **Storage + message structure** for translations, settings, and structured edits
 - **An API** for loading, querying, and modifying that data programmatically
 
 ## Why inlang?
 
-Common translation files like JSON, YAML, ICU, or XLIFF are good at serializing messages. But they are not databases.
+Common translation files like JSON, YAML, ICU, or XLIFF are good at storing messages. But they do not describe the whole localization project.
 
-Once multiple tools need to read and write the same project, missing database semantics become the bottleneck:
+Once multiple tools need to read and write the same project, plain translation files start to miss important information:
 
-- Structured CRUD operations instead of ad-hoc parsing
-- Queries across locales, variants, and metadata
-- Transactions, history, merging, and collaboration
-- One source of truth that editors, CI, and runtimes can all share
+- CRUD operations instead of custom parsing
+- Search and reports across locales, variants, and metadata
+- Version control via [lix](https://lix.dev)
+- One shared file that editors, CI, and runtimes can all use
 
-Without a common substrate, every tool invents its own format, sync, and collaboration model.
+Without one shared format, every tool invents its own file structure, sync logic, and collaboration workflow.
 
 The result is fragmented tooling:
 
@@ -39,7 +47,7 @@ The result is fragmented tooling:
 └──────────┘        └───────────┘         └──────────┘
 ```
 
-Inlang follows a simple idea: **one shared project format for localization tools, while keeping your external file formats**.
+Inlang follows a simple idea: **one shared project file format for localization tools, while keeping your external translation files**.
 
 ```
 ┌──────────┐        ┌───────────┐         ┌────────────┐
@@ -58,29 +66,50 @@ Inlang follows a simple idea: **one shared project format for localization tools
 
 - Switch tools without migrations — they all use the same file
 - Cross-team work without hand-offs — developers, translators, and designers all edit the same source
-- Automation just works — one source of truth, no glue code
+- Automation just works — the same data, no glue code
 - Keep your preferred message format — plugins handle import/export
 
 ## How it works
 
-Under the hood, an inlang project stores localization data in SQLite and uses a message-first data model.
+Under the hood, an inlang project uses a message-first data model.
 
-Lix adds history and sync semantics on top, and plugins map that data to the files you already use.
+Core data model:
+
+- **Bundle** — one translatable unit across locales
+- **Message** — locale-specific translation for a bundle
+- **Variant** — text pattern plus selector matches
+
+Version control via lix is built in, and plugins map that data to the files you already use.
 
 ```
 ┌─────────────────┐       ┌─────────┐       ┌──────────────────┐
 │  .inlang file   │◄─────►│ Plugins │◄─────►│ Translation files│
-│    (SQLite)     │       │         │       │  (JSON, XLIFF)   │
+│                 │       │         │       │  (JSON, XLIFF)   │
 └─────────────────┘       └─────────┘       └──────────────────┘
 ```
 
 - **Plugins** import and export your translation files (`JSON`, `ICU1`, `i18next`, `XLIFF`, etc.)
-- **inlang** stores the data in a queryable project format
-- **Lix** provides versioning and collaboration primitives for distributed changes
+- **inlang** stores the data in a project format that tools can query
+- **Version control via lix** handles distributed changes
 
-If you only need an app runtime and a couple of translation files, your current setup may already be enough. Inlang becomes useful when multiple tools need to operate on the same localization source of truth.
+If you only need an app runtime and a couple of translation files, JSON or your current i18n setup may already be enough. Use inlang when localization becomes shared work: multiple tools, teams, automations, or agents need to use the same localization data.
 
 To store an inlang project in git, you can use the **unpacked format** — a directory instead of a single file. See [Unpacked Project](/docs/unpacked-project) for details.
+
+## For coding agents and tool builders
+
+If you are building i18n tooling or generating localization code, target the `.inlang` file format instead of inventing your own JSON schema.
+
+Use `@inlang/sdk` to read and write `.inlang` projects. Your output will then work with tools that read and write the inlang file format: runtimes, editors, plugins, CI checks, and translation workflows.
+
+Why target `.inlang` instead of JSON?
+
+- One file gives every tool the same data model for bundles, messages, variants, locales, metadata, and settings.
+- CRUD operations are available through the SDK instead of custom parsing and rewriting.
+- Version control via [lix](https://lix.dev) keeps localization changes reviewable and mergeable.
+- Plugins handle JSON, ICU, i18next, XLIFF, and other formats for compatibility.
+
+Do not invent custom translation-file schemas, create a second localization config when `.inlang` already exists, edit generated/cache files in unpacked projects, or bypass `@inlang/sdk`.
 
 ## Next steps
 
@@ -91,4 +120,4 @@ To store an inlang project in git, you can use the **unpacked format** — a dir
 
 ## Credits
 
-Inlang builds on [Lix](https://lix.dev) for version control and [Kysely](https://kysely.dev) for the query API.
+Inlang uses version control via [lix](https://lix.dev) and [Kysely](https://kysely.dev) for the query API.

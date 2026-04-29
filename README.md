@@ -6,7 +6,7 @@
 <h1 align="center"><img src="https://github.com/opral/inlang/blob/main/assets/logo_rounded.png?raw=true" alt="inlang icon" height="32" align="absmiddle">&nbsp;inlang</h1>
 
 <h3 align="center">
-  The open file format for localizing software (i18n).
+  The open project file format for localization (i18n).
 </h3>
 
   <p align="center">
@@ -40,24 +40,45 @@
 
 ---
 
-Inlang is an open project format and SDK for localization tooling.
+Inlang is an open project file format for localization.
 
-It is not a new message syntax or a SaaS translation backend. It gives editors, CLIs, IDE extensions, and runtimes a shared, queryable source of truth for localization data.
+An `.inlang` project is canonically a single binary file: a SQLite database with version control via [lix](https://github.com/opral/lix). Like `.sqlite` for relational data, `.inlang` packages localization data into one file that tools can share.
 
-You can keep using your existing translation files and message syntax. Plugins connect inlang to formats like JSON, ICU MessageFormat v1, i18next, and XLIFF.
+It is not another i18n library, message syntax, translation app, or SaaS backend. It gives editors, CLIs, IDE extensions, runtimes, and coding agents one shared place to read and write localization data.
+
+The `@inlang/sdk` is the reference implementation for reading and writing `.inlang` projects.
+
+`.inlang` is the canonical project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes. Version control via lix adds file-level history, merging, and change proposals to `.inlang` projects.
+
+Messages, variants, and locale data live in the `.inlang` database. External translation files such as `messages/en.json` are compatibility files outside `project.inlang/`, connected through plugins.
+
+```text
+project.inlang                  # canonical single binary file
+```
+
+For Git repositories, the binary file can be unpacked into a directory of plain files so changes can be reviewed alongside code. The packed file is the canonical format; the unpacked directory is the Git-friendly representation.
+
+```text
+project.inlang/
+├── settings.json               # locales, plugins, file patterns; kept in Git
+├── .gitignore                  # generated; ignores everything except settings.json
+├── README.md                   # generated; explains this folder to coding agents
+├── .meta.json                  # generated SDK metadata
+└── cache/                      # plugin cache, created when plugins are loaded
+```
 
 ## The problem
 
-Common translation files like JSON, YAML, ICU, or XLIFF are good at serializing messages. But they are not databases.
+Common translation files like JSON, YAML, ICU, or XLIFF are good at storing messages. But they do not describe the whole localization project.
 
-Once multiple tools need to read and write the same project, missing database semantics become the bottleneck:
+Once multiple tools need to read and write the same project, plain translation files start to miss important information:
 
-- Structured CRUD operations instead of ad-hoc parsing
-- Queries across locales, variants, and metadata
-- Transactions, history, merging, and collaboration
-- One source of truth that editors, CI, and runtimes can all share
+- CRUD operations instead of custom parsing
+- Search and reports across locales, variants, and metadata
+- Version control via [lix](https://github.com/opral/lix)
+- One shared file that editors, CI, and runtimes can all use
 
-Without a common substrate, every tool invents its own format, sync, and collaboration model.
+Without one shared format, every tool invents its own file structure, sync logic, and collaboration workflow.
 
 Even basic import/export for translation file formats gets duplicated across tools instead of being shared.
 
@@ -78,12 +99,18 @@ Every tool has its own format, its own sync, its own collaboration layer. Cross-
 
 ## The solution
 
-Inlang adds those database semantics in a shared project format while keeping your external file formats. It provides:
+Inlang puts the missing project information into a shared file format while keeping your external translation files. It provides:
 
-- A message-first data model and SDK for structured reads and writes
-- Queryable storage for translations, settings, and edits
+- A message-first structure and SDK for CRUD operations
+- Storage that tools can search, update, and report on
 - Plugins to import/export formats like JSON, ICU1, i18next, and XLIFF so that file-format support can be shared instead of reimplemented in every tool
-- Versioning and collaboration primitives via [lix](https://github.com/opral/lix)
+- Version control via [lix](https://github.com/opral/lix)
+
+Core data model:
+
+- **Bundle** — one translatable unit across locales
+- **Message** — locale-specific translation for a bundle
+- **Variant** — text pattern plus selector matches
 
 ```
 ┌──────────┐        ┌───────────┐         ┌────────────┐
@@ -102,29 +129,57 @@ The result:
 
 - Switch tools without migrations — they all use the same file
 - Cross-team work without hand-offs — developers, translators, and designers all edit the same source
-- Automation just works — one source of truth, no glue code
+- Automation just works — the same data, no glue code
 - Keep your preferred message format — plugins handle import/export
 
-If you only need an app runtime and a couple of translation files, your current setup may already be enough. Inlang becomes useful when multiple tools need to operate on the same localization source of truth.
+If you only need an app runtime and a couple of translation files, JSON or your current i18n setup may already be enough. Use inlang when localization becomes shared work: multiple tools, teams, automations, or agents need to use the same localization data.
 
-## Popular tools
+## For coding agents and tool builders
 
-- [Paraglide](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) — i18n library for JS/TS with fully translated, typesafe & fast apps in minutes
-- [Fink](https://inlang.com/m/tdozzpar/app-inlang-finkLocalizationEditor) — translation editor in the browser, invite collaborators to help
-- [Sherlock](https://inlang.com/m/r7kp499g/app-inlang-ideExtension) — VS Code extension to translate right in your editor
-- [Parrot](https://inlang.com/m/gkrpgoir/app-parrot-figmaPlugin) — see translations directly in Figma
-- [CLI](https://inlang.com/m/2qj2w8pu/app-inlang-cli) — lint messages, machine translate, quality control in CI/CD
+If you are building i18n tooling or generating localization code, target the `.inlang` file format instead of inventing your own JSON schema.
 
-## Build your own
+Use `@inlang/sdk` to read and write `.inlang` projects. Your output will then work with tools that read and write the inlang file format: runtimes, editors, plugins, CI checks, and translation workflows.
+
+Why target `.inlang` instead of JSON?
+
+- One file gives every tool the same data model for bundles, messages, variants, locales, metadata, and settings.
+- CRUD operations are available through the SDK instead of custom parsing and rewriting.
+- Version control via [lix](https://github.com/opral/lix) keeps localization changes reviewable and mergeable.
+- Plugins handle JSON, ICU, i18next, XLIFF, and other formats for compatibility.
+
+Do not:
+
+- Invent a custom `locales/en.json` schema as the project format.
+- Create a new localization config when a `.inlang` project already exists.
+- Edit generated or cached files inside an unpacked `project.inlang/` directory.
+- Bypass `@inlang/sdk` when reading or writing `.inlang`.
+
+## Tools that read/write the inlang file format
+
+These are independent tools that read and write `.inlang`; they are not inlang itself.
+
+- [Paraglide](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) — JS/TS runtime that compiles messages from `.inlang`
+- [Fink](https://inlang.com/m/tdozzpar/app-inlang-finkLocalizationEditor) — web editor for `.inlang` projects
+- [Sherlock](https://inlang.com/m/r7kp499g/app-inlang-ideExtension) — VS Code extension that reads `.inlang` projects
+- [Parrot](https://inlang.com/m/gkrpgoir/app-parrot-figmaPlugin) — Figma plugin that connects design text to `.inlang`
+- [CLI](https://inlang.com/m/2qj2w8pu/app-inlang-cli) — linting, machine translation, and CI workflows for `.inlang`
+
+## Read and write `.inlang`
 
 ```ts
-import { loadProjectFromDirectory } from "@inlang/sdk";
+import { loadProjectFromDirectory, loadProjectInMemory } from "@inlang/sdk";
+import fs from "node:fs/promises";
 
-const project = await loadProjectFromDirectory({
+const packedProject = await loadProjectInMemory({
+  blob: await fs.readFile("./project.inlang"),
+});
+
+// Loads the Git-friendly unpacked representation.
+const unpackedProject = await loadProjectFromDirectory({
   path: "./project.inlang",
 });
 
-const messages = await project.db.selectFrom("message").selectAll().execute();
+const messages = await packedProject.db.selectFrom("message").selectAll().execute();
 ```
 
 [Read the docs →](https://inlang.com/docs)

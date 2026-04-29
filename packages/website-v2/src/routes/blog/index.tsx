@@ -106,7 +106,7 @@ export const Route = createFileRoute("/blog/")({
           "@type": "Blog",
           name: "Blog | inlang",
           description:
-            "Insights on localization (i18n) and building the inlang ecosystem.",
+            "Insights on localization (i18n) and building on the inlang project file format.",
           url: "https://inlang.com/blog",
         }),
       },
@@ -116,13 +116,13 @@ export const Route = createFileRoute("/blog/")({
       {
         name: "description",
         content:
-          "Insights on localization (i18n) and building the inlang ecosystem.",
+          "Insights on localization (i18n) and building on the inlang project file format.",
       },
       { property: "og:title", content: "Blog | inlang" },
       {
         property: "og:description",
         content:
-          "Insights on localization (i18n) and building the inlang ecosystem.",
+          "Insights on localization (i18n) and building on the inlang project file format.",
       },
       { property: "og:url", content: "https://inlang.com/blog" },
       { property: "og:type", content: "website" },
@@ -138,7 +138,7 @@ export const Route = createFileRoute("/blog/")({
       {
         name: "twitter:description",
         content:
-          "Insights on localization (i18n) and building the inlang ecosystem.",
+          "Insights on localization (i18n) and building on the inlang project file format.",
       },
       { name: "twitter:site", content: "@inlanghq" },
     ],
