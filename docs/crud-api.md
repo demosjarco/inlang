@@ -69,19 +69,21 @@ await project.db
 ```typescript
 import { insertBundleNested } from "@inlang/sdk";
 
+const messageId = crypto.randomUUID();
+
 await insertBundleNested(project.db, {
   id: "greeting",
   declarations: [],
   messages: [
     {
-      id: "greeting_en",
+      id: messageId,
       bundleId: "greeting",
       locale: "en",
       selectors: [],
       variants: [
         {
           id: crypto.randomUUID(),
-          messageId: "greeting_en",
+          messageId,
           matches: [],
           pattern: [{ type: "text", value: "Hello!" }],
         },

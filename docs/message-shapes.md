@@ -7,19 +7,22 @@ Use these shapes when inserting data through `project.db`, `insertBundleNested()
 ## Minimal Message
 
 ```typescript
+const messageId = crypto.randomUUID();
+const variantId = crypto.randomUUID();
+
 await insertBundleNested(project.db, {
   id: "greeting",
   declarations: [],
   messages: [
     {
-      id: "greeting_en",
+      id: messageId,
       bundleId: "greeting",
       locale: "en",
       selectors: [],
       variants: [
         {
-          id: "greeting_en_default",
-          messageId: "greeting_en",
+          id: variantId,
+          messageId,
           matches: [],
           pattern: [{ type: "text", value: "Hello world!" }],
         },
@@ -44,19 +47,22 @@ A `pattern` is an array. It can mix text, expressions, and markup.
 Use an `input-variable` declaration for variables provided by the caller, then reference it with an expression.
 
 ```typescript
+const messageId = crypto.randomUUID();
+const variantId = crypto.randomUUID();
+
 {
   id: "greeting",
   declarations: [{ type: "input-variable", name: "name" }],
   messages: [
     {
-      id: "greeting_en",
+      id: messageId,
       bundleId: "greeting",
       locale: "en",
       selectors: [],
       variants: [
         {
-          id: "greeting_en_default",
-          messageId: "greeting_en",
+          id: variantId,
+          messageId,
           matches: [],
           pattern: [
             { type: "text", value: "Hello " },
@@ -171,6 +177,10 @@ Selectors choose which variables a message uses to pick a variant. Matches on ea
 Use an input variable for the caller-provided value, a local variable for the derived selector value, and variants that match the local variable.
 
 ```typescript
+const messageId = crypto.randomUUID();
+const oneVariantId = crypto.randomUUID();
+const otherVariantId = crypto.randomUUID();
+
 {
   id: "items_count",
   declarations: [
@@ -191,20 +201,20 @@ Use an input variable for the caller-provided value, a local variable for the de
   ],
   messages: [
     {
-      id: "items_count_en",
+      id: messageId,
       bundleId: "items_count",
       locale: "en",
       selectors: [{ type: "variable-reference", name: "countPlural" }],
       variants: [
         {
-          id: "items_count_en_one",
-          messageId: "items_count_en",
+          id: oneVariantId,
+          messageId,
           matches: [{ type: "literal-match", key: "countPlural", value: "one" }],
           pattern: [{ type: "text", value: "One item" }],
         },
         {
-          id: "items_count_en_other",
-          messageId: "items_count_en",
+          id: otherVariantId,
+          messageId,
           matches: [
             { type: "literal-match", key: "countPlural", value: "other" },
           ],
