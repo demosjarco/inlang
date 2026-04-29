@@ -232,20 +232,22 @@ const otherVariantId = crypto.randomUUID();
 }
 ```
 
-## CRUD Versus Plugin Import Shapes
+## Variant Linkage: CRUD Versus Plugin Import
 
-When you write directly to the database or use `insertBundleNested()`, variants link to messages with `messageId`.
+Use `messageId` when you already have a concrete message row id. This is the normal shape for direct CRUD writes and `insertBundleNested()`.
 
 ```typescript
+const messageId = crypto.randomUUID();
+
 {
   id: "variant_1",
-  messageId: "message_1",
+  messageId,
   matches: [],
   pattern: [{ type: "text", value: "Hello" }],
 }
 ```
 
-When a plugin returns variants from `importFiles()`, it can omit generated ids and link a variant to a message with `messageBundleId` and `messageLocale`.
+Use `messageBundleId` and `messageLocale` when returning variants from a plugin's `importFiles()`. In that flow, message ids are often omitted so the SDK can generate or reuse them while importing.
 
 ```typescript
 {
@@ -257,6 +259,12 @@ When a plugin returns variants from `importFiles()`, it can omit generated ids a
 ```
 
 The SDK resolves `messageBundleId` plus `messageLocale` to the matching message and generates ids when needed.
+
+Rule of thumb:
+
+- Direct database writes: use `messageId`.
+- `insertBundleNested()`: use `messageId`, and reuse the same id from the message object.
+- Plugin `importFiles()`: use `messageBundleId` plus `messageLocale`, unless your plugin deliberately manages stable message ids itself.
 
 ## Next Steps
 

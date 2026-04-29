@@ -94,7 +94,8 @@ export const plugin: InlangPlugin = {
           selectors: [],
         });
 
-        // One variant with the actual text
+        // One variant with the actual text. Plugins usually link variants by
+        // bundle + locale because the SDK can generate message ids during import.
         variants.push({
           messageBundleId: key,
           messageLocale: file.locale,
@@ -108,6 +109,8 @@ export const plugin: InlangPlugin = {
   },
 };
 ```
+
+Use `messageBundleId` plus `messageLocale` for variants returned from `importFiles()`. Use `messageId` only when your plugin also returns stable message ids. Direct CRUD examples use `messageId` because they operate on existing database rows.
 
 ### Understanding the data model
 

@@ -15,8 +15,8 @@ Plugins handle the transformation between external file formats (JSON, i18next, 
 type InlangPlugin<ExternalSettings = unknown> = {
   key: string;
   settingsSchema?: TObject;
-  toBeImportedFiles?: (args) => Promise<Array<{ path, locale, metadata? }>>;
-  importFiles?: (args) => Promise<{ bundles, messages, variants }>;
+  toBeImportedFiles?: (args) => Promise<Array<{ path; locale; metadata? }>>;
+  importFiles?: (args) => Promise<{ bundles; messages; variants }>;
   exportFiles?: (args) => Promise<Array<ExportFile>>;
   meta?: Record<string, Record<string, unknown>>;
 };
@@ -99,13 +99,15 @@ toBeImportedFiles: async ({ settings }) => {
     { path: "./messages/en.json", locale: "en" },
     { path: "./messages/de.json", locale: "de" },
   ];
-}
+};
 ```
 
 **Parameters:**
+
 - `settings` — Project settings including plugin-specific config
 
 **Returns:** Array of file descriptors:
+
 - `path` — Path to the file
 - `locale` — Locale this file contains
 - `metadata` — Optional, passed to `importFiles`
@@ -125,6 +127,7 @@ importFiles: async ({ files, settings }) => {
 ```
 
 **Parameters:**
+
 - `files` — Array of files to import:
   - `locale` — The locale
   - `content` — Binary file content (`Uint8Array`)
@@ -132,6 +135,7 @@ importFiles: async ({ files, settings }) => {
 - `settings` — Project settings
 
 **Returns:**
+
 - `bundles` — Array of `BundleImport`
 - `messages` — Array of `MessageImport`
 - `variants` — Array of `VariantImport`
@@ -149,16 +153,18 @@ exportFiles: async ({ bundles, messages, variants, settings }) => {
       content: new TextEncoder().encode(JSON.stringify(data)),
     },
   ];
-}
+};
 ```
 
 **Parameters:**
+
 - `bundles` — All bundles
 - `messages` — All messages
 - `variants` — All variants
 - `settings` — Project settings
 
 **Returns:** Array of files to write:
+
 - `locale` — The locale
 - `name` — Filename (e.g., `"en.json"`)
 - `content` — Binary content (`Uint8Array`)
@@ -176,9 +182,7 @@ export const PluginSettings = Type.Object({
     description: "Path to translation files",
     examples: ["./messages/{locale}.json"],
   }),
-  sort: Type.Optional(
-    Type.Union([Type.Literal("asc"), Type.Literal("desc")])
-  ),
+  sort: Type.Optional(Type.Union([Type.Literal("asc"), Type.Literal("desc")])),
 });
 ```
 
@@ -223,7 +227,7 @@ type BundleImport = {
 
 ```typescript
 type MessageImport = {
-  id?: string;  // auto-generated if omitted
+  id?: string; // auto-generated if omitted
   bundleId: string;
   locale: string;
   selectors: VariableReference[];
@@ -232,7 +236,11 @@ type MessageImport = {
 
 ### VariantImport
 
-Variants can reference messages by ID or by bundle/locale:
+Variants can reference messages by ID or by bundle/locale.
+
+Use `messageBundleId` plus `messageLocale` for most `importFiles()` implementations. The SDK can then generate or reuse message ids during import.
+
+Use `messageId` only when your plugin deliberately manages stable message ids and returns matching message ids in `messages`.
 
 ```typescript
 // By message ID
@@ -243,7 +251,7 @@ type VariantImport = {
   pattern: Pattern;
 };
 
-// By bundle/locale (recommended)
+// By bundle/locale
 type VariantImport = {
   messageBundleId: string;
   messageLocale: string;
