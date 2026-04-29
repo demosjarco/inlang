@@ -23,8 +23,6 @@ Add the plugin URL to the `modules` array in `project.inlang/settings.json`:
 
 Plugins are loaded from the URL when the project opens.
 
-> **Compatibility:** Use `@inlang/plugin-i18next@6` with the current `@inlang/sdk` v2 import/export plugin API. Older `@inlang/plugin-i18next@3` URLs use the legacy plugin API and do not work with the examples on this page.
-
 ### Why jsdelivr?
 
 Plugins are loaded via [jsdelivr](https://www.jsdelivr.com/), a free CDN for npm packages. This provides:
