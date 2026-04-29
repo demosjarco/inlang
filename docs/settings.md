@@ -16,7 +16,7 @@ type ProjectSettings = {
   locales: string[];
   modules?: string[];
   experimental?: Record<string, true>;
-}
+};
 ```
 
 ### baseLocale
@@ -53,7 +53,7 @@ URIs to plugin modules. Plugins extend inlang with import/export capabilities fo
 ```json
 {
   "modules": [
-    "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@3/dist/index.js",
+    "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@6.1.4/dist/index.js",
     "./local-plugin.js"
   ]
 }
@@ -62,6 +62,7 @@ URIs to plugin modules. Plugins extend inlang with import/export capabilities fo
 - Must be valid URIs (RFC 3986)
 - Must end with `.js`
 - Can be absolute (CDN) or relative paths
+- Pin plugin versions that support the current SDK import/export API. For i18next, use `@inlang/plugin-i18next@6` or newer.
 
 ### experimental
 
@@ -97,7 +98,7 @@ See each plugin's marketplace page for available settings.
   "baseLocale": "en",
   "locales": ["en", "de", "fr", "es"],
   "modules": [
-    "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@3/dist/index.js",
+    "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@6.1.4/dist/index.js",
     "https://cdn.jsdelivr.net/npm/@inlang/plugin-t-function-matcher@3/dist/index.js"
   ],
   "plugin.inlang.i18next": {
@@ -114,11 +115,11 @@ See each plugin's marketplace page for available settings.
 
 These settings are deprecated and will be removed in SDK v3:
 
-| Setting | Replacement |
-|---------|-------------|
-| `sourceLanguageTag` | Use `baseLocale` |
-| `languageTags` | Use `locales` |
-| `{languageTag}` in paths | Use `{locale}` |
+| Setting                  | Replacement      |
+| ------------------------ | ---------------- |
+| `sourceLanguageTag`      | Use `baseLocale` |
+| `languageTags`           | Use `locales`    |
+| `{languageTag}` in paths | Use `{locale}`   |
 
 ## Next Steps
 

@@ -16,7 +16,7 @@ Add the plugin URL to the `modules` array in `project.inlang/settings.json`:
   "baseLocale": "en",
   "locales": ["en", "de", "fr"],
 + "modules": [
-+   "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@3/dist/index.js"
++   "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@6.1.4/dist/index.js"
 + ]
 }
 ```
@@ -33,12 +33,12 @@ Plugins are loaded via [jsdelivr](https://www.jsdelivr.com/), a free CDN for npm
 Version pinning examples:
 
 ```
-@inlang/plugin-i18next@3        # Major version (3.x.x)
-@inlang/plugin-i18next@3.5      # Minor version (3.5.x)
-@inlang/plugin-i18next@3.5.2    # Exact version
+@inlang/plugin-i18next@6        # Major version (6.x.x)
+@inlang/plugin-i18next@6.1      # Minor version (6.1.x)
+@inlang/plugin-i18next@6.1.4    # Exact version
 ```
 
-Pin to at least a major version to avoid breaking changes.
+Pin an exact version for CI and agents. Use a major version only when you intentionally accept compatible updates.
 
 ## Configuring a plugin
 
@@ -49,7 +49,7 @@ Most plugins require configuration. Add settings using the `plugin.<plugin-id>` 
   "baseLocale": "en",
   "locales": ["en", "de", "fr"],
   "modules": [
-    "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@3/dist/index.js"
+    "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@6.1.4/dist/index.js"
   ],
   "plugin.inlang.i18next": {
     "pathPattern": "./locales/{locale}.json"
@@ -58,6 +58,27 @@ Most plugins require configuration. Add settings using the `plugin.<plugin-id>` 
 ```
 
 Each plugin documents its available settings on its marketplace page.
+
+`pathPattern` is resolved relative to the directory that contains `project.inlang/`. For example, `./locales/{locale}.json` with `path: "./project.inlang"` reads and writes `./locales/en.json`, not `./project.inlang/locales/en.json`.
+
+After loading a project with plugins, check `project.errors.get()` before trusting the imported data:
+
+```typescript
+import { loadProjectFromDirectory } from "@inlang/sdk";
+import fs from "node:fs";
+
+const project = await loadProjectFromDirectory({
+  path: "./project.inlang",
+  fs,
+});
+
+const errors = await project.errors.get();
+if (errors.length > 0) {
+  throw new AggregateError(errors, "Could not load inlang project");
+}
+
+await project.close();
+```
 
 ## Using multiple plugins
 
@@ -68,7 +89,7 @@ You can install multiple plugins. Each plugin handles different files or provide
   "baseLocale": "en",
   "locales": ["en", "de"],
   "modules": [
-    "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@3/dist/index.js",
+    "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@6.1.4/dist/index.js",
     "https://cdn.jsdelivr.net/npm/@inlang/plugin-t-function-matcher@3/dist/index.js"
   ],
   "plugin.inlang.i18next": {
@@ -98,11 +119,11 @@ Then reference it from `node_modules`:
 
 ```json
 {
-  "modules": ["../node_modules/@inlang/plugin-i18next/dist/index.js"]
+  "modules": ["./node_modules/@inlang/plugin-i18next/dist/index.js"]
 }
 ```
 
-The path is relative to the `project.inlang` directory.
+The path is relative to the directory that contains `project.inlang/`.
 
 ### Custom plugins
 
@@ -134,14 +155,17 @@ Browse available plugins at [inlang.com/c/plugins](https://inlang.com/c/plugins)
 **Plugin not loading**
 
 - Verify the URL is correct and ends with `.js`
+- Verify the plugin version supports the current `@inlang/sdk` import/export API
 - Check that the CDN is accessible
 - For local plugins, ensure the path is relative to `project.inlang`
+- Inspect `await project.errors.get()` after `loadProjectFromDirectory()`
 
 **Files not importing**
 
 - Check that `pathPattern` matches your file structure
 - Verify `{locale}` placeholder is in the correct position
 - Ensure locale codes in filenames match your `locales` array
+- Remember that `pathPattern` is relative to the directory containing `project.inlang/`
 
 **Settings validation errors**
 

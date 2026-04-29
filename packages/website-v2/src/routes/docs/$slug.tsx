@@ -38,6 +38,12 @@ const docsJsonFiles = import.meta.glob<string>("../../../../../docs/*.json", {
   import: "default",
 });
 const docsRootPrefix = "../../../../../docs/";
+const docSlugAliases: Record<string, string> = {
+  "installing-plugins": "install-plugin",
+  "settings-reference": "settings",
+  "writing-a-plugin": "write-plugin",
+  "writing-a-tool": "write-tool",
+};
 
 const loadDoc = createServerFn({ method: "GET" }).handler(async (ctx) => {
   const data = ctx.data as { slug?: string } | undefined;
@@ -123,6 +129,11 @@ const loadDoc = createServerFn({ method: "GET" }).handler(async (ctx) => {
 
 export const Route = createFileRoute("/docs/$slug")({
   loader: async ({ params }) => {
+    const canonicalSlug = docSlugAliases[params.slug];
+    if (canonicalSlug) {
+      throw redirect({ to: "/docs/$slug", params: { slug: canonicalSlug } });
+    }
+
     try {
       // @ts-expect-error - TanStack Start server function type inference
       return await loadDoc({ data: { slug: params.slug } });

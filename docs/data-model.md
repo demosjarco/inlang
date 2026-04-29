@@ -20,12 +20,14 @@ A bundle groups translations by key. One bundle = one translatable unit across a
 
 ```typescript
 type Bundle = {
-  id: string;           // e.g., "greeting", "error_404"
+  id: string; // e.g., "greeting", "error_404"
   declarations: Declaration[];
-}
+};
 ```
 
 The `id` is your translation key — what you reference in code. The id is assumed to be stable; changing it would break all references. Declarations define variables available to all messages in the bundle.
+
+See [Message Shapes](/docs/message-shapes) for concrete JSON examples of declarations, selectors, matches, and pattern parts.
 
 ## Message
 
@@ -33,11 +35,11 @@ A message is a locale-specific translation. One message per locale per bundle.
 
 ```typescript
 type Message = {
-  id: string;           // auto-generated UUID
-  bundleId: string;     // references Bundle.id
-  locale: string;       // e.g., "en", "de", "fr"
+  id: string; // auto-generated UUID
+  bundleId: string; // references Bundle.id
+  locale: string; // e.g., "en", "de", "fr"
   selectors: VariableReference[];
-}
+};
 ```
 
 Selectors are used for conditional matching (plurals, gender, etc.). If your message has no conditions, selectors is empty.
@@ -48,11 +50,11 @@ A variant is the actual text pattern. Most messages have one variant, but plural
 
 ```typescript
 type Variant = {
-  id: string;           // auto-generated UUID
-  messageId: string;    // references Message.id
-  matches: Match[];     // conditions for this variant
-  pattern: Pattern;     // the text content
-}
+  id: string; // auto-generated UUID
+  messageId: string; // references Message.id
+  matches: Match[]; // conditions for this variant
+  pattern: Pattern; // the text content
+};
 ```
 
 ### Simple example
@@ -126,24 +128,25 @@ const bundles = await project.db
   .execute();
 
 // Find missing translations
-const missing = await project.db
-  .selectFrom("bundle")
-  .where((eb) =>
-    eb.not(
-      eb.exists(
-        eb.selectFrom("message")
-          .where("message.bundleId", "=", eb.ref("bundle.id"))
-          .where("message.locale", "=", "de")
-      )
-    )
-  )
-  .selectAll()
+const allBundles = await project.db.selectFrom("bundle").selectAll().execute();
+const germanMessages = await project.db
+  .selectFrom("message")
+  .select("bundleId")
+  .where("locale", "=", "de")
   .execute();
+
+const translatedBundleIds = new Set(
+  germanMessages.map((message) => message.bundleId),
+);
+const missing = allBundles.filter(
+  (bundle) => translatedBundleIds.has(bundle.id) === false,
+);
 ```
 
 ## Next steps
 
 - [CRUD API](/docs/crud-api) — Full reference for query operations
+- [Message Shapes](/docs/message-shapes) — Concrete JSON shapes for patterns, matches, and declarations
 - [Architecture](/docs/architecture) — See how the data model fits in
 - [Writing a Tool](/docs/write-tool) — Build a tool that queries messages
 - [Plugin API](/docs/plugin-api) — Import types for plugins

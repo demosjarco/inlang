@@ -60,6 +60,76 @@ test("it should overwrite all files to the directory except the db.sqlite file",
 	expect(updatedSettings.locales).toEqual(["en", "fr", "mock"]);
 });
 
+test("accepts the node:fs style module with a promises namespace", async () => {
+	const volume = Volume.fromJSON({});
+
+	const project = await loadProjectInMemory({
+		blob: await newProject({
+			settings: {
+				baseLocale: "en",
+				locales: ["en"],
+			},
+		}),
+	});
+
+	await saveProjectToDirectory({
+		fs: volume as any,
+		project,
+		path: "/foo/bar.inlang",
+	});
+
+	const settings = await volume.promises.readFile(
+		"/foo/bar.inlang/settings.json",
+		"utf-8"
+	);
+	expect(JSON.parse(settings as string).locales).toEqual(["en"]);
+});
+
+test("creates exporter target directories from pathPattern", async () => {
+	const volume = Volume.fromJSON({});
+	const mockPlugin: InlangPlugin = {
+		key: "mock",
+		exportFiles: async () => [
+			{
+				locale: "en",
+				name: "fallback.json",
+				content: new TextEncoder().encode(JSON.stringify({ greeting: "Hi" })),
+			},
+		],
+	};
+
+	const project = await loadProjectInMemory({
+		blob: await newProject({
+			settings: {
+				baseLocale: "en",
+				locales: ["en"],
+				modules: [],
+				mock: {
+					pathPattern: "./messages/{locale}.json",
+				},
+			},
+		}),
+		providePlugins: [mockPlugin],
+	});
+
+	await project.db
+		.insertInto("bundle")
+		.values({ id: "greeting", declarations: [] })
+		.execute();
+
+	await saveProjectToDirectory({
+		fs: volume as any,
+		project,
+		path: "/foo/bar.inlang",
+	});
+
+	const exported = await volume.promises.readFile(
+		"/foo/messages/en.json",
+		"utf-8"
+	);
+	expect(JSON.parse(exported as string)).toEqual({ greeting: "Hi" });
+});
+
 // Users were confused by project_id, and without sync a stable id is rarely needed.
 test("it should not write project_id to disk", async () => {
 	const mockFs = Volume.fromJSON({
@@ -402,6 +472,29 @@ test("emits a .meta.json file with the sdk version", async () => {
 		typeof metaRaw === "string" ? metaRaw : metaRaw.toString()
 	);
 	expect(meta.highestSdkVersion).toBe(ENV_VARIABLES.SDK_VERSION);
+});
+
+test("throws when saving translation data to a directory without an exporter plugin", async () => {
+	const fs = Volume.fromJSON({});
+
+	const project = await loadProjectInMemory({
+		blob: await newProject(),
+	});
+
+	await project.db
+		.insertInto("bundle")
+		.values({ id: "greeting", declarations: [] })
+		.execute();
+
+	await expect(
+		saveProjectToDirectory({
+			fs: fs.promises as any,
+			project,
+			path: "/foo/bar.inlang",
+		})
+	).rejects.toThrow(
+		"saveProjectToDirectory cannot write bundles, messages, or variants without an import/export plugin"
+	);
 });
 
 test("updates an existing README.md file", async () => {
