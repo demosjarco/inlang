@@ -4,7 +4,9 @@ This guide walks through building a tool that flags missing translations. By the
 
 ## What tools can do
 
-Tools read and write translations via the CRUD API. Because inlang handles file format conversion through plugins, your tool works with any translation format — JSON, XLIFF, i18next, etc.
+Tools read and write translations through the `.inlang` project file format via the CRUD API. Because plugins handle conversion at the boundary, your tool works with any translation format — JSON, XLIFF, i18next, etc. — without parsing each one directly.
+
+An `.inlang` project is canonically a single binary file. In Git repositories, it is often unpacked into a directory; `loadProjectFromDirectory()` loads that Git-friendly representation.
 
 ```
 ┌─────────────────┐
@@ -30,7 +32,7 @@ const project = await loadProjectFromDirectory({
 });
 ```
 
-That's it. The project is loaded with all translations from your files (via plugins).
+That's it. The project is loaded with all translations from your files (via plugins). The external files are compatibility files; the tool works against the shared `.inlang` data model.
 
 ## Step 2: Get project settings
 
@@ -223,4 +225,3 @@ await saveProjectToDirectory({
 - [Data Model](/docs/data-model) — Understand bundles, messages, and variants
 - [Unpacked Project](/docs/unpacked-project) — Loading projects from git repos
 - [Architecture](/docs/architecture) — See how tools fit in
-

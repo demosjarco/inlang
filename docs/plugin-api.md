@@ -1,11 +1,11 @@
 # Plugin API
 
-Plugins handle the transformation between external file formats (JSON, i18next, XLIFF) and inlang's internal data model. They only do import/export — they don't touch the database directly.
+Plugins handle the transformation between external file formats (JSON, i18next, XLIFF) and inlang's internal data model. `.inlang` is the canonical project format; external translation files are compatibility files. Plugins only do import/export — they don't write the `.inlang` project directly.
 
 ```
 ┌─────────────────┐       ┌─────────┐       ┌──────────────────┐
 │  .inlang file   │◄─────►│ Plugins │◄─────►│ Translation files│
-│    (SQLite)     │       │         │       │  (JSON, XLIFF)   │
+│                 │       │         │       │  (JSON, XLIFF)   │
 └─────────────────┘       └─────────┘       └──────────────────┘
 ```
 
@@ -272,4 +272,3 @@ export const plugin: InlangPlugin = {
 - [Writing a Plugin](/docs/write-plugin) — Step-by-step guide to building a plugin
 - [Data Model](/docs/data-model) — Understand bundles, messages, and variants
 - [Architecture](/docs/architecture) — See how plugins fit in the architecture
-

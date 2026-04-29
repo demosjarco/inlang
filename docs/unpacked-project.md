@@ -2,21 +2,24 @@
 
 ## What is an unpacked project?
 
-An unpacked project is a directory representation of an `.inlang` file. Instead of a single SQLite binary, the project is stored as a folder with human-readable files.
+An unpacked project is the Git-friendly representation of an `.inlang` file. The canonical `.inlang` format is a single binary file: a SQLite database with version control via [lix](https://lix.dev). The unpacked directory exists so changes can be reviewed alongside code.
+
+Messages, variants, and locale data live in the `.inlang` database. In unpacked Git projects, `settings.json` is the only tracked project file by default; translation files such as `messages/en.json` live outside `project.inlang/` and are connected through plugins.
 
 ```
 project.inlang/
 ├── settings.json
-├── cache/
+├── .gitignore
 ├── README.md
-└── .gitignore
+├── .meta.json
+└── cache/
 ```
 
 ## Packed vs Unpacked
 
 | | Packed (`.inlang` file) | Unpacked (directory) |
 |---|---|---|
-| **Format** | Single SQLite file | Directory with files |
+| **Format** | Canonical single binary file | Git-friendly directory representation |
 | **Git-friendly** | No (binary) | Yes (diffable, mergeable) |
 | **Portable** | Yes (one file to share) | No |
 | **Use case** | Sharing, backups, tools like Fink | Storing in git repos |
@@ -29,13 +32,13 @@ Most codebases use git for version control. Developers want their translations c
 
 ### Git doesn't handle binary files well
 
-An `.inlang` file is a SQLite database (binary). Git can store binary files, but you lose:
+An `.inlang` file is binary. Git can store binary files, but you lose:
 
 - **Readable diffs** — Binary changes show as "file changed", not what changed
 - **Merge conflict resolution** — Git can't merge binary files
 - **Code review** — Teammates can't review translation changes in PRs
 
-An unpacked project solves this. Each file is human-readable, diffable, and mergeable.
+An unpacked project solves this for the project configuration. The generated `.gitignore` keeps `settings.json` in Git and ignores generated/cache files. Translation files are stored outside `project.inlang/` according to plugin configuration.
 
 ## How to use it
 
@@ -92,10 +95,11 @@ When `syncInterval` is set, changes to files on disk are automatically imported,
 
 | File | Purpose |
 |------|---------|
-| `settings.json` | Project configuration (locales, plugins, plugin settings) |
+| `settings.json` | Project configuration (locales, plugins, plugin settings). This is the only file kept in Git by default. |
 | `.gitignore` | Auto-created, ignores everything except `settings.json` (including itself) |
 | `README.md` | Auto-created, explains the folder to coding agents (gitignored) |
-| `cache/` | Cached plugin modules (gitignored) |
+| `.meta.json` | Auto-created SDK metadata (gitignored) |
+| `cache/` | Cached plugin modules, usually under `cache/plugins/` (gitignored) |
 
 Translation files (like `messages/en.json`) are managed by plugins and stored relative to your project based on plugin configuration.
 

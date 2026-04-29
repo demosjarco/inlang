@@ -1,10 +1,10 @@
 # Architecture
 
-Inlang's architecture has three layers: storage, data model, and plugins.
+Inlang's file format has three layers: storage, data model, and plugins.
 
 ```
 ┌─────────────────────────────────────────────┐
-│  Storage (SQLite + Lix)                     │
+│  Storage (SQLite + version control via Lix) │
 ├─────────────────────────────────────────────┤
 │  Data Model (Bundle, Message, Variant)      │
 ├─────────────────────────────────────────────┤
@@ -14,13 +14,17 @@ Inlang's architecture has three layers: storage, data model, and plugins.
 
 ## Storage
 
-An `.inlang` file is a SQLite database with built-in version control via [Lix](https://lix.dev). One portable file containing all your translations, settings, and change history.
+An `.inlang` project is canonically a single binary file: a SQLite database with version control via [lix](https://lix.dev). Like `.sqlite` for relational data, `.inlang` packages localization data into one file that tools can share.
 
-SQLite was chosen because:
+For Git repositories, the binary file can be unpacked into a directory of plain files so changes can be reviewed alongside code. The packed file is the canonical format; the unpacked directory is the Git-friendly representation.
+
+Version control via lix adds file-level history, merging, and change proposals to `.inlang` projects.
+
+The storage layer is designed to be:
 
 - **Queryable** — Filter, join, and aggregate translations with SQL
-- **Portable** — Single file, no server, works in browser via WASM
-- **Proven** — Battle-tested, used everywhere
+- **Portable** — Single file, no server
+- **Git-friendly when unpacked** — Store a directory representation in repos for reviewable changes
 
 ## Data Model
 
@@ -44,22 +48,22 @@ See [Data Model](/docs/data-model) for details.
 
 ## Plugins
 
-Plugins handle the transformation between external file formats (JSON, i18next, XLIFF) and inlang's internal data model.
+Plugins handle the transformation between external translation files (JSON, i18next, XLIFF) and inlang's internal data model.
 
 ```
 ┌─────────────────┐       ┌─────────┐       ┌──────────────────┐
 │  .inlang file   │◄─────►│ Plugins │◄─────►│ Translation files│
-│    (SQLite)     │       │         │       │  (JSON, XLIFF)   │
+│                 │       │         │       │  (JSON, XLIFF)   │
 └─────────────────┘       └─────────┘       └──────────────────┘
 ```
 
-Plugins only do import/export — they don't touch the database directly. This keeps the core simple and makes format support extensible.
+`.inlang` is the canonical project format. External translation files are compatibility files that plugins import and export. Plugins only do import/export — they don't write the `.inlang` project directly. This keeps the core simple and makes format support extensible.
 
 See [Plugin API](/docs/plugin-api) for the reference or [Writing a Plugin](/docs/write-plugin) to build your own.
 
 ## Message-first design
 
-Traditional i18n tools are file-first: you load `en.json`, `de.json`, `fr.json` as separate resources and iterate through files to find translations.
+Traditional i18n tools are translation-file-first: you load `en.json`, `de.json`, `fr.json` as separate resources and iterate through files to find translations.
 
 Inlang is message-first: you query messages directly from the database.
 
@@ -80,6 +84,7 @@ const messages = await project.db
 Why this matters:
 
 - **Tools don't care about files** — They care about messages. Files are an import/export detail.
+- **CRUD operations** — Tools can read and write messages through the SDK instead of custom parsing.
 - **Query across locales** — Find missing translations, compare locales, aggregate stats.
 - **Future-proof** — The data model works regardless of where translations come from (files, APIs, databases).
 
@@ -88,4 +93,3 @@ Why this matters:
 - [CRUD API](/docs/crud-api) — Query and modify translations
 - [Writing a Tool](/docs/write-tool) — Build a tool using the SDK
 - [Writing a Plugin](/docs/write-plugin) — Support a custom file format
-

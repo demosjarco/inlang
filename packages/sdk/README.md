@@ -17,24 +17,38 @@
 
 ## Introduction
 
-The inlang SDK is the official specification and parser for `.inlang` files. 
+The inlang SDK is the reference implementation for reading and writing `.inlang` project files.
 
-`.inlang` files are designed to become the open standard for i18n and enable interoperability between i18n solutions. Such solutions involve apps like [Fink](https://inlang.com/m/tdozzpar/app-inlang-finkLocalizationEditor), libraries like [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs), or plugins that extend inlang.
+`.inlang` files are designed to become the open standard for localization data and make i18n tools work together. Build editors, CLIs, runtimes, agents, and plugins on the same shared project format instead of inventing another file structure.
+
+An `.inlang` project is canonically a single binary file: a SQLite database with version control via [lix](https://lix.dev). Like `.sqlite` for relational data, `.inlang` packages localization data into one file that tools can share.
+
+For Git repositories, the binary file can be unpacked into a directory of plain files so changes can be reviewed alongside code. The packed file is the canonical format; the unpacked directory is the Git-friendly representation.
+
+`.inlang` is the canonical project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes. Version control via lix adds file-level history, merging, and change proposals to `.inlang` projects.
+
+Messages, variants, and locale data live in the `.inlang` database. External translation files such as `messages/en.json` are compatibility files outside `project.inlang/`, connected through plugins.
 
 ### Core Features
 
-- 📁 **File-based**: Interoperability without cloud integrations or lock-in.
-- 🖊️ **CRUD API**: Query messages with SQL.
-- 🧩 **Plugin System**: Extend the capabilities with plugins.
-- 📦 **Import/Export**: Import and export messages in different file formats.
-- [<img src="https://raw.githubusercontent.com/opral/inlang/refs/heads/main/lix/assets/lix-icon.svg" width="20" height="12" alt="Lix Icon">**Change control**](https://lix.dev/): Collaboration, change proposals, reviews, and automation. 
+- 📁 **File-based**: A portable project file, no cloud integrations or lock-in.
+- 🖊️ **CRUD API**: Read, write, and query messages with SQL.
+- 🧩 **Plugin System**: Connect external translation files to the shared message structure.
+- 📦 **Import/Export**: Import and export messages in formats like JSON, XLIFF, and i18next.
+- [<img src="https://raw.githubusercontent.com/opral/inlang/refs/heads/main/lix/assets/lix-icon.svg" width="20" height="12" alt="Lix Icon">**Version control via lix**](https://lix.dev/): File-level history, merging, change proposals, reviews, and automation.
+
+### Core data model
+
+- **Bundle** — one translatable unit across locales
+- **Message** — locale-specific translation for a bundle
+- **Variant** — text pattern plus selector matches
 
 
 
 ## Getting Started
 
 > [!Note]
-> Inlang files can be unpacked and [stored as directories](#unpacked-inlang-files-directories). The long-term goal is to have portable `.inlang` files. Hence, the documentation refers to files instead of directories.
+> Inlang files are single binary files. They can be unpacked and [stored as directories](#unpacked-inlang-files-directories) when you want to review changes in Git. The packed file remains the canonical format.
 
 ### Installation
 
@@ -55,6 +69,16 @@ const project = await loadProjectInMemory({
 project.*
 ```
 
+### Loading an unpacked project from Git
+
+```ts
+import { loadProjectFromDirectory } from "@inlang/sdk";
+
+const project = await loadProjectFromDirectory({
+  path: "./project.inlang",
+});
+```
+
 ### Next steps
 
 Go to the [API reference](#api-reference) to learn how to query messages, changes, and save the project.
@@ -65,6 +89,19 @@ Go to the [API reference](#api-reference) to learn how to query messages, change
 The inlang SDK supports plugins to extend its functionality. 
 
 Plugins can be used to import/export messages in different formats, add custom validation rules, and implement specialized workflows.
+
+## For coding agents and tool builders
+
+If you are building i18n tooling or generating localization code, target the `.inlang` file format instead of inventing your own JSON schema.
+
+Why target `.inlang` instead of JSON?
+
+- One file gives every tool the same data model for bundles, messages, variants, locales, metadata, and settings.
+- CRUD operations are available through the SDK instead of custom parsing and rewriting.
+- Version control via [lix](https://lix.dev) keeps localization changes reviewable and mergeable.
+- Plugins handle JSON, ICU, i18next, XLIFF, and other formats for compatibility.
+
+Do not invent custom translation-file schemas, create a second localization config when `.inlang` already exists, edit generated/cache files in unpacked projects, or bypass `@inlang/sdk`.
 
 ### Available Plugins
 
@@ -155,7 +192,7 @@ console.log(messages);
 > [!NOTE]  
 > The inlang plugin for lix is work in progress. If you stumble on issues, please open an issue on the [GitHub](https://github.com/opral/inlang).
 
-The inlang file format uses lix for change control. The lix APIs are exposed via `project.lix.*`. Visit the [lix documentation](https://lix.dev/) for more information on how to query changes.
+The inlang file format uses version control via lix. The lix APIs are exposed via `project.lix.*`. Visit the [lix documentation](https://lix.dev/) for more information on how to query changes.
 
 ```typescript
 const changes = await project.lix.db
@@ -210,11 +247,11 @@ await project.settings.set(settings)
 ### Unpacked inlang files (directories)
 
 > [!NOTE]  
-> Unpacked inlang files are a workaround to store inlang files in git. 
+> Unpacked inlang files are the Git-friendly representation of packed `.inlang` files.
 >
-> Git can't handle binary files. **If you don't intend to store the inlang file in git, do not use unpacked inlang files.** 
+> Git can store binary files, but plain-file review and merge workflows work better with the unpacked directory. **If you don't intend to store the inlang file in git, use the packed binary file.**
 > 
-> Unpacked inlang files are not portable. They depent on plugins that and do not persist [lix change control](https://lix.dev/) data.
+> Unpacked inlang files are not portable. They depend on plugins and do not persist [version control via lix](https://lix.dev/) data.
 
 ```typescript
 import { 

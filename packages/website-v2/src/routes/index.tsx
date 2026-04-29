@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Inlang is an open file format for localizing software (i18n). One file format, multiple solutions, all interoperable.",
+          "Inlang is an open project file format for localization (i18n): a single SQLite-based binary file with version control via lix.",
       },
       { name: "og:image", content: ogImage },
       { name: "twitter:card", content: "summary_large_image" },
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/")({
       {
         name: "twitter:description",
         content:
-          "Inlang is an open file format for localizing software (i18n). One file format, multiple solutions, all interoperable.",
+          "Inlang is an open project file format for localization (i18n): a single SQLite-based binary file with version control via lix.",
       },
       { name: "twitter:site", content: "@inlanghq" },
       { name: "twitter:creator", content: "@inlanghq" },
@@ -68,11 +68,12 @@ function App() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-6 flex flex-col gap-6">
             <h1 className="max-w-2xl text-4xl font-semibold tracking-tight md:text-5xl">
-              The open file format for localizing software (i18n).
+              The open project file format for localization (i18n).
             </h1>
             <p className="max-w-xl text-lg leading-8 text-slate-600">
-              One file format that all i18n tools share. i18n libraries, CAT
-              editors, CI/CD, and more.
+              A SQLite-based binary file for localization projects with
+              version control via lix. Unpack it for Git; read and write it
+              with @inlang/sdk.
             </p>
             <div className="flex gap-12 pt-2">
               <a
@@ -165,11 +166,12 @@ function App() {
         </div>
       </section>
 
-      {/* Popular tools section commented out
+      {/* Tools that read/write the inlang file format section commented out
       <section className="pb-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="border-t border-slate-200 pt-10">
-          <SectionHeading title="Popular tools" className="max-w-2xl" />
+          <SectionHeading title="Tools that read/write the inlang file format" className="max-w-2xl" />
+          <p>These are independent tools that read and write .inlang; they are not inlang itself.</p>
           ...
           </div>
         </div>

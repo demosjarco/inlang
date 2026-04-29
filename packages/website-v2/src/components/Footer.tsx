@@ -89,7 +89,7 @@ export default function Footer() {
             </span>
           </Link>
           <p className="pt-0.5 text-sm text-slate-600">
-            The open file format for localization (i18n).
+            The open project file format for localization (i18n).
           </p>
           <div className="flex flex-wrap gap-6 pt-1">
             {socialMediaLinks.map((link) => (

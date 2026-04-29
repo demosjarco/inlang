@@ -5,7 +5,7 @@ og:description: "Accelerating both inlang and lix by prioritizing lix."
 
 Dear inlang community, 
 
-The release of the inlang SDK v2 (variant support) is blocked until we have a 1.0 release of the lix version control system. We are prioritizing [lix](https://lix.dev/) so we can unblock v2. Which means:
+The release of the inlang SDK v2 (variant support) is blocked until we have a 1.0 release with version control via lix. We are prioritizing [lix](https://lix.dev/) so we can unblock v2. Which means:
 
 - The release of the inlang SDK v2 is likely postponed until Jan/Feb next year.
 
@@ -23,13 +23,13 @@ As a sneak peek of what’s coming with v2, check out the Fink v2 demo [https://
 
 ## What is lix?
 
-Unbeknown to many of you, inlang has been built on the lix version control system over the past two years. You probably ask yourself right now: “What is lix?”.
+Unbeknown to many of you, inlang has been built on version control via lix over the past two years. You probably ask yourself right now: “What is lix?”.
 
 Lix is a version control system, a new technology that allows controlling changes in various file formats, such as .csv, .inlang, music, video, architecture, .cad, and more. Controlling changes refers to workflows like change tracking, automation pipelines (CI/CD), or review systems. 
 
 You can try out a CSV file demo of lix [here](https://csv.lix.opral.com/).
 
-## Inlang needs lix version control to succeed
+## Inlang needs version control via lix to succeed
 
 What makes globalization of software complicated is the required coordination effort. Designers need to know that translators updated translations to adjust their UIs, developers need to redeploy the app if translations change, auditors need to know that a message has changed, … the list goes on. 
 

@@ -11,20 +11,20 @@ export const Route = createFileRoute("/c/plugins")({
       {
         name: "description",
         content:
-          "Find everything localization (i18n) related to plugins - inlang",
+          "Explore plugins that connect translation files to the inlang project file format.",
       },
       { name: "og:image", content: ogImage },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: ogImage },
       {
         name: "twitter:image:alt",
-        content: "inlang's ecosystem helps organizations to localize software.",
+        content: "inlang is the open project file format for localization.",
       },
       { name: "twitter:title", content: "Localization Plugins | inlang" },
       {
         name: "twitter:description",
         content:
-          "Find everything localization (i18n) related to plugins - inlang",
+          "Explore plugins that connect translation files to the inlang project file format.",
       },
       { name: "twitter:site", content: "@inlanghq" },
       { name: "twitter:creator", content: "@inlanghq" },
