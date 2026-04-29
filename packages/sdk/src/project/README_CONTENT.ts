@@ -86,7 +86,6 @@ npm install @inlang/sdk
 \`\`\`ts
 import { loadProjectFromDirectory, saveProjectToDirectory } from "@inlang/sdk";
 import fs from "node:fs";
-import fsPromises from "node:fs/promises";
 
 const project = await loadProjectFromDirectory({
   path: "./project.inlang",
@@ -98,12 +97,14 @@ const messages = await project.db.selectFrom("message").selectAll().execute();
 // Use project.db to update messages.
 await saveProjectToDirectory({
   path: "./project.inlang",
-  fs: fsPromises,
+  fs,
   project,
 });
+
+await project.close();
 \`\`\`
 
-\`saveProjectToDirectory()\` writes translation files through import/export plugins. If no exporter plugin is configured, save the canonical packed file with \`project.toBlob()\` instead.
+\`loadProjectFromDirectory()\` and \`saveProjectToDirectory()\` both accept \`node:fs\`. \`saveProjectToDirectory()\` writes translation files through import/export plugins. If no exporter plugin is configured, save the canonical packed file with \`project.toBlob()\` instead.
 
 ## For coding agents and tool builders
 

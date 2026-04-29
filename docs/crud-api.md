@@ -19,6 +19,8 @@ const bundles = await project.db.selectFrom("bundle").selectAll().execute();
 
 > **Saving changes:** CRUD operations update the in-memory `.inlang` database. To save a packed `.inlang` file, call `project.toBlob()`. To save an unpacked `project.inlang/` directory, `saveProjectToDirectory()` needs an import/export plugin; without one, bundles, messages, and variants have no file path to export to.
 
+If the project uses plugins, check `await project.errors.get()` after loading. Close the project with `await project.close()` in one-off scripts.
+
 ## Create
 
 ### Insert a bundle
@@ -36,7 +38,7 @@ await project.db
 ### Insert a message
 
 ```typescript
-await project.db
+const message = await project.db
   .insertInto("message")
   .values({
     id: crypto.randomUUID(),
@@ -44,7 +46,8 @@ await project.db
     locale: "en",
     selectors: [],
   })
-  .execute();
+  .returning("id")
+  .executeTakeFirstOrThrow();
 ```
 
 ### Insert a variant
@@ -54,7 +57,7 @@ await project.db
   .insertInto("variant")
   .values({
     id: crypto.randomUUID(),
-    messageId: messageId,
+    messageId: message.id,
     matches: [],
     pattern: [{ type: "text", value: "Hello world!" }],
   })
@@ -172,20 +175,19 @@ const results = await project.db
 ### Find missing translations
 
 ```typescript
-const missingGerman = await project.db
-  .selectFrom("bundle")
-  .where((eb) =>
-    eb.not(
-      eb.exists(
-        eb
-          .selectFrom("message")
-          .where("message.bundleId", "=", eb.ref("bundle.id"))
-          .where("message.locale", "=", "de"),
-      ),
-    ),
-  )
-  .selectAll()
+const bundles = await project.db.selectFrom("bundle").selectAll().execute();
+const germanMessages = await project.db
+  .selectFrom("message")
+  .select("bundleId")
+  .where("locale", "=", "de")
   .execute();
+
+const translatedBundleIds = new Set(
+  germanMessages.map((message) => message.bundleId),
+);
+const missingGerman = bundles.filter(
+  (bundle) => translatedBundleIds.has(bundle.id) === false,
+);
 ```
 
 ## Update

@@ -24,6 +24,10 @@
         "slug": "data-model"
       },
       {
+        "path": "./message-shapes.md",
+        "slug": "message-shapes"
+      },
+      {
         "path": "./unpacked-project.md",
         "slug": "unpacked-project"
       },

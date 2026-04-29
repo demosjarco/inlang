@@ -4,6 +4,14 @@ Use inlang when localization data needs to be shared across tools, teams, automa
 
 An `.inlang` project is canonically a single binary file: a SQLite database with version control via [lix](https://lix.dev). For Git repositories, the file can be unpacked into a directory of plain files. The packed file is the canonical format; the unpacked directory is the Git-friendly representation.
 
+## Install
+
+Use Node.js 20 or newer and an ESM project (`"type": "module"` in `package.json`).
+
+```bash
+npm install @inlang/sdk
+```
+
 ## Which path should I use?
 
 | Situation                                                                       | Use                                                           |
@@ -70,6 +78,9 @@ const reloadedProject = await loadProjectInMemory({
 
 const bundles = await selectBundleNested(reloadedProject.db).execute();
 console.log(bundles[0]?.messages[0]?.variants[0]?.pattern);
+
+await project.close();
+await reloadedProject.close();
 ```
 
 Use `project.toBlob()` for the packed `.inlang` file. Use `saveProjectToDirectory()` only for the unpacked Git representation, and only when an import/export plugin can write your translation files.

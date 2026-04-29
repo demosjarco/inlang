@@ -36,7 +36,24 @@ const project = await loadProjectFromDirectory({
 
 That's it. The project is loaded with all translations from your files (via plugins). The external files are compatibility files; the tool works against the shared `.inlang` data model.
 
-## Step 2: Get project settings
+## Step 2: Check load errors
+
+Plugin import and resource-file errors are exposed through `project.errors.get()`. Check them before trusting query results.
+
+```typescript
+const errors = await project.errors.get();
+if (errors.length > 0) {
+  throw new AggregateError(errors, "Could not load inlang project");
+}
+```
+
+In one-off scripts and CLIs, close the project before the process exits:
+
+```typescript
+await project.close();
+```
+
+## Step 3: Get project settings
 
 ```typescript
 const settings = await project.settings.get();
@@ -47,7 +64,7 @@ console.log("Locales:", settings.locales);
 // Locales: ["en", "de", "fr"]
 ```
 
-## Step 3: Query all bundles
+## Step 4: Query all bundles
 
 ```typescript
 const bundles = await project.db.selectFrom("bundle").selectAll().execute();
@@ -55,7 +72,7 @@ const bundles = await project.db.selectFrom("bundle").selectAll().execute();
 console.log(`Found ${bundles.length} translation keys`);
 ```
 
-## Step 4: Find missing translations
+## Step 5: Find missing translations
 
 Now let's find bundles that are missing translations for certain locales:
 
@@ -87,7 +104,7 @@ async function findMissingTranslations(project) {
 }
 ```
 
-## Step 5: Put it together
+## Step 6: Put it together
 
 Here's a complete CLI tool:
 
@@ -96,39 +113,48 @@ import { loadProjectFromDirectory } from "@inlang/sdk";
 import fs from "node:fs";
 
 async function main() {
-  // Load project
   const project = await loadProjectFromDirectory({
     path: "./project.inlang",
     fs,
   });
 
-  const settings = await project.settings.get();
-  const bundles = await project.db.selectFrom("bundle").selectAll().execute();
-  const messages = await project.db.selectFrom("message").selectAll().execute();
+  try {
+    const errors = await project.errors.get();
+    if (errors.length > 0) {
+      throw new AggregateError(errors, "Could not load inlang project");
+    }
 
-  // Find missing translations
-  const missing = [];
+    const settings = await project.settings.get();
+    const bundles = await project.db.selectFrom("bundle").selectAll().execute();
+    const messages = await project.db
+      .selectFrom("message")
+      .selectAll()
+      .execute();
 
-  for (const bundle of bundles) {
-    const bundleMessages = messages.filter((m) => m.bundleId === bundle.id);
-    const localesWithTranslation = bundleMessages.map((m) => m.locale);
+    const missing = [];
 
-    for (const locale of settings.locales) {
-      if (!localesWithTranslation.includes(locale)) {
-        missing.push({ bundleId: bundle.id, locale });
+    for (const bundle of bundles) {
+      const bundleMessages = messages.filter((m) => m.bundleId === bundle.id);
+      const localesWithTranslation = bundleMessages.map((m) => m.locale);
+
+      for (const locale of settings.locales) {
+        if (!localesWithTranslation.includes(locale)) {
+          missing.push({ bundleId: bundle.id, locale });
+        }
       }
     }
-  }
 
-  // Report results
-  if (missing.length === 0) {
-    console.log("All translations complete!");
-  } else {
-    console.log(`Found ${missing.length} missing translations:\n`);
-    for (const { bundleId, locale } of missing) {
-      console.log(`  - "${bundleId}" is missing locale "${locale}"`);
+    if (missing.length === 0) {
+      console.log("All translations complete!");
+    } else {
+      console.log(`Found ${missing.length} missing translations:\n`);
+      for (const { bundleId, locale } of missing) {
+        console.log(`  - "${bundleId}" is missing locale "${locale}"`);
+      }
+      process.exitCode = 1;
     }
-    process.exit(1);
+  } finally {
+    await project.close();
   }
 }
 
@@ -147,34 +173,34 @@ Found 3 missing translations:
   - "error_404" is missing locale "fr"
 ```
 
-## Using SQL for complex queries
+## Building report queries
 
-The CRUD API is powered by Kysely. You can write complex queries:
+The CRUD API is powered by Kysely. For reports, it is often clearest to query the rows you need and aggregate them in JavaScript:
 
 ```typescript
 // Find bundles missing a specific locale
-const missingGerman = await project.db
-  .selectFrom("bundle")
-  .where((eb) =>
-    eb.not(
-      eb.exists(
-        eb
-          .selectFrom("message")
-          .where("message.bundleId", "=", eb.ref("bundle.id"))
-          .where("message.locale", "=", "de"),
-      ),
-    ),
-  )
-  .selectAll()
+const bundles = await project.db.selectFrom("bundle").selectAll().execute();
+const germanMessages = await project.db
+  .selectFrom("message")
+  .select("bundleId")
+  .where("locale", "=", "de")
   .execute();
 
+const translatedBundleIds = new Set(
+  germanMessages.map((message) => message.bundleId),
+);
+const missingGerman = bundles.filter(
+  (bundle) => translatedBundleIds.has(bundle.id) === false,
+);
+
 // Count translations per locale
-const counts = await project.db
-  .selectFrom("message")
-  .select("locale")
-  .select((eb) => eb.fn.count("id").as("count"))
-  .groupBy("locale")
-  .execute();
+const messages = await project.db.selectFrom("message").selectAll().execute();
+const counts = Object.entries(
+  messages.reduce<Record<string, number>>((result, message) => {
+    result[message.locale] = (result[message.locale] ?? 0) + 1;
+    return result;
+  }, {}),
+).map(([locale, count]) => ({ locale, count }));
 ```
 
 ## Modifying translations
@@ -183,7 +209,7 @@ Tools can also create, update, and delete translations:
 
 ```typescript
 // Add a missing translation
-await project.db
+const message = await project.db
   .insertInto("message")
   .values({
     id: crypto.randomUUID(),
@@ -191,14 +217,15 @@ await project.db
     locale: "fr",
     selectors: [],
   })
-  .execute();
+  .returning("id")
+  .executeTakeFirstOrThrow();
 
 // Add the variant with text
 await project.db
   .insertInto("variant")
   .values({
     id: crypto.randomUUID(),
-    messageId: messageId,
+    messageId: message.id,
     matches: [],
     pattern: [{ type: "text", value: "Bonjour!" }],
   })
@@ -211,7 +238,7 @@ If you're using the unpacked format, changes sync automatically when `syncInterv
 
 ```typescript
 import { saveProjectToDirectory } from "@inlang/sdk";
-import fs from "node:fs/promises";
+import fs from "node:fs";
 
 await saveProjectToDirectory({
   fs,
@@ -220,7 +247,7 @@ await saveProjectToDirectory({
 });
 ```
 
-`saveProjectToDirectory()` writes translation resource files through import/export plugins. If no exporter plugin is configured, save the canonical packed file instead:
+`loadProjectFromDirectory()` and `saveProjectToDirectory()` both accept `node:fs`. `saveProjectToDirectory()` writes translation resource files through import/export plugins. If no exporter plugin is configured, save the canonical packed file instead:
 
 ```typescript
 import fs from "node:fs/promises";

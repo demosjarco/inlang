@@ -61,13 +61,28 @@ const project = await loadProjectFromDirectory({
 const messages = await project.db.selectFrom("message").selectAll().execute();
 ```
 
+Check plugin and resource-file errors after loading:
+
+```typescript
+const errors = await project.errors.get();
+if (errors.length > 0) {
+  throw new AggregateError(errors, "Could not load inlang project");
+}
+```
+
+Close the project in one-off scripts:
+
+```typescript
+await project.close();
+```
+
 ### Saving a project
 
 Use `saveProjectToDirectory()` to save changes back to disk:
 
 ```typescript
 import { saveProjectToDirectory } from "@inlang/sdk";
-import fs from "node:fs/promises";
+import fs from "node:fs";
 
 await saveProjectToDirectory({
   fs: fs,
@@ -75,6 +90,8 @@ await saveProjectToDirectory({
   path: "./project.inlang",
 });
 ```
+
+`loadProjectFromDirectory()` and `saveProjectToDirectory()` both accept `node:fs`. Passing the same `fs` object to both functions is the least surprising Node setup.
 
 This writes `settings.json`, metadata files, and any resource files produced by configured exporters. Without an exporter plugin, translation data stays in the packed `.inlang` database and cannot be represented by the unpacked directory.
 

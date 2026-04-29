@@ -16,6 +16,10 @@ Translation files  ──►  importFiles()  ──►  Bundles/Messages/Variant
 Translation files  ◄──  exportFiles()  ◄──  Bundles/Messages/Variants
 ```
 
+When a project is loaded with `loadProjectFromDirectory()`, the SDK calls `toBeImportedFiles()` and then `importFiles()` for configured import/export plugins. When a project is saved with `saveProjectToDirectory()`, the SDK calls `exportFiles()`.
+
+Plugin load and resource-file errors are exposed through `await project.errors.get()` on the loaded project.
+
 ## Step 1: Create the plugin file
 
 Create a new file for your plugin:
@@ -112,6 +116,7 @@ export const plugin: InlangPlugin = {
 - **Variant** — The actual text. Most messages have one variant; plurals have multiple.
 
 For a simple `{ "greeting": "Hello" }`:
+
 ```
 Bundle: id="greeting"
 └── Message: bundleId="greeting", locale="en"
@@ -153,6 +158,10 @@ exportFiles: async ({ bundles, messages, variants }) => {
 },
 ```
 
+`exportFiles()` must return `{ locale, name, content }` objects. `name` is used as the fallback filename when the plugin settings do not define `pathPattern`. If the project settings include `settings[plugin.key].pathPattern`, `saveProjectToDirectory()` writes to that path instead.
+
+Relative `pathPattern` values are resolved relative to the directory that contains `project.inlang/`.
+
 ## Step 5: Add settings (optional)
 
 Let users configure your plugin with a settings schema:
@@ -174,8 +183,8 @@ export const plugin: InlangPlugin<{
   settingsSchema: PluginSettings,
 
   toBeImportedFiles: async ({ settings }) => {
-    const pattern = settings["plugin.my.json"]?.pathPattern
-      ?? "./messages/{locale}.json";
+    const pattern =
+      settings["plugin.my.json"]?.pathPattern ?? "./messages/{locale}.json";
 
     return settings.locales.map((locale) => ({
       path: pattern.replace("{locale}", locale),
@@ -222,8 +231,8 @@ export const plugin: InlangPlugin<{
   settingsSchema: PluginSettings,
 
   toBeImportedFiles: async ({ settings }) => {
-    const pattern = settings["plugin.my.json"]?.pathPattern
-      ?? "./messages/{locale}.json";
+    const pattern =
+      settings["plugin.my.json"]?.pathPattern ?? "./messages/{locale}.json";
 
     return settings.locales.map((locale) => ({
       path: pattern.replace("{locale}", locale),
@@ -263,10 +272,11 @@ export const plugin: InlangPlugin<{
 
     for (const message of messages) {
       const variant = variants.find((v) => v.messageId === message.id);
-      const text = variant?.pattern
-        .filter((p) => p.type === "text")
-        .map((p) => p.value)
-        .join("") ?? "";
+      const text =
+        variant?.pattern
+          .filter((p) => p.type === "text")
+          .map((p) => p.value)
+          .join("") ?? "";
 
       if (!filesByLocale[message.locale]) {
         filesByLocale[message.locale] = {};
@@ -287,7 +297,7 @@ export const plugin: InlangPlugin<{
 
 - Handle variables: Parse `{name}` syntax into expression patterns
 - Handle plurals: Create multiple variants with match conditions
+- [Message Shapes](/docs/message-shapes) — Concrete pattern, match, and declaration shapes
 - [Plugin API](/docs/plugin-api) — Full type reference
 - [Data Model](/docs/data-model) — Understand bundles, messages, and variants
 - [Architecture](/docs/architecture) — See how plugins fit in
-

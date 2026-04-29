@@ -1,3 +1,4 @@
+import type nodeFs from "node:fs";
 import type fs from "node:fs/promises";
 import type { InlangProject } from "./api.js";
 import path from "node:path";
@@ -16,6 +17,12 @@ async function fileExists(fsModule: typeof fs, filePath: string) {
 	} catch {
 		return false;
 	}
+}
+
+type SaveProjectFs = typeof fs | typeof nodeFs;
+
+function getPromisesFs(fsModule: SaveProjectFs): typeof fs {
+	return "promises" in fsModule ? fsModule.promises : fsModule;
 }
 
 async function assertTranslationDataCanBeExported(project: InlangProject) {
@@ -47,7 +54,7 @@ async function assertTranslationDataCanBeExported(project: InlangProject) {
  *
  * @example
  *   await saveProjectToDirectory({
- *     fs: await import("node:fs/promises"),
+ *     fs: await import("node:fs"),
  *     project,
  *     path: "./project.inlang",
  *   });
@@ -55,8 +62,10 @@ async function assertTranslationDataCanBeExported(project: InlangProject) {
 export async function saveProjectToDirectory(args: {
 	/**
 	 * The file system module to use for writing files.
+	 *
+	 * Accepts either `node:fs` or `node:fs/promises`.
 	 */
-	fs: typeof fs;
+	fs: SaveProjectFs;
 	/**
 	 * The inlang project to save.
 	 */
@@ -79,6 +88,7 @@ export async function saveProjectToDirectory(args: {
 	if (!args.skipExporting) {
 		await assertTranslationDataCanBeExported(args.project);
 	}
+	const fsModule = getPromisesFs(args.fs);
 
 	const files = await args.project.lix.db
 		.selectFrom("file")
@@ -90,7 +100,7 @@ export async function saveProjectToDirectory(args: {
 	);
 
 	const existingMeta = await readProjectMeta({
-		fs: args.fs,
+		fs: fsModule,
 		projectPath: args.path,
 	});
 	const highestSdkVersion =
@@ -108,9 +118,9 @@ export async function saveProjectToDirectory(args: {
 	const readmePath = path.join(args.path, "README.md");
 	const gitignorePath = path.join(args.path, ".gitignore");
 	const shouldWriteReadme =
-		shouldWriteMetadata || !(await fileExists(args.fs, readmePath));
+		shouldWriteMetadata || !(await fileExists(fsModule, readmePath));
 	const shouldWriteGitignore =
-		shouldWriteMetadata || !(await fileExists(args.fs, gitignorePath));
+		shouldWriteMetadata || !(await fileExists(fsModule, gitignorePath));
 
 	// write all files to the directory
 	for (const file of files) {
@@ -118,17 +128,17 @@ export async function saveProjectToDirectory(args: {
 			continue;
 		}
 		const p = path.join(args.path, file.path);
-		await args.fs.mkdir(path.dirname(p), { recursive: true });
-		await args.fs.writeFile(p, new Uint8Array(file.data));
+		await fsModule.mkdir(path.dirname(p), { recursive: true });
+		await fsModule.writeFile(p, new Uint8Array(file.data));
 	}
 
 	if (shouldWriteGitignore) {
-		await args.fs.writeFile(gitignorePath, gitignoreContent);
+		await fsModule.writeFile(gitignorePath, gitignoreContent);
 	}
 
 	if (shouldWriteReadme) {
 		// Write README.md for coding agents
-		await args.fs.writeFile(
+		await fsModule.writeFile(
 			readmePath,
 			new TextEncoder().encode(README_CONTENT)
 		);
@@ -136,7 +146,7 @@ export async function saveProjectToDirectory(args: {
 
 	if (shouldWriteMetadata) {
 		const metaContent = JSON.stringify({ highestSdkVersion }, null, 2);
-		await args.fs.writeFile(
+		await fsModule.writeFile(
 			path.join(args.path, ".meta.json"),
 			new TextEncoder().encode(metaContent)
 		);
@@ -186,15 +196,12 @@ export async function saveProjectToDirectory(args: {
 								pathPattern.replace(/\{(languageTag|locale)\}/g, file.locale)
 							)
 						: absolutePathFromProject(args.path, file.name);
-					const dirname = path.dirname(p);
-					if ((await args.fs.stat(dirname)).isDirectory() === false) {
-						await args.fs.mkdir(dirname, { recursive: true });
-					}
+					await fsModule.mkdir(path.dirname(p), { recursive: true });
 					if (p.endsWith(".json")) {
 						try {
-							const existing = await args.fs.readFile(p, "utf-8");
+							const existing = await fsModule.readFile(p, "utf-8");
 							const stringify = detectJsonFormatting(existing);
-							await args.fs.writeFile(
+							await fsModule.writeFile(
 								p,
 								new TextEncoder().encode(
 									stringify(JSON.parse(new TextDecoder().decode(file.content)))
@@ -203,10 +210,10 @@ export async function saveProjectToDirectory(args: {
 						} catch {
 							// write the file to disk (json doesn't exist yet)
 							// yeah ugly duplication of write file but it works.
-							await args.fs.writeFile(p, new Uint8Array(file.content));
+							await fsModule.writeFile(p, new Uint8Array(file.content));
 						}
 					} else {
-						await args.fs.writeFile(p, new Uint8Array(file.content));
+						await fsModule.writeFile(p, new Uint8Array(file.content));
 					}
 				}
 			}
@@ -219,7 +226,7 @@ export async function saveProjectToDirectory(args: {
 			await plugin.saveMessages({
 				messages: bundlesNested.map((b) => toMessageV1(b)),
 				// @ts-expect-error - legacy
-				nodeishFs: withAbsolutePaths(args.fs, args.path),
+				nodeishFs: withAbsolutePaths(fsModule, args.path),
 				settings,
 			});
 		}
