@@ -6,6 +6,7 @@ Inlang uses [Kysely](https://kysely.dev) for type-safe database queries. Access 
 
 ```typescript
 import { loadProjectFromDirectory } from "@inlang/sdk";
+import fs from "node:fs";
 
 const project = await loadProjectFromDirectory({
   path: "./project.inlang",
@@ -13,11 +14,10 @@ const project = await loadProjectFromDirectory({
 });
 
 // project.db is a Kysely instance
-const bundles = await project.db
-  .selectFrom("bundle")
-  .selectAll()
-  .execute();
+const bundles = await project.db.selectFrom("bundle").selectAll().execute();
 ```
+
+> **Saving changes:** CRUD operations update the in-memory `.inlang` database. To save a packed `.inlang` file, call `project.toBlob()`. To save an unpacked `project.inlang/` directory, `saveProjectToDirectory()` needs an import/export plugin; without one, bundles, messages, and variants have no file path to export to.
 
 ## Create
 
@@ -28,7 +28,7 @@ await project.db
   .insertInto("bundle")
   .values({
     id: "greeting",
-    declarations: []
+    declarations: [],
   })
   .execute();
 ```
@@ -42,7 +42,7 @@ await project.db
     id: crypto.randomUUID(),
     bundleId: "greeting",
     locale: "en",
-    selectors: []
+    selectors: [],
   })
   .execute();
 ```
@@ -56,7 +56,7 @@ await project.db
     id: crypto.randomUUID(),
     messageId: messageId,
     matches: [],
-    pattern: [{ type: "text", value: "Hello world!" }]
+    pattern: [{ type: "text", value: "Hello world!" }],
   })
   .execute();
 ```
@@ -71,20 +71,20 @@ await insertBundleNested(project.db, {
   declarations: [],
   messages: [
     {
-      id: crypto.randomUUID(),
+      id: "greeting_en",
       bundleId: "greeting",
       locale: "en",
       selectors: [],
       variants: [
         {
           id: crypto.randomUUID(),
-          messageId: messageId,
+          messageId: "greeting_en",
           matches: [],
-          pattern: [{ type: "text", value: "Hello!" }]
-        }
-      ]
-    }
-  ]
+          pattern: [{ type: "text", value: "Hello!" }],
+        },
+      ],
+    },
+  ],
 });
 ```
 
@@ -93,10 +93,7 @@ await insertBundleNested(project.db, {
 ### Get all bundles
 
 ```typescript
-const bundles = await project.db
-  .selectFrom("bundle")
-  .selectAll()
-  .execute();
+const bundles = await project.db.selectFrom("bundle").selectAll().execute();
 ```
 
 ### Get bundle by ID
@@ -180,11 +177,12 @@ const missingGerman = await project.db
   .where((eb) =>
     eb.not(
       eb.exists(
-        eb.selectFrom("message")
+        eb
+          .selectFrom("message")
           .where("message.bundleId", "=", eb.ref("bundle.id"))
-          .where("message.locale", "=", "de")
-      )
-    )
+          .where("message.locale", "=", "de"),
+      ),
+    ),
   )
   .selectAll()
   .execute();
@@ -198,7 +196,7 @@ const missingGerman = await project.db
 await project.db
   .updateTable("bundle")
   .set({
-    declarations: [{ type: "input-variable", name: "count" }]
+    declarations: [{ type: "input-variable", name: "count" }],
   })
   .where("id", "=", "greeting")
   .execute();
@@ -210,7 +208,7 @@ await project.db
 await project.db
   .updateTable("variant")
   .set({
-    pattern: [{ type: "text", value: "Updated text" }]
+    pattern: [{ type: "text", value: "Updated text" }],
   })
   .where("id", "=", variantId)
   .execute();
@@ -233,11 +231,11 @@ await updateBundleNested(project.db, {
         {
           id: variantId,
           matches: [],
-          pattern: [{ type: "text", value: "Updated!" }]
-        }
-      ]
-    }
-  ]
+          pattern: [{ type: "text", value: "Updated!" }],
+        },
+      ],
+    },
+  ],
 });
 ```
 
@@ -246,10 +244,7 @@ await updateBundleNested(project.db, {
 ### Delete a bundle
 
 ```typescript
-await project.db
-  .deleteFrom("bundle")
-  .where("id", "=", "greeting")
-  .execute();
+await project.db.deleteFrom("bundle").where("id", "=", "greeting").execute();
 
 // Cascades: all messages and variants are deleted
 ```
@@ -257,10 +252,7 @@ await project.db
 ### Delete a message
 
 ```typescript
-await project.db
-  .deleteFrom("message")
-  .where("id", "=", messageId)
-  .execute();
+await project.db.deleteFrom("message").where("id", "=", messageId).execute();
 
 // Cascades: all variants are deleted
 ```
@@ -268,10 +260,7 @@ await project.db
 ### Delete a variant
 
 ```typescript
-await project.db
-  .deleteFrom("variant")
-  .where("id", "=", variantId)
-  .execute();
+await project.db.deleteFrom("variant").where("id", "=", variantId).execute();
 ```
 
 ## Upsert
@@ -285,12 +274,12 @@ await project.db
   .insertInto("bundle")
   .values({
     id: "greeting",
-    declarations: []
+    declarations: [],
   })
   .onConflict((oc) =>
     oc.column("id").doUpdateSet({
-      declarations: []
-    })
+      declarations: [],
+    }),
   )
   .execute();
 ```
@@ -312,4 +301,3 @@ await upsertBundleNested(project.db, {
 - [Data Model](/docs/data-model) — Understand bundles, messages, and variants
 - [Writing a Tool](/docs/write-tool) — Build a complete tool using CRUD operations
 - [Unpacked Project](/docs/unpacked-project) — Load projects from disk
-

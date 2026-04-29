@@ -8,6 +8,8 @@ Tools read and write translations through the `.inlang` project file format via 
 
 An `.inlang` project is canonically a single binary file. In Git repositories, it is often unpacked into a directory; `loadProjectFromDirectory()` loads that Git-friendly representation.
 
+If a `project.inlang/` directory already exists, load it with `loadProjectFromDirectory()`. If your tool is generating a new localization project from scratch, start with `newProject()` and save the packed file with `project.toBlob()`; see [Getting Started](/docs/getting-started) for a runnable create-save-reload example.
+
 ```
 ┌─────────────────┐
 │    Your Tool    │
@@ -48,10 +50,7 @@ console.log("Locales:", settings.locales);
 ## Step 3: Query all bundles
 
 ```typescript
-const bundles = await project.db
-  .selectFrom("bundle")
-  .selectAll()
-  .execute();
+const bundles = await project.db.selectFrom("bundle").selectAll().execute();
 
 console.log(`Found ${bundles.length} translation keys`);
 ```
@@ -159,11 +158,12 @@ const missingGerman = await project.db
   .where((eb) =>
     eb.not(
       eb.exists(
-        eb.selectFrom("message")
+        eb
+          .selectFrom("message")
           .where("message.bundleId", "=", eb.ref("bundle.id"))
-          .where("message.locale", "=", "de")
-      )
-    )
+          .where("message.locale", "=", "de"),
+      ),
+    ),
   )
   .selectAll()
   .execute();
@@ -207,16 +207,26 @@ await project.db
 
 ## Saving changes
 
-If you're using the unpacked format, changes sync automatically. To explicitly save:
+If you're using the unpacked format, changes sync automatically when `syncInterval` is enabled. To explicitly save:
 
 ```typescript
 import { saveProjectToDirectory } from "@inlang/sdk";
+import fs from "node:fs/promises";
 
 await saveProjectToDirectory({
-  fs: fs.promises,
+  fs,
   project,
   path: "./project.inlang",
 });
+```
+
+`saveProjectToDirectory()` writes translation resource files through import/export plugins. If no exporter plugin is configured, save the canonical packed file instead:
+
+```typescript
+import fs from "node:fs/promises";
+
+const blob = await project.toBlob();
+await fs.writeFile("project.inlang", new Uint8Array(await blob.arrayBuffer()));
 ```
 
 ## Next steps

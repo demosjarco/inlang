@@ -404,6 +404,29 @@ test("emits a .meta.json file with the sdk version", async () => {
 	expect(meta.highestSdkVersion).toBe(ENV_VARIABLES.SDK_VERSION);
 });
 
+test("throws when saving translation data to a directory without an exporter plugin", async () => {
+	const fs = Volume.fromJSON({});
+
+	const project = await loadProjectInMemory({
+		blob: await newProject(),
+	});
+
+	await project.db
+		.insertInto("bundle")
+		.values({ id: "greeting", declarations: [] })
+		.execute();
+
+	await expect(
+		saveProjectToDirectory({
+			fs: fs.promises as any,
+			project,
+			path: "/foo/bar.inlang",
+		})
+	).rejects.toThrow(
+		"saveProjectToDirectory cannot write bundles, messages, or variants without an import/export plugin"
+	);
+});
+
 test("updates an existing README.md file", async () => {
 	const fs = Volume.fromJSON({
 		"/foo/bar.inlang/README.md": "custom readme",

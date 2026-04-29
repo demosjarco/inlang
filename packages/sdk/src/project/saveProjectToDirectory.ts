@@ -18,6 +18,27 @@ async function fileExists(fsModule: typeof fs, filePath: string) {
 	}
 }
 
+async function assertTranslationDataCanBeExported(project: InlangProject) {
+	const plugins = await project.plugins.get();
+	const hasExporter = plugins.some(
+		(plugin) => plugin.exportFiles || plugin.saveMessages
+	);
+	if (hasExporter) {
+		return;
+	}
+
+	const [bundle, message, variant] = await Promise.all([
+		project.db.selectFrom("bundle").select("id").limit(1).executeTakeFirst(),
+		project.db.selectFrom("message").select("id").limit(1).executeTakeFirst(),
+		project.db.selectFrom("variant").select("id").limit(1).executeTakeFirst(),
+	]);
+	if (bundle || message || variant) {
+		throw new Error(
+			"saveProjectToDirectory cannot write bundles, messages, or variants without an import/export plugin. Add a plugin to settings.modules/providePlugins, or save the canonical .inlang file with project.toBlob()."
+		);
+	}
+}
+
 /**
  * Saves a project to a directory.
  *
@@ -55,6 +76,10 @@ export async function saveProjectToDirectory(args: {
 	if (args.path.endsWith(".inlang") === false) {
 		throw new Error("The path must end with .inlang");
 	}
+	if (!args.skipExporting) {
+		await assertTranslationDataCanBeExported(args.project);
+	}
+
 	const files = await args.project.lix.db
 		.selectFrom("file")
 		.selectAll()
