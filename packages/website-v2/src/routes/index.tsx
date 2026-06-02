@@ -26,8 +26,7 @@ export const Route = createFileRoute("/")({
       { title: "inlang" },
       {
         name: "description",
-        content:
-          "Inlang is an open project file format for localization (i18n): a single SQLite-based binary file with version control via lix.",
+        content: "Inlang is an open project file format for localization.",
       },
       { name: "og:image", content: ogImage },
       { name: "twitter:card", content: "summary_large_image" },
@@ -36,8 +35,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:title", content: "inlang" },
       {
         name: "twitter:description",
-        content:
-          "Inlang is an open project file format for localization (i18n): a single SQLite-based binary file with version control via lix.",
+        content: "Inlang is an open project file format for localization.",
       },
       { name: "twitter:site", content: "@inlanghq" },
       { name: "twitter:creator", content: "@inlanghq" },
@@ -71,9 +69,7 @@ function App() {
               The open project file format for localization (i18n).
             </h1>
             <p className="max-w-xl text-lg leading-8 text-slate-600">
-              A SQLite-based binary file for localization projects with
-              version control via lix. Unpack it for Git; read and write it
-              with @inlang/sdk.
+              Inlang is an open project file format for localization.
             </p>
             <div className="flex gap-12 pt-2">
               <a

@@ -6,7 +6,7 @@
 <h1 align="center"><img src="https://github.com/opral/inlang/blob/main/assets/logo_rounded.png?raw=true" alt="inlang icon" height="32" align="absmiddle">&nbsp;inlang</h1>
 
 <h3 align="center">
-  The open project file format for localization (i18n).
+  Inlang is an open project file format for localization.
 </h3>
 
   <p align="center">
@@ -41,8 +41,6 @@
 ---
 
 Inlang is an open project file format for localization.
-
-An `.inlang` project is canonically a single binary file: a SQLite database with version control via [lix](https://github.com/opral/lix). Like `.sqlite` for relational data, `.inlang` packages localization data into one file that tools can share.
 
 It is not another i18n library, message syntax, translation app, or SaaS backend. It gives editors, CLIs, IDE extensions, runtimes, and coding agents one shared place to read and write localization data.
 
