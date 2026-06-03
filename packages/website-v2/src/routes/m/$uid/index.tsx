@@ -1,15 +1,25 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { registry } from "@inlang/marketplace-registry";
 import type { MarketplaceManifest } from "@inlang/marketplace-manifest";
-import { getLegacyRedirect } from "../../../marketplace/legacyRedirects";
+import {
+  getLegacyRedirect,
+  getParaglideStandaloneRedirect,
+} from "../../../marketplace/legacyRedirects";
 
 export const Route = createFileRoute("/m/$uid/")({
   loader: async ({ params }) => {
     const legacyRedirect = getLegacyRedirect(params.uid);
     if (legacyRedirect) {
       throw redirect({
-        to: legacyRedirect.to,
+        href: legacyRedirect.href,
         statusCode: legacyRedirect.statusCode,
+      });
+    }
+    const paraglideRedirect = getParaglideStandaloneRedirect(params.uid);
+    if (paraglideRedirect) {
+      throw redirect({
+        href: paraglideRedirect.href,
+        statusCode: paraglideRedirect.statusCode,
       });
     }
     const item = registry.find(

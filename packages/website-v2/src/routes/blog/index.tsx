@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { parse } from "@opral/markdown-wc";
 import { getBlogDescription, getBlogTitle } from "../../blog/blogMetadata";
+import { getParaglideBlogRedirect } from "../../blog/paraglideBlogRedirects";
 
 type Author = {
   name: string;
@@ -42,7 +43,7 @@ const loadBlogIndex = createServerFn({ method: "GET" }).handler(async () => {
   }>;
 
   const posts = await Promise.all(
-    toc.map(async (item) => {
+    toc.filter((item) => getParaglideBlogRedirect(item.slug) === undefined).map(async (item) => {
       const relativePath = item.path.startsWith("./")
         ? item.path.slice(2)
         : item.path;

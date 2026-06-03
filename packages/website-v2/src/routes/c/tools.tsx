@@ -38,6 +38,9 @@ const prioritizedTools = new Map([
   ["inlang cli", 1],
 ]);
 
+const PARAGLIDE_JS_ID = "library.inlang.paraglideJs";
+const PARAGLIDE_JS_URL = "https://paraglidejs.com";
+
 // Filter tools and libraries from the registry
 const tools = registry
   .filter((item) => {
@@ -129,13 +132,11 @@ function ToolCard({ item }: { item: (typeof registry)[number] }) {
   const isExternal = item.keywords
     ?.map((k) => k.toLowerCase())
     .includes("external");
-
-  return (
-    <Link
-      to="/m/$uid/$slug"
-      params={{ uid: item.uniqueID, slug }}
-      className="group flex flex-col rounded-xl border border-slate-200 bg-white transition-all hover:border-slate-300 hover:shadow-md"
-    >
+  const isParaglideJs = item.id === PARAGLIDE_JS_ID;
+  const cardClassName =
+    "group flex flex-col rounded-xl border border-slate-200 bg-white transition-all hover:border-slate-300 hover:shadow-md";
+  const cardContent = (
+    <>
       {/* Icon */}
       <div className="p-4 pb-0">
         {item.icon ? (
@@ -157,7 +158,7 @@ function ToolCard({ item }: { item: (typeof registry)[number] }) {
           <h3 className="text-[15px] font-bold text-slate-800 group-hover:text-slate-900">
             {displayName}
           </h3>
-          {isExternal && (
+          {(isExternal || isParaglideJs) && (
             <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-500">
               External
             </span>
@@ -185,6 +186,29 @@ function ToolCard({ item }: { item: (typeof registry)[number] }) {
           {String(item.publisherName)}
         </span>
       </div>
+    </>
+  );
+
+  if (isParaglideJs) {
+    return (
+      <a
+        href={PARAGLIDE_JS_URL}
+        target="_blank"
+        rel="noreferrer"
+        className={cardClassName}
+      >
+        {cardContent}
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      to="/m/$uid/$slug"
+      params={{ uid: item.uniqueID, slug }}
+      className={cardClassName}
+    >
+      {cardContent}
     </Link>
   );
 }

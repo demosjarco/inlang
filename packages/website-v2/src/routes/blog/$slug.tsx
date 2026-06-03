@@ -6,6 +6,7 @@ import { initMarkdownInteractive } from "../../components/markdown-interactive";
 import markdownCss from "../../markdown.css?url";
 import { getBlogDescription, getBlogTitle } from "../../blog/blogMetadata";
 import { resolveOgImageUrl } from "../../blog/og-image";
+import { getParaglideBlogRedirect } from "../../blog/paraglideBlogRedirects";
 
 const ogImage =
   "https://cdn.jsdelivr.net/gh/opral/inlang@latest/packages/website/public/opengraph/inlang-social-image.jpg";
@@ -158,6 +159,13 @@ const loadBlogPost = createServerFn({ method: "GET" }).handler(async (ctx) => {
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: async ({ params }) => {
+    const paraglideRedirect = getParaglideBlogRedirect(params.slug);
+    if (paraglideRedirect) {
+      throw redirect({
+        href: paraglideRedirect.href,
+        statusCode: paraglideRedirect.statusCode,
+      });
+    }
     try {
       // @ts-expect-error - TanStack Start server function type inference
       return await loadBlogPost({ data: { slug: params.slug } });

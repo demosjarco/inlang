@@ -9,8 +9,8 @@ vi.mock("@inlang/marketplace-registry", () => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  redirect: ({ to }: { to: string }) => {
-    throw { to };
+  redirect: (input: { to?: string; href?: string; statusCode?: number }) => {
+    throw input;
   },
 }));
 
@@ -52,7 +52,8 @@ describe("loadMarketplacePage redirects", () => {
         splat: "legacy/path",
       }),
     ).rejects.toMatchObject({
-      to: "/m/gerre34r/library-inlang-paraglideJs/sveltekit",
+      href: "https://paraglidejs.com/sveltekit",
+      statusCode: 301,
     });
   });
 
@@ -64,7 +65,8 @@ describe("loadMarketplacePage redirects", () => {
         splat: "legacy/path",
       }),
     ).rejects.toMatchObject({
-      to: "/m/gerre34r/library-inlang-paraglideJs/next-js",
+      href: "https://paraglidejs.com/next-js",
+      statusCode: 301,
     });
   });
 
@@ -76,7 +78,33 @@ describe("loadMarketplacePage redirects", () => {
         splat: "legacy/path",
       }),
     ).rejects.toMatchObject({
-      to: "/m/gerre34r/library-inlang-paraglideJs/astro",
+      href: "https://paraglidejs.com/astro",
+      statusCode: 301,
+    });
+  });
+
+  it("redirects paraglide marketplace root to standalone site", async () => {
+    await expect(
+      loadMarketplacePage({
+        uid: "gerre34r",
+        slug: "library-inlang-paraglideJs",
+      }),
+    ).rejects.toMatchObject({
+      href: "https://paraglidejs.com",
+      statusCode: 301,
+    });
+  });
+
+  it("redirects paraglide marketplace subpages to standalone site", async () => {
+    await expect(
+      loadMarketplacePage({
+        uid: "gerre34r",
+        slug: "library-inlang-paraglideJs",
+        splat: "server-side-rendering",
+      }),
+    ).rejects.toMatchObject({
+      href: "https://paraglidejs.com/server-side-rendering",
+      statusCode: 301,
     });
   });
 

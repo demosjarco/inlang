@@ -2,7 +2,10 @@ import { parse } from "@opral/markdown-wc";
 import { registry } from "@inlang/marketplace-registry";
 import type { MarketplaceManifest } from "@inlang/marketplace-manifest";
 import { redirect } from "@tanstack/react-router";
-import { getLegacyRedirect } from "./legacyRedirects";
+import {
+  getLegacyRedirect,
+  getParaglideStandaloneRedirect,
+} from "./legacyRedirects";
 
 const localMarketplaceFiles = import.meta.glob<string>(
   "../../../../packages/**/*.{md,html}",
@@ -122,8 +125,16 @@ export async function loadMarketplacePage({
   const legacyRedirect = getLegacyRedirect(uid);
   if (legacyRedirect) {
     throw redirect({
-      to: legacyRedirect.to,
+      href: legacyRedirect.href,
       statusCode: legacyRedirect.statusCode,
+    });
+  }
+  const pagePath = splat ? `/${splat}` : "/";
+  const paraglideRedirect = getParaglideStandaloneRedirect(uid, pagePath);
+  if (paraglideRedirect) {
+    throw redirect({
+      href: paraglideRedirect.href,
+      statusCode: paraglideRedirect.statusCode,
     });
   }
   const item = registry.find((entry: any) => entry.uniqueID === uid) as
@@ -138,7 +149,6 @@ export async function loadMarketplacePage({
     ? item.slug.replaceAll(".", "-")
     : item.id.replaceAll(".", "-");
   const itemPath = `/m/${item.uniqueID}/${canonicalSlug}`;
-  const pagePath = splat ? `/${splat}` : "/";
   const resolveItemPageUrl = (path: string) =>
     path === "/" ? itemPath : `${itemPath}${path}`;
 
