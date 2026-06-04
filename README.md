@@ -156,7 +156,7 @@ Do not:
 
 These are independent tools that read and write `.inlang`; they are not inlang itself.
 
-- [Paraglide](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) — JS/TS runtime that compiles messages from `.inlang`
+- [Paraglide](https://paraglidejs.com) — JS/TS runtime that compiles messages from `.inlang`
 - [Fink](https://inlang.com/m/tdozzpar/app-inlang-finkLocalizationEditor) — web editor for `.inlang` projects
 - [Sherlock](https://inlang.com/m/r7kp499g/app-inlang-ideExtension) — VS Code extension that reads `.inlang` projects
 - [Parrot](https://inlang.com/m/gkrpgoir/app-parrot-figmaPlugin) — Figma plugin that connects design text to `.inlang`

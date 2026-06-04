@@ -3,6 +3,8 @@ import {
   defaultStreamHandler,
 } from "@tanstack/react-start/server";
 import { trackVisit } from "2027-track";
+import { getParaglideBlogRedirectForPath } from "./blog/paraglideBlogRedirects";
+import { getParaglideRedirectForPath } from "./marketplace/legacyRedirects";
 
 const handler = createStartHandler(defaultStreamHandler);
 
@@ -17,6 +19,14 @@ export default {
     ctx: { waitUntil: (promise: Promise<unknown>) => void },
   ): Promise<Response> {
     const url = new URL(request.url);
+    const paraglideRedirect =
+      getParaglideRedirectForPath(url.pathname) ??
+      getParaglideBlogRedirectForPath(url.pathname);
+    if (paraglideRedirect) {
+      const location = new URL(paraglideRedirect.href);
+      location.search = url.search;
+      return Response.redirect(location.toString(), paraglideRedirect.statusCode);
+    }
 
     // non-blocking: tracks AI agent visits without delaying the response
     ctx.waitUntil(

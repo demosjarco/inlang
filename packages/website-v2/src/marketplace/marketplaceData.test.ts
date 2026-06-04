@@ -19,6 +19,7 @@ import {
   resolveHtmlAssetLinks,
   resolveRelativeUrl,
 } from "./marketplaceData";
+import { getParaglideRedirectForPath } from "./legacyRedirects";
 
 describe("loadMarketplacePage redirects", () => {
   beforeEach(() => {
@@ -144,6 +145,34 @@ describe("loadMarketplacePage redirects", () => {
       }),
     ).rejects.toMatchObject({
       to: "/m/u2/app-inlang-cli",
+    });
+  });
+});
+
+describe("getParaglideRedirectForPath", () => {
+  it("redirects Paraglide marketplace paths to the standalone site", () => {
+    expect(
+      getParaglideRedirectForPath("/m/gerre34r/library-inlang-paraglideJs"),
+    ).toEqual({
+      href: "https://paraglidejs.com",
+      statusCode: 301,
+    });
+    expect(
+      getParaglideRedirectForPath(
+        "/m/gerre34r/library-inlang-paraglideJs/comparison",
+      ),
+    ).toEqual({
+      href: "https://paraglidejs.com/comparison",
+      statusCode: 301,
+    });
+  });
+
+  it("redirects legacy Paraglide integration paths", () => {
+    expect(
+      getParaglideRedirectForPath("/m/dxnzrydw/paraglide-sveltekit-i18n"),
+    ).toEqual({
+      href: "https://paraglidejs.com/sveltekit",
+      statusCode: 301,
     });
   });
 });

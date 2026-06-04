@@ -7,6 +7,8 @@ import { registry } from "@inlang/marketplace-registry";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { githubStarsPlugin } from "./src/ssg/github-stars-plugin";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import { getParaglideRedirectForPath } from "./src/marketplace/legacyRedirects";
+import { getParaglideBlogRedirectForPath } from "./src/blog/paraglideBlogRedirects";
 
 const config = defineConfig(({ mode, command }) => {
   const isTest = process.env.VITEST === "true" || mode === "test";
@@ -48,6 +50,7 @@ const config = defineConfig(({ mode, command }) => {
           retryDelay: 1000,
           maxRedirects: 5,
           failOnError: true,
+          filter: excludeRedirectedParaglidePages,
         },
         sitemap: {
           enabled: true,
@@ -71,6 +74,7 @@ function getMarketplaceStaticPages() {
       ? entry.slug.replaceAll(".", "-")
       : entry.id.replaceAll(".", "-");
     const basePath = `/m/${entry.uniqueID}/${slug}`;
+    if (getParaglideRedirectForPath(basePath)) continue;
     paths.add(basePath);
 
     if (!entry.pages) continue;
@@ -87,6 +91,22 @@ function getMarketplaceStaticPages() {
   }
 
   return Array.from(paths).map((path) => ({ path }));
+}
+
+function isRedirectedParaglidePath(pathname: string) {
+  return Boolean(
+    getParaglideRedirectForPath(pathname) ??
+      getParaglideBlogRedirectForPath(pathname),
+  );
+}
+
+function excludeRedirectedParaglidePages(page: {
+  path: string;
+  sitemap?: { exclude?: boolean };
+}) {
+  if (!isRedirectedParaglidePath(page.path)) return true;
+  page.sitemap = { ...page.sitemap, exclude: true };
+  return false;
 }
 
 function flattenPages(

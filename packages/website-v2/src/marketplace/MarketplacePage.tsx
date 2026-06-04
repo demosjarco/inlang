@@ -6,6 +6,7 @@ import type {
   MarketplacePageData,
   MarketplaceHeading,
 } from "./marketplaceData";
+import { getParaglideRedirectForPath } from "./legacyRedirects";
 import { initMarkdownInteractive } from "../components/markdown-interactive";
 import { getGithubRepoMetrics } from "../github-stars-cache";
 
@@ -926,29 +927,45 @@ function RecommendationCard({
       : item.description;
   const slug = item.id.replaceAll(".", "-");
   const href = `/m/${(item as any).uniqueID}/${slug}`;
+  const redirect = getParaglideRedirectForPath(href);
+  const className =
+    "rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-300 hover:shadow-sm";
+  const content = (
+    <div className="flex items-start gap-3">
+      {item.icon ? (
+        <img
+          src={item.icon}
+          alt={displayName}
+          className="h-10 w-10 rounded-lg object-cover"
+        />
+      ) : (
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-sm font-semibold text-white">
+          {displayName[0]}
+        </div>
+      )}
+      <div>
+        <p className="text-sm font-semibold text-slate-900">{displayName}</p>
+        <p className="mt-2 text-sm text-slate-600">{description}</p>
+      </div>
+    </div>
+  );
+
+  if (redirect) {
+    return (
+      <a
+        href={redirect.href}
+        target="_blank"
+        rel="noreferrer"
+        className={className}
+      >
+        {content}
+      </a>
+    );
+  }
 
   return (
-    <Link
-      to={href}
-      className="rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-300 hover:shadow-sm"
-    >
-      <div className="flex items-start gap-3">
-        {item.icon ? (
-          <img
-            src={item.icon}
-            alt={displayName}
-            className="h-10 w-10 rounded-lg object-cover"
-          />
-        ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-sm font-semibold text-white">
-            {displayName[0]}
-          </div>
-        )}
-        <div>
-          <p className="text-sm font-semibold text-slate-900">{displayName}</p>
-          <p className="mt-2 text-sm text-slate-600">{description}</p>
-        </div>
-      </div>
+    <Link to={href} className={className}>
+      {content}
     </Link>
   );
 }
