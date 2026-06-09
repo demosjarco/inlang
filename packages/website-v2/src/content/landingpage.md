@@ -4,7 +4,7 @@
 
 Traditional TMSs make a vendor database the localization source of truth. Translation files become exports.
 
-No common project file format for i18n tools exists. JSON and YAML can store messages, but they do not describe the whole localization project: locales, variants, metadata, history, and safe reads and writes for tools.
+No common open format for i18n tools exists. JSON and YAML can store messages, but they do not describe the whole localization project: locales, variants, metadata, history, and safe reads and writes for tools.
 
 The result is fragmented tooling:
 
@@ -29,7 +29,7 @@ An `.inlang` project is canonically a single binary file: a SQLite database with
 
 For Git repositories, the binary file can be unpacked into a directory of plain files so changes can be reviewed alongside code. The packed file is the canonical format; the unpacked directory is the Git-friendly representation. The `@inlang/sdk` is the reference implementation for reading and writing `.inlang` projects.
 
-`.inlang` is the canonical localization project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes.
+`.inlang` is the canonical open format for localization. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes.
 
 Inlang defines the localization format and TMS surface. [Lix](https://lix.dev) provides the underlying versioning, history, review, change proposals, and rollback infrastructure.
 

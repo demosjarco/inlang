@@ -44,19 +44,30 @@ Inlang is the open-format TMS (translation management system) for software teams
 
 Store translations in your repo as a vendor-neutral file format, so developers, translators, CI, translation tools, and AI agents can read and update the same localization source of truth.
 
+Inlang is a fit when engineering, localization, design, CI, and automation need to work on the same localization data. If you need a fully managed enterprise localization suite with built-in vendor management, translation memory, glossary workflows, assignments, and procurement features, evaluate inlang as an open-format localization layer rather than a full replacement for every enterprise TMS function.
+
+## What inlang gives your team
+
+- Repo-owned localization source of truth
+- Translator-friendly editing through tools like Fink
+- CI checks for missing translations and placeholder issues
+- Compatibility with JSON, ICU MessageFormat, i18next, and XLIFF
+- Review, history, change proposals, and rollback via Lix
+- Runtime integration through tools like Paraglide
+
 The `@inlang/sdk` is the reference implementation for reading and writing `.inlang` projects.
 
-`.inlang` is the canonical localization project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes.
+`.inlang` is the canonical open format for localization. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes.
 
 Inlang defines the localization format and TMS surface. [Lix](https://github.com/opral/lix) provides the underlying versioning, history, review, change proposals, and rollback infrastructure.
 
-Messages, variants, and locale data live in the `.inlang` database. External translation files such as `messages/en.json` are compatibility files outside `project.inlang/`, connected through plugins.
+Messages, variants, and locale data live in the `.inlang` database. External translation files such as `messages/en.json` are compatibility files connected through plugins.
+
+There are two representations:
 
 ```text
-project.inlang                  # canonical single binary file
+project.inlang                  # canonical packed file used by tools
 ```
-
-For Git repositories, the binary file can be unpacked into a directory of plain files so changes can be reviewed alongside code. The packed file is the canonical format; the unpacked directory is the Git-friendly representation.
 
 ```text
 project.inlang/
@@ -66,6 +77,8 @@ project.inlang/
 ├── .meta.json                  # generated SDK metadata
 └── cache/                      # plugin cache, created when plugins are loaded
 ```
+
+`project.inlang` is the canonical packed file. `project.inlang/` is the Git-friendly unpacked representation used for review and repository workflows. Both represent the same localization project; the SDK handles reading and writing them.
 
 ## The problem
 
@@ -140,6 +153,41 @@ Translators do not need to work in the repo. The repo holds the source of truth;
 
 If you only need an app runtime and a couple of translation files, JSON or your current i18n setup may already be enough. Use inlang when localization becomes shared work: multiple tools, teams, automations, or agents need to use the same localization data.
 
+## How inlang compares
+
+Inlang is an open-format TMS for software teams: localization data stays in your repo as the source of truth, with TMS workflows layered around it.
+
+| Approach | Source of truth | Best for | Tradeoff |
+| --- | --- | --- | --- |
+| Traditional TMS | Vendor database | Managed translation workflows, vendors, and enterprise localization ops | Translation files become synced exports; migration, automation, and CI depend on the vendor |
+| Translation files only | JSON, YAML, ICU, i18next, XLIFF, etc. | Small apps and simple runtime lookup | Teams maintain their own schema, validation, sync logic, and collaboration workflows |
+| inlang | `.inlang` file in your repo | Software teams that want repo-stored localization data with TMS workflows | Requires adopting the `.inlang` format; existing JSON, ICU, i18next, and XLIFF files connect through plugins |
+
+Inlang gives tools, CI, translators, and automation one open format to work on instead of syncing separate exports.
+
+## How teams use inlang
+
+A typical software localization workflow looks like this:
+
+1. Developers add or update messages in the repo.
+2. The `.inlang` file becomes the shared localization source of truth.
+3. CI checks for missing translations, placeholder mismatches, and message-format issues.
+4. Translators and reviewers edit translations in tools that read and write `.inlang`, such as Fink, without working directly in Git.
+5. Lix records localization changes, review history, change proposals, merges, and rollback points.
+6. Runtime tools such as Paraglide compile from the same `.inlang` source when the app ships.
+
+| Layer | What it provides |
+| --- | --- |
+| `.inlang` | Open localization format and source of truth |
+| `@inlang/sdk` | Read/write API for editors, CI, agents, and automations |
+| Plugins | Compatibility with JSON, ICU, i18next, XLIFF, and other existing message formats |
+| Lix | History, review, change proposals, rollback, and merging |
+| CLI / CI | Checks for missing translations, placeholders, and message-format issues |
+| Editor tools | Translation and review workflows without requiring translators to use Git |
+| Runtime tools | App integration from the same localization source, for example through Paraglide |
+
+This is different from a traditional TMS where the vendor database owns the localization state and translation files are exports. In inlang, the localization file remains portable and repo-owned; TMS workflows operate around the open format.
+
 ## For coding agents and tool builders
 
 If you are building i18n tooling or generating localization code, target the `.inlang` file format instead of inventing your own JSON schema.
@@ -155,7 +203,7 @@ Why target `.inlang` instead of JSON?
 
 Do not:
 
-- Invent a custom `locales/en.json` schema as the project format.
+- Invent a custom `locales/en.json` schema as the localization format.
 - Create a new localization config when a `.inlang` project already exists.
 - Edit generated or cached files inside an unpacked `project.inlang/` directory.
 - Bypass `@inlang/sdk` when reading or writing `.inlang`.

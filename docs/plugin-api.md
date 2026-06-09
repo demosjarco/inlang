@@ -1,6 +1,6 @@
 # Plugin API
 
-Plugins handle the transformation between external file formats (JSON, i18next, XLIFF) and inlang's internal data model. `.inlang` is the canonical project format; external translation files are compatibility files. Plugins only do import/export — they don't write the `.inlang` project directly.
+Plugins handle the transformation between external file formats (JSON, i18next, XLIFF) and inlang's internal data model. `.inlang` is the canonical open format for localization; external translation files are compatibility files. Plugins only do import/export — they don't write the `.inlang` project directly.
 
 ```
 ┌─────────────────┐       ┌─────────┐       ┌──────────────────┐

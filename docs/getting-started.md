@@ -93,7 +93,7 @@ Use `project.toBlob()` for the packed `.inlang` file. Use `saveProjectToDirector
 
 ## Use a tool built on inlang
 
-Browse tools that read and write the `.inlang` project file format. Most app developers start here.
+Browse tools that read and write the `.inlang` format. Most app developers start here.
 
 [Browse Tools →](/c/tools)
 

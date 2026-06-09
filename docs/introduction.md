@@ -10,7 +10,7 @@ An `.inlang` project is canonically a single binary file: a SQLite database with
 
 The `@inlang/sdk` is the reference implementation for reading and writing `.inlang` projects.
 
-`.inlang` is the canonical localization project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes.
+`.inlang` is the canonical open format for localization. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes.
 
 Inlang defines the localization format and TMS surface. [Lix](https://lix.dev) provides the underlying versioning, history, review, change proposals, and rollback infrastructure.
 
@@ -95,7 +95,7 @@ Lix provides versioning and review workflows, and plugins map localization data 
 ```
 
 - **Plugins** import and export your translation files (`JSON`, `ICU1`, `i18next`, `XLIFF`, etc.)
-- **inlang** stores the data in a project format that tools can query
+- **inlang** stores the data in an open format that tools can query
 - **Lix** handles versioning, history, review, change proposals, rollback, and distributed changes
 
 If you only need an app runtime and a couple of translation files, JSON or your current i18n setup may already be enough. Use inlang when localization becomes shared work: multiple tools, teams, automations, or agents need to use the same localization data.

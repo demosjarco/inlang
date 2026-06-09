@@ -57,7 +57,7 @@ Plugins handle the transformation between external translation files (JSON, i18n
 └─────────────────┘       └─────────┘       └──────────────────┘
 ```
 
-`.inlang` is the canonical localization project format. External translation files are compatibility files that plugins import and export. Plugins only do import/export — they don't write the `.inlang` project directly. This keeps the core simple and makes format support extensible.
+`.inlang` is the canonical open format for localization. External translation files are compatibility files that plugins import and export. Plugins only do import/export — they don't write the `.inlang` project directly. This keeps the core simple and makes format support extensible.
 
 See [Plugin API](/docs/plugin-api) for the reference or [Writing a Plugin](/docs/write-plugin) to build your own.
 
