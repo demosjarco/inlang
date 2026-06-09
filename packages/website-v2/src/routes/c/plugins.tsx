@@ -4,27 +4,28 @@ import { registry } from "@inlang/marketplace-registry";
 const ogImage =
   "https://cdn.jsdelivr.net/gh/opral/inlang@latest/packages/website/public/opengraph/inlang-social-image.jpg";
 
+const pluginsDescription =
+  "Explore plugins that connect JSON, ICU, i18next, XLIFF, and other formats to the inlang localization source of truth.";
+
 export const Route = createFileRoute("/c/plugins")({
   head: () => ({
     meta: [
       { title: "Localization Plugins | inlang" },
       {
         name: "description",
-        content:
-          "Explore plugins that connect translation files to the inlang project file format.",
+        content: pluginsDescription,
       },
       { name: "og:image", content: ogImage },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: ogImage },
       {
         name: "twitter:image:alt",
-        content: "inlang is the open project file format for localization.",
+        content: "inlang is the open-format TMS for software teams.",
       },
       { name: "twitter:title", content: "Localization Plugins | inlang" },
       {
         name: "twitter:description",
-        content:
-          "Explore plugins that connect translation files to the inlang project file format.",
+        content: pluginsDescription,
       },
       { name: "twitter:site", content: "@inlanghq" },
       { name: "twitter:creator", content: "@inlanghq" },
@@ -57,9 +58,8 @@ function PluginsPage() {
             Plugins
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-slate-600">
-            Extend inlang with plugins for different file formats, frameworks,
-            and workflows. Import and export translations in the format you
-            need.
+            Connect JSON, ICU, i18next, XLIFF, and other formats to the same
+            inlang localization source of truth.
           </p>
           <div className="mt-6">
             <Link

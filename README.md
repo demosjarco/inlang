@@ -6,7 +6,7 @@
 <h1 align="center"><img src="https://github.com/opral/inlang/blob/main/assets/logo_rounded.png?raw=true" alt="inlang icon" height="32" align="absmiddle">&nbsp;inlang</h1>
 
 <h3 align="center">
-  Inlang is an open project file format for localization.
+  Inlang is the open-format TMS for software teams.
 </h3>
 
   <p align="center">
@@ -40,13 +40,15 @@
 
 ---
 
-Inlang is an open project file format for localization.
+Inlang is the open-format TMS (translation management system) for software teams.
 
-It is not another i18n library, message syntax, translation app, or SaaS backend. It gives editors, CLIs, IDE extensions, runtimes, and coding agents one shared place to read and write localization data.
+Store translations in your repo as a vendor-neutral file format, so developers, translators, CI, translation tools, and AI agents can read and update the same localization source of truth.
 
 The `@inlang/sdk` is the reference implementation for reading and writing `.inlang` projects.
 
-`.inlang` is the canonical project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes. Version control via lix adds file-level history, merging, and change proposals to `.inlang` projects.
+`.inlang` is the canonical localization project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes.
+
+Inlang defines the localization format and TMS surface. [Lix](https://github.com/opral/lix) provides the underlying versioning, history, review, change proposals, and rollback infrastructure.
 
 Messages, variants, and locale data live in the `.inlang` database. External translation files such as `messages/en.json` are compatibility files outside `project.inlang/`, connected through plugins.
 
@@ -66,6 +68,8 @@ project.inlang/
 ```
 
 ## The problem
+
+Traditional TMSs make a vendor database the localization source of truth. Translation files become exports.
 
 Common translation files like JSON, YAML, ICU, or XLIFF are good at storing messages. But they do not describe the whole localization project.
 
@@ -97,12 +101,14 @@ Every tool has its own format, its own sync, its own collaboration layer. Cross-
 
 ## The solution
 
-Inlang puts the missing project information into a shared file format while keeping your external translation files. It provides:
+Inlang makes the localization file the source of truth. The TMS becomes a layer around the format, not the owner of the data.
+
+It provides:
 
 - A message-first structure and SDK for CRUD operations
 - Storage that tools can search, update, and report on
 - Plugins to import/export formats like JSON, ICU1, i18next, and XLIFF so that file-format support can be shared instead of reimplemented in every tool
-- Version control via [lix](https://github.com/opral/lix)
+- Versioning, history, review, change proposals, and rollback via [lix](https://github.com/opral/lix)
 
 Core data model:
 
@@ -129,6 +135,8 @@ The result:
 - Cross-team work without hand-offs — developers, translators, and designers all edit the same source
 - Automation just works — the same data, no glue code
 - Keep your preferred message format — plugins handle import/export
+
+Translators do not need to work in the repo. The repo holds the source of truth; editor-friendly apps and workflows operate on the same open localization data.
 
 If you only need an app runtime and a couple of translation files, JSON or your current i18n setup may already be enough. Use inlang when localization becomes shared work: multiple tools, teams, automations, or agents need to use the same localization data.
 

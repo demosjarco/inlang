@@ -1,6 +1,6 @@
 # Architecture
 
-Inlang's file format has three layers: storage, data model, and plugins.
+Inlang is the open-format TMS (translation management system) for software teams. Its file format has three layers: storage, data model, and plugins.
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -18,7 +18,7 @@ An `.inlang` project is canonically a single binary file: a SQLite database with
 
 For Git repositories, the binary file can be unpacked into a directory of plain files so changes can be reviewed alongside code. The packed file is the canonical format; the unpacked directory is the Git-friendly representation.
 
-Version control via lix adds file-level history, merging, and change proposals to `.inlang` projects.
+Inlang defines the localization format and TMS surface. Lix provides the underlying versioning, history, review, change proposals, rollback, and merging infrastructure.
 
 The storage layer is designed to be:
 
@@ -57,7 +57,7 @@ Plugins handle the transformation between external translation files (JSON, i18n
 └─────────────────┘       └─────────┘       └──────────────────┘
 ```
 
-`.inlang` is the canonical project format. External translation files are compatibility files that plugins import and export. Plugins only do import/export — they don't write the `.inlang` project directly. This keeps the core simple and makes format support extensible.
+`.inlang` is the canonical localization project format. External translation files are compatibility files that plugins import and export. Plugins only do import/export — they don't write the `.inlang` project directly. This keeps the core simple and makes format support extensible.
 
 See [Plugin API](/docs/plugin-api) for the reference or [Writing a Plugin](/docs/write-plugin) to build your own.
 

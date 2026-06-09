@@ -1,8 +1,14 @@
 # Getting Started
 
+Inlang is the open-format TMS (translation management system) for software teams.
+
+Store translations in your repo as a vendor-neutral file format, so developers, translators, CI, translation tools, and AI agents can read and update the same localization source of truth.
+
 Use inlang when localization data needs to be shared across tools, teams, automations, or coding agents. If you only need an app runtime with a couple of translation files, your current i18n setup may already be enough.
 
-An `.inlang` project is canonically a single binary file: a SQLite database with version control via [lix](https://lix.dev). For Git repositories, the file can be unpacked into a directory of plain files. The packed file is the canonical format; the unpacked directory is the Git-friendly representation.
+An `.inlang` project is canonically a single binary file: a SQLite database with version control via [lix](https://lix.dev). Inlang defines the localization format and TMS surface. Lix provides the underlying versioning, history, review, change proposals, and rollback infrastructure.
+
+For Git repositories, the file can be unpacked into a directory of plain files. The packed file is the canonical format; the unpacked directory is the Git-friendly representation.
 
 ## Install
 
@@ -100,7 +106,7 @@ Use `@inlang/sdk` to build linters, editors, CLI tools, IDE extensions, and codi
 Why target `.inlang`?
 
 - CRUD operations instead of custom parsing
-- Version control via [lix](https://lix.dev)
+- Versioning, history, review, change proposals, and rollback via [lix](https://lix.dev)
 - Plugins for JSON, ICU, i18next, XLIFF, and other formats
 - One data model that tools can share
 

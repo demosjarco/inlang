@@ -4,27 +4,28 @@ import { registry } from "@inlang/marketplace-registry";
 const ogImage =
   "https://cdn.jsdelivr.net/gh/opral/inlang@latest/packages/website/public/opengraph/inlang-social-image.jpg";
 
+const toolsDescription =
+  "Explore tools that read and update the same open localization source of truth in inlang.";
+
 export const Route = createFileRoute("/c/tools")({
   head: () => ({
     meta: [
       { title: "Localization Tools | inlang" },
       {
         name: "description",
-        content:
-          "Explore tools built on the inlang project file format for localization (i18n).",
+        content: toolsDescription,
       },
       { name: "og:image", content: ogImage },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: ogImage },
       {
         name: "twitter:image:alt",
-        content: "inlang is the open project file format for localization.",
+        content: "inlang is the open-format TMS for software teams.",
       },
       { name: "twitter:title", content: "Localization Tools | inlang" },
       {
         name: "twitter:description",
-        content:
-          "Explore tools built on the inlang project file format for localization (i18n).",
+        content: toolsDescription,
       },
       { name: "twitter:site", content: "@inlanghq" },
       { name: "twitter:creator", content: "@inlanghq" },
@@ -76,8 +77,8 @@ function ToolsPage() {
             Tools
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-slate-600">
-            Localization tools for translators, developers, and anyone who wants
-            to make their software work across languages and cultures.
+            Tools that read and update the same open localization source of
+            truth: editors, runtimes, CI workflows, and AI agents.
           </p>
           <div className="mt-6">
             <Link

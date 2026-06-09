@@ -10,6 +10,9 @@ import landingMarkdown from "../../../../README.md?raw";
 const ogImage =
   "https://cdn.jsdelivr.net/gh/opral/inlang@latest/packages/website/public/opengraph/inlang-social-image.jpg";
 
+const siteDescription =
+  "Inlang is the open-format TMS for software teams. Store translations in your repo as a vendor-neutral file format.";
+
 const loadLandingContent = createServerFn({ method: "GET" }).handler(
   async () => {
     const parsed = await parse(landingMarkdown);
@@ -26,7 +29,7 @@ export const Route = createFileRoute("/")({
       { title: "inlang" },
       {
         name: "description",
-        content: "Inlang is an open project file format for localization.",
+        content: siteDescription,
       },
       { name: "og:image", content: ogImage },
       { name: "twitter:card", content: "summary_large_image" },
@@ -35,7 +38,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:title", content: "inlang" },
       {
         name: "twitter:description",
-        content: "Inlang is an open project file format for localization.",
+        content: siteDescription,
       },
       { name: "twitter:site", content: "@inlanghq" },
       { name: "twitter:creator", content: "@inlanghq" },
@@ -66,10 +69,12 @@ function App() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-6 flex flex-col gap-6">
             <h1 className="max-w-2xl text-4xl font-semibold tracking-tight md:text-5xl">
-              The open project file format for localization (i18n).
+              The open-format TMS for software teams.
             </h1>
             <p className="max-w-xl text-lg leading-8 text-slate-600">
-              Inlang is an open project file format for localization.
+              Store translations in your repo as a vendor-neutral file format,
+              so developers, translators, CI, translation tools, and AI agents
+              can read and update the same localization source of truth.
             </p>
             <div className="flex gap-12 pt-2">
               <a

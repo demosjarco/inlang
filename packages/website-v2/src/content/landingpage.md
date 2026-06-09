@@ -2,7 +2,7 @@
 
 ## The problem
 
-i18n tools do not work together well.
+Traditional TMSs make a vendor database the localization source of truth. Translation files become exports.
 
 No common project file format for i18n tools exists. JSON and YAML can store messages, but they do not describe the whole localization project: locales, variants, metadata, history, and safe reads and writes for tools.
 
@@ -21,13 +21,17 @@ The result is fragmented tooling:
 
 ## The solution
 
-Inlang is an open project file format for localization (i18n).
+Inlang is the open-format TMS (translation management system) for software teams.
+
+Store translations in your repo as a vendor-neutral file format, so developers, translators, CI, translation tools, and AI agents can read and update the same localization source of truth.
 
 An `.inlang` project is canonically a single binary file: a SQLite database with version control via [lix](https://lix.dev). Like `.sqlite` for relational data, `.inlang` packages localization data into one file that tools can share.
 
 For Git repositories, the binary file can be unpacked into a directory of plain files so changes can be reviewed alongside code. The packed file is the canonical format; the unpacked directory is the Git-friendly representation. The `@inlang/sdk` is the reference implementation for reading and writing `.inlang` projects.
 
-`.inlang` is the canonical project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes. Version control via lix adds file-level history, merging, and change proposals to `.inlang` projects.
+`.inlang` is the canonical localization project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes.
+
+Inlang defines the localization format and TMS surface. [Lix](https://lix.dev) provides the underlying versioning, history, review, change proposals, and rollback infrastructure.
 
 Messages, variants, and locale data live in the `.inlang` database. External translation files such as `messages/en.json` are compatibility files outside `project.inlang/`, connected through plugins.
 
@@ -62,6 +66,8 @@ Core data model:
 - Switch tools without migrations — they all use the same file
 - Cross-team work without hand-offs — developers, translators, and designers all edit the same source
 - Automation just works — the same data, no glue code
+
+Translators do not need to work in the repo. The repo holds the source of truth; editor-friendly apps and workflows operate on the same open localization data.
 
 ## For coding agents and tool builders
 

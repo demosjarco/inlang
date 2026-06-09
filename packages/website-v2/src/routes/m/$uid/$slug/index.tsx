@@ -148,7 +148,7 @@ function buildMarketplaceHead(
       { name: "twitter:image", content: image },
       {
         name: "twitter:image:alt",
-        content: "inlang is the open project file format for localization.",
+        content: "inlang is the open-format TMS for software teams.",
       },
       { name: "twitter:title", content: pageTitle },
       { name: "twitter:description", content: metaDescription },

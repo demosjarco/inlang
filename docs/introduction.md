@@ -2,15 +2,17 @@
 
 ## What is inlang?
 
-Inlang is an open project file format for localization.
+Inlang is the open-format TMS (translation management system) for software teams.
+
+Store translations in your repo as a vendor-neutral file format, so developers, translators, CI, translation tools, and AI agents can read and update the same localization source of truth.
 
 An `.inlang` project is canonically a single binary file: a SQLite database with version control via [lix](https://lix.dev). Like `.sqlite` for relational data, `.inlang` packages localization data into one file that tools can share.
 
-It is not another i18n library, message syntax, translation app, or SaaS backend. Instead, it gives editors, CLIs, IDE extensions, runtimes, and coding agents one shared place to read and write localization data.
-
 The `@inlang/sdk` is the reference implementation for reading and writing `.inlang` projects.
 
-`.inlang` is the canonical project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes. Version control via lix adds file-level history, merging, and change proposals to `.inlang` projects.
+`.inlang` is the canonical localization project format. Plugins import and export formats like JSON, ICU MessageFormat v1, i18next, and XLIFF for compatibility with existing translation files and runtimes.
+
+Inlang defines the localization format and TMS surface. [Lix](https://lix.dev) provides the underlying versioning, history, review, change proposals, and rollback infrastructure.
 
 Messages, variants, and locale data live in the `.inlang` database. External translation files such as `messages/en.json` are compatibility files outside `project.inlang/`, connected through plugins.
 
@@ -22,6 +24,8 @@ The SDK has two main parts:
 - **An API** for loading, querying, and modifying that data programmatically
 
 ## Why inlang?
+
+Traditional TMSs make a vendor database the localization source of truth. Translation files become exports.
 
 Common translation files like JSON, YAML, ICU, or XLIFF are good at storing messages. But they do not describe the whole localization project.
 
@@ -47,7 +51,7 @@ The result is fragmented tooling:
 └──────────┘        └───────────┘         └──────────┘
 ```
 
-Inlang follows a simple idea: **one shared project file format for localization tools, while keeping your external translation files**.
+Inlang follows a simple idea: **make the localization file the source of truth**. The TMS becomes a layer around the format, not the owner of the data.
 
 ```
 ┌──────────┐        ┌───────────┐         ┌────────────┐
@@ -69,6 +73,8 @@ Inlang follows a simple idea: **one shared project file format for localization 
 - Automation just works — the same data, no glue code
 - Keep your preferred message format — plugins handle import/export
 
+Translators do not need to work in the repo. The repo holds the source of truth; editor-friendly apps and workflows operate on the same open localization data.
+
 ## How it works
 
 Under the hood, an inlang project uses a message-first data model.
@@ -79,7 +85,7 @@ Core data model:
 - **Message** — locale-specific translation for a bundle
 - **Variant** — text pattern plus selector matches
 
-Version control via lix is built in, and plugins map that data to the files you already use.
+Lix provides versioning and review workflows, and plugins map localization data to the files you already use.
 
 ```
 ┌─────────────────┐       ┌─────────┐       ┌──────────────────┐
@@ -90,7 +96,7 @@ Version control via lix is built in, and plugins map that data to the files you 
 
 - **Plugins** import and export your translation files (`JSON`, `ICU1`, `i18next`, `XLIFF`, etc.)
 - **inlang** stores the data in a project format that tools can query
-- **Version control via lix** handles distributed changes
+- **Lix** handles versioning, history, review, change proposals, rollback, and distributed changes
 
 If you only need an app runtime and a couple of translation files, JSON or your current i18n setup may already be enough. Use inlang when localization becomes shared work: multiple tools, teams, automations, or agents need to use the same localization data.
 
