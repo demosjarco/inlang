@@ -130,6 +130,222 @@ test("creates exporter target directories from pathPattern", async () => {
 	expect(JSON.parse(exported as string)).toEqual({ greeting: "Hi" });
 });
 
+test("writes exported files to every pattern of a pathPattern array", async () => {
+	const volume = Volume.fromJSON({});
+	const mockPlugin: InlangPlugin = {
+		key: "mock",
+		exportFiles: async () => [
+			{
+				locale: "en",
+				name: "en.json",
+				content: new TextEncoder().encode(JSON.stringify({ greeting: "Hi" })),
+			},
+		],
+	};
+
+	const project = await loadProjectInMemory({
+		blob: await newProject({
+			settings: {
+				baseLocale: "en",
+				locales: ["en"],
+				modules: [],
+				mock: {
+					pathPattern: ["./messages/{locale}.json", "./backup/{locale}.json"],
+				},
+			},
+		}),
+		providePlugins: [mockPlugin],
+	});
+
+	await saveProjectToDirectory({
+		fs: volume as any,
+		project,
+		path: "/foo/bar.inlang",
+	});
+
+	const messages = await volume.promises.readFile(
+		"/foo/messages/en.json",
+		"utf-8"
+	);
+	const backup = await volume.promises.readFile("/foo/backup/en.json", "utf-8");
+	expect(JSON.parse(messages as string)).toEqual({ greeting: "Hi" });
+	expect(JSON.parse(backup as string)).toEqual({ greeting: "Hi" });
+});
+
+test("an empty pathPattern array writes nothing", async () => {
+	const volume = Volume.fromJSON({});
+	const mockPlugin: InlangPlugin = {
+		key: "mock",
+		exportFiles: async () => [
+			{
+				locale: "en",
+				name: "en.json",
+				content: new TextEncoder().encode(JSON.stringify({ greeting: "Hi" })),
+			},
+		],
+	};
+
+	const project = await loadProjectInMemory({
+		blob: await newProject({
+			settings: {
+				baseLocale: "en",
+				locales: ["en"],
+				modules: [],
+				mock: {
+					pathPattern: [],
+				},
+			},
+		}),
+		providePlugins: [mockPlugin],
+	});
+
+	await saveProjectToDirectory({
+		fs: volume as any,
+		project,
+		path: "/foo/bar.inlang",
+	});
+
+	const files = await volume.promises.readdir("/foo");
+	expect(files).not.toContain("en.json");
+});
+
+// https://github.com/opral/inlang/issues/4356
+test("resolves a namespaced pathPattern object via export file metadata", async () => {
+	const volume = Volume.fromJSON({});
+	const mockPlugin: InlangPlugin = {
+		key: "mock",
+		exportFiles: async () => [
+			{
+				locale: "en",
+				name: "common-en.json",
+				content: new TextEncoder().encode(JSON.stringify({ hello: "Hello" })),
+				metadata: { namespace: "common" },
+			},
+			{
+				locale: "en",
+				name: "app-en.json",
+				content: new TextEncoder().encode(JSON.stringify({ title: "My app" })),
+				metadata: { namespace: "app" },
+			},
+		],
+	};
+
+	const project = await loadProjectInMemory({
+		blob: await newProject({
+			settings: {
+				baseLocale: "en",
+				locales: ["en"],
+				modules: [],
+				mock: {
+					pathPattern: {
+						common: "./{locale}/common.json",
+						app: "./{locale}/app.json",
+					},
+				},
+			},
+		}),
+		providePlugins: [mockPlugin],
+	});
+
+	await saveProjectToDirectory({
+		fs: volume as any,
+		project,
+		path: "/foo/bar.inlang",
+	});
+
+	const common = await volume.promises.readFile("/foo/en/common.json", "utf-8");
+	const app = await volume.promises.readFile("/foo/en/app.json", "utf-8");
+	expect(JSON.parse(common as string)).toEqual({ hello: "Hello" });
+	expect(JSON.parse(app as string)).toEqual({ title: "My app" });
+});
+
+// old plugin versions don't provide namespace metadata. falling back to
+// file.name is better than throwing "pathPattern.replace is not a function"
+// https://github.com/opral/inlang/issues/4356
+test("falls back to the file name when a namespaced pathPattern can't be resolved", async () => {
+	const volume = Volume.fromJSON({});
+	const mockPlugin: InlangPlugin = {
+		key: "mock",
+		exportFiles: async () => [
+			{
+				locale: "en",
+				name: "common-en.json",
+				content: new TextEncoder().encode(JSON.stringify({ hello: "Hello" })),
+				// no metadata, like plugin versions that predate ExportFile.metadata
+			},
+		],
+	};
+
+	const project = await loadProjectInMemory({
+		blob: await newProject({
+			settings: {
+				baseLocale: "en",
+				locales: ["en"],
+				modules: [],
+				mock: {
+					pathPattern: {
+						common: "./{locale}/common.json",
+					},
+				},
+			},
+		}),
+		providePlugins: [mockPlugin],
+	});
+
+	await saveProjectToDirectory({
+		fs: volume as any,
+		project,
+		path: "/foo/bar.inlang",
+	});
+
+	const fallback = await volume.promises.readFile(
+		"/foo/common-en.json",
+		"utf-8"
+	);
+	expect(JSON.parse(fallback as string)).toEqual({ hello: "Hello" });
+});
+
+// https://github.com/opral/inlang/issues/4356
+test("falls back to the file name when the namespace is missing from the pathPattern object", async () => {
+	const volume = Volume.fromJSON({});
+	const mockPlugin: InlangPlugin = {
+		key: "mock",
+		exportFiles: async () => [
+			{
+				locale: "en",
+				name: "stray-en.json",
+				content: new TextEncoder().encode(JSON.stringify({ hello: "Hello" })),
+				metadata: { namespace: "stray" },
+			},
+		],
+	};
+
+	const project = await loadProjectInMemory({
+		blob: await newProject({
+			settings: {
+				baseLocale: "en",
+				locales: ["en"],
+				modules: [],
+				mock: {
+					pathPattern: {
+						common: "./{locale}/common.json",
+					},
+				},
+			},
+		}),
+		providePlugins: [mockPlugin],
+	});
+
+	await saveProjectToDirectory({
+		fs: volume as any,
+		project,
+		path: "/foo/bar.inlang",
+	});
+
+	const fallback = await volume.promises.readFile("/foo/stray-en.json", "utf-8");
+	expect(JSON.parse(fallback as string)).toEqual({ hello: "Hello" });
+});
+
 // Users were confused by project_id, and without sync a stable id is rarely needed.
 test("it should not write project_id to disk", async () => {
 	const mockFs = Volume.fromJSON({

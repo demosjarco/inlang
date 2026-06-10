@@ -183,19 +183,37 @@ export async function saveProjectToDirectory(args: {
 			for (const file of files) {
 				const pathPattern = settings[plugin.key]?.pathPattern;
 
-				// We need to check if pathPattern is a string or an array of strings
-				// and handle both cases.
-				const formattedPathPatterns = Array.isArray(pathPattern)
-					? pathPattern
-					: [pathPattern];
+				const resolvePattern = (pattern: string) =>
+					absolutePathFromProject(
+						args.path,
+						pattern.replace(/\{(languageTag|locale)\}/g, file.locale)
+					);
 
-				for (const pathPattern of formattedPathPatterns) {
-					const p = pathPattern
-						? absolutePathFromProject(
-								args.path,
-								pathPattern.replace(/\{(languageTag|locale)\}/g, file.locale)
-							)
-						: absolutePathFromProject(args.path, file.name);
+				// pathPattern can be a string, an array of strings, or a record
+				// mapping namespaces to patterns (e.g. plugin-i18next).
+				// https://github.com/opral/inlang/issues/4356
+				let targetPaths: string[];
+				if (typeof pathPattern === "string") {
+					targetPaths = [resolvePattern(pathPattern)];
+				} else if (Array.isArray(pathPattern)) {
+					// an empty array writes nothing
+					targetPaths = pathPattern.map(resolvePattern);
+				} else if (typeof pathPattern === "object" && pathPattern !== null) {
+					const namespace = file.metadata?.["namespace"];
+					const namespacePattern = namespace
+						? pathPattern[namespace]
+						: undefined;
+					// no pattern for this file (plugin didn't provide namespace
+					// metadata or the namespace is unknown) -> fall back to file.name
+					targetPaths =
+						typeof namespacePattern === "string"
+							? [resolvePattern(namespacePattern)]
+							: [absolutePathFromProject(args.path, file.name)];
+				} else {
+					targetPaths = [absolutePathFromProject(args.path, file.name)];
+				}
+
+				for (const p of targetPaths) {
 					await fsModule.mkdir(path.dirname(p), { recursive: true });
 					if (p.endsWith(".json")) {
 						try {

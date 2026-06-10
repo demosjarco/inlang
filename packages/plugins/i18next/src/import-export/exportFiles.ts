@@ -67,6 +67,12 @@ export const exportFiles: NonNullable<(typeof plugin)["exportFiles"]> = async ({
 					JSON.stringify(unflatten(messages), undefined, "\t") + "\n"
 				),
 				name: `${namespace}-${locale}.json`,
+				// mirrors toBeImportedFiles metadata so that the SDK can resolve
+				// the namespaced pathPattern when writing the file back to disk
+				// https://github.com/opral/inlang/issues/4356
+				metadata: {
+					namespace,
+				},
 			}))
 	);
 	return [...withoutNamespace, ...withNamespace];
