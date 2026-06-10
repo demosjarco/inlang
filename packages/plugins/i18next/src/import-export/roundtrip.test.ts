@@ -191,7 +191,9 @@ test("keyMarkupMixedNamedAndNumericTransTags", async () => {
 	] satisfies Pattern);
 });
 
-test.todo("keyContext", async () => {
+// context keys, see https://www.i18next.com/translation-function/context
+// reproduces https://github.com/opral/inlang/issues/4355
+test("keyContext", async () => {
 	const imported = await runImportFiles({
 		// catch all
 		keyContext: "the variant",
@@ -207,34 +209,80 @@ test.todo("keyContext", async () => {
 	});
 
 	expect(imported.bundles).lengthOf(1);
-	expect(imported.messages).lengthOf(1);
+	// one message per imported key, see
+	// "a key with a single variant should have no matches even if other keys are multi variant"
+	expect(imported.messages).lengthOf(3);
 	expect(imported.variants).lengthOf(3);
 
 	expect(imported.bundles[0]?.id).toStrictEqual("keyContext");
 	expect(imported.bundles[0]?.declarations).toStrictEqual([
 		{ type: "input-variable", name: "context" },
 	]);
-	expect(imported?.messages[0]?.selectors).toStrictEqual([
-		{ type: "variable-reference", name: "context" },
+
+	const variantByText = (text: string) =>
+		imported.variants.find((variant) =>
+			variant.pattern?.some(
+				(part) => part.type === "text" && part.value === text
+			)
+		);
+
+	// the base key is the fallback in i18next — it must not carry a literal
+	// context match
+	expect(
+		variantByText("the variant")?.matches?.some(
+			(match) => match.type === "literal-match" && match.key === "context"
+		)
+	).toBe(false);
+	expect(variantByText("the male variant")?.matches).toStrictEqual([
+		{ type: "literal-match", key: "context", value: "male" },
 	]);
-	expect(imported.variants[0]).toStrictEqual(
-		expect.objectContaining({
-			matches: [{ type: "catchall-match", key: "context" }],
-			pattern: [{ type: "text", value: "the variant" }],
-		} satisfies Partial<Variant>)
+	expect(variantByText("the female variant")?.matches).toStrictEqual([
+		{ type: "literal-match", key: "context", value: "female" },
+	]);
+});
+
+// context combined with plurals, mirrors the example in
+// https://www.i18next.com/translation-function/context#combining-with-plurals
+// reproduces https://github.com/opral/inlang/issues/4355
+test("keyContextCombinedWithPlurals", async () => {
+	// the context+plural keys mirror i18next's own test fixture in
+	// test/runtime/translator/translator.translate.combination.test.js
+	const json = {
+		friend_one: "A friend",
+		friend_other: "{{count}} friends",
+		friend_male_zero: "No boyfriend",
+		friend_male_one: "A boyfriend",
+		friend_male_other: "{{count}} boyfriends",
+		friend_female_zero: "no girlfriend",
+		friend_female_one: "a girlfriend",
+		friend_female_other: "{{count}} girlfriends",
+	};
+	const imported = await runImportFiles(json);
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+
+	expect(imported.bundles).lengthOf(1);
+	expect(imported.bundles[0]?.id).toStrictEqual("friend");
+	expect(imported.bundles[0]?.declarations).toStrictEqual(
+		expect.arrayContaining([
+			{ type: "input-variable", name: "context" },
+			{ type: "input-variable", name: "count" },
+		])
 	);
-	expect(imported.variants[1]).toStrictEqual(
-		expect.objectContaining({
-			matches: [{ type: "literal-match", key: "context", value: "male" }],
-			pattern: [{ type: "text", value: "the male variant" }],
-		} satisfies Partial<Variant>)
-	);
-	expect(imported.variants[2]).toStrictEqual(
-		expect.objectContaining({
-			matches: [{ type: "literal-match", key: "context", value: "female" }],
-			pattern: [{ type: "text", value: "the female variant" }],
-		} satisfies Partial<Variant>)
-	);
+	expect(imported.variants).lengthOf(8);
+});
+
+// a plural key set can ship a base key as the fallback for calls without a
+// count, see https://www.i18next.com/translation-function/plurals
+// reproduces https://github.com/opral/inlang/issues/4355
+// ("The variant does not have a plural match")
+test("keyPluralWithBaseKey", async () => {
+	const json = {
+		friend: "A friend",
+		friend_one: "A friend",
+		friend_other: "{{count}} friends",
+	};
+	const imported = await runImportFiles(json);
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
 });
 
 test("keyPluralSimple", async () => {
