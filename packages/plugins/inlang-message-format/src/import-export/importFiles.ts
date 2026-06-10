@@ -11,7 +11,7 @@ import type {
 	VariableReference,
 	Message,
 } from "@inlang/sdk";
-import { type plugin } from "../plugin.js";
+import type { plugin } from "../plugin.js";
 import { flatten } from "flat";
 import type {
 	ComplexMessage,

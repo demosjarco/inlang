@@ -6,7 +6,7 @@ import type {
 	Pattern,
 	Variant,
 } from "@inlang/sdk";
-import { type plugin } from "../plugin.js";
+import type { plugin } from "../plugin.js";
 import { unflatten } from "flat";
 import { matchSpecificity } from "./matchSpecificity.js";
 import type { PluginSettings } from "../settings.js";

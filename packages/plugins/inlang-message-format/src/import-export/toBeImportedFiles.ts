@@ -1,4 +1,5 @@
-import { PLUGIN_KEY, type plugin } from "../plugin.js";
+import type { plugin } from "../plugin.js";
+import { PLUGIN_KEY } from "../pluginKey.js";
 
 export const toBeImportedFiles: NonNullable<
 	(typeof plugin)["toBeImportedFiles"]

@@ -4,8 +4,9 @@ import { PluginSettings } from "./settings.js";
 import { toBeImportedFiles } from "./import-export/toBeImportedFiles.js";
 import { importFiles } from "./import-export/importFiles.js";
 import { exportFiles } from "./import-export/exportFiles.js";
+import { PLUGIN_KEY } from "./pluginKey.js";
 
-export const PLUGIN_KEY = "plugin.inlang.messageFormat";
+export { PLUGIN_KEY };
 
 export const plugin: InlangPlugin<{
 	[PLUGIN_KEY]?: PluginSettings;

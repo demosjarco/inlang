@@ -6,7 +6,7 @@ import type {
 	VariableReference,
 	Variant,
 } from "@inlang/sdk";
-import { type plugin } from "../plugin.js";
+import type { plugin } from "../plugin.js";
 import { flatten } from "flat";
 import type { BundleImport, MessageImport, VariantImport } from "@inlang/sdk";
 import { matchSpecificity } from "./matchSpecificity.js";
