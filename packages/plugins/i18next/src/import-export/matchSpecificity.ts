@@ -24,6 +24,7 @@ export function matchSpecificity(variant: {
 	return (
 		(hasLiteralMatch("context") ? 4 : 0) +
 		(hasLiteralMatch("count") ? 2 : 0) +
+		(hasLiteralMatch("countOrdinal") ? 1 : 0) +
 		(hasLiteralMatch("countPlural") ? 1 : 0)
 	);
 }

@@ -95,6 +95,9 @@ function serializeMessage(
 		const countMatch = variant.matches.find(
 			(match) => match.type === "literal-match" && match.key === "count"
 		) as LiteralMatch | undefined;
+		const ordinalMatch = variant.matches.find(
+			(match) => match.type === "literal-match" && match.key === "countOrdinal"
+		) as LiteralMatch | undefined;
 		const pluralMatch = variant.matches.find(
 			(match) => match.type === "literal-match" && match.key === "countPlural"
 		) as LiteralMatch | undefined;
@@ -113,6 +116,10 @@ function serializeMessage(
 			// `_zero` suffix (its Intl category fallback variant derives the
 			// same key), see https://github.com/opral/inlang/issues/4357
 			key += "_zero";
+		} else if (ordinalMatch !== undefined) {
+			// ordinal plurals use the reserved `_ordinal_<category>` suffix,
+			// see https://github.com/opral/inlang/issues/4358
+			key += `_ordinal_${ordinalMatch.value}`;
 		} else if (pluralMatch !== undefined) {
 			key += `_${pluralMatch.value}`;
 		}

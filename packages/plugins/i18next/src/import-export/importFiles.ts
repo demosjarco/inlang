@@ -71,24 +71,40 @@ function parseFile(args: {
 	// https://www.i18next.com/translation-function/context#combining-with-plurals
 	const bundleSelectorsByRootKey = new Map<
 		string,
-		{ hasPlurals: boolean; hasContext: boolean; hasZero: boolean }
+		{
+			hasPlurals: boolean;
+			hasContext: boolean;
+			hasZero: boolean;
+			hasOrdinal: boolean;
+		}
 	>();
 	for (const key in resource) {
 		const keyParts = key.split("_");
-		const hasPlurals = testForPlurals(key);
+		const hasPluralSuffix = testForPlurals(key);
+		// i18next ordinal plurals use the reserved `_ordinal_<category>`
+		// suffix, optionally combined with context:
+		// "race_male_ordinal_one" -> ["race", "male", "ordinal", "one"]
+		// https://www.i18next.com/translation-function/plurals#ordinal-plurals
+		const isOrdinal = hasPluralSuffix && keyParts.at(-2) === "ordinal";
 		const summary = bundleSelectorsByRootKey.get(keyParts[0]!) ?? {
 			hasPlurals: false,
 			hasContext: false,
 			hasZero: false,
+			hasOrdinal: false,
 		};
-		summary.hasPlurals = summary.hasPlurals || hasPlurals;
+		summary.hasPlurals = summary.hasPlurals || (hasPluralSuffix && !isOrdinal);
+		summary.hasOrdinal = summary.hasOrdinal || isOrdinal;
 		summary.hasContext =
 			summary.hasContext ||
-			(hasPlurals ? keyParts.length === 3 : keyParts.length === 2);
+			(isOrdinal
+				? keyParts.length === 4
+				: hasPluralSuffix
+					? keyParts.length === 3
+					: keyParts.length === 2);
 		// `_zero` is i18next's exact `count === 0` match in every language
-		// (in addition to the Intl "zero" plural category), see
-		// https://www.i18next.com/translation-function/plurals
-		summary.hasZero = summary.hasZero || key.endsWith("_zero");
+		// (in addition to the Intl "zero" plural category) — cardinal only,
+		// see https://www.i18next.com/translation-function/plurals
+		summary.hasZero = summary.hasZero || (!isOrdinal && key.endsWith("_zero"));
 		bundleSelectorsByRootKey.set(keyParts[0]!, summary);
 	}
 
@@ -134,6 +150,7 @@ function parseMessage(args: {
 		hasPlurals: boolean;
 		hasContext: boolean;
 		hasZero: boolean;
+		hasOrdinal: boolean;
 	};
 	settings?: PluginSettings;
 }): {
@@ -175,10 +192,18 @@ function parseMessage(args: {
 	};
 
 	// plurals, see https://www.i18next.com/misc/json-format#i18next-json-v4
-	const hasPlurals = testForPlurals(args.key);
+	const hasPluralSuffix = testForPlurals(args.key);
+	// ordinal plurals use the reserved `_ordinal_<category>` suffix, see
+	// https://www.i18next.com/translation-function/plurals#ordinal-plurals
+	const isOrdinal = hasPluralSuffix && keyParts.at(-2) === "ordinal";
+	const hasPlurals = hasPluralSuffix && !isOrdinal;
 	// context is used see https://www.i18next.com/translation-function/context
-	const hasContext = hasPlurals ? keyParts.length === 3 : keyParts.length === 2;
-	const isZero = args.key.endsWith("_zero");
+	const hasContext = isOrdinal
+		? keyParts.length === 4
+		: hasPluralSuffix
+			? keyParts.length === 3
+			: keyParts.length === 2;
+	const isZero = !isOrdinal && args.key.endsWith("_zero");
 
 	// base keys are the fallback for their context/plural siblings and get
 	// explicit catchall matches (see the per-bundle summary in parseFile).
@@ -186,6 +211,7 @@ function parseMessage(args: {
 		hasPlurals: bundleHasPlurals,
 		hasContext: bundleHasContext,
 		hasZero: bundleHasZero,
+		hasOrdinal: bundleHasOrdinal,
 	} = args.bundleSelectors;
 
 	const selectors: Message["selectors"] = [];
@@ -237,6 +263,52 @@ function parseMessage(args: {
 				: {
 						type: "catchall-match",
 						key: "count",
+					}
+		);
+	}
+
+	if (bundleHasOrdinal) {
+		bundle.declarations.push({
+			type: "input-variable",
+			name: "count",
+		});
+		bundle.declarations.push({
+			type: "local-variable",
+			name: "countOrdinal",
+			value: {
+				type: "expression",
+				arg: {
+					type: "variable-reference",
+					name: "count",
+				},
+				annotation: {
+					type: "function-reference",
+					name: "plural",
+					options: [
+						{
+							name: "type",
+							value: { type: "literal", value: "ordinal" },
+						},
+					],
+				},
+			},
+		});
+		selectors.push({
+			type: "variable-reference",
+			name: "countOrdinal",
+		});
+		matches.push(
+			isOrdinal
+				? {
+						type: "literal-match",
+						key: "countOrdinal",
+						value: keyParts.at(-1)!,
+					}
+				: // cardinal/zero/base variants are the fallback for ordinal
+					// lookups of the same key
+					{
+						type: "catchall-match",
+						key: "countOrdinal",
 					}
 		);
 	}
