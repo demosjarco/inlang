@@ -64,6 +64,29 @@ function parseFile(args: {
 	const messages: MessageImport[] = [];
 	const variants: VariantImport[] = [];
 
+	// sibling keys of the same bundle (`friend` -> `friend_one`,
+	// `friend_male_one`, ...) decide which selectors the bundle has. the
+	// summary is precomputed in a single pass to avoid rescanning the
+	// resource for every key.
+	// https://www.i18next.com/translation-function/context#combining-with-plurals
+	const bundleSelectorsByRootKey = new Map<
+		string,
+		{ hasPlurals: boolean; hasContext: boolean }
+	>();
+	for (const key in resource) {
+		const keyParts = key.split("_");
+		const hasPlurals = testForPlurals(key);
+		const summary = bundleSelectorsByRootKey.get(keyParts[0]!) ?? {
+			hasPlurals: false,
+			hasContext: false,
+		};
+		summary.hasPlurals = summary.hasPlurals || hasPlurals;
+		summary.hasContext =
+			summary.hasContext ||
+			(hasPlurals ? keyParts.length === 3 : keyParts.length === 2);
+		bundleSelectorsByRootKey.set(keyParts[0]!, summary);
+	}
+
 	for (const key in resource) {
 		const value = resource[key]!;
 		const { bundle, message, variant } = parseMessage({
@@ -71,7 +94,7 @@ function parseFile(args: {
 			key,
 			value,
 			locale: args.locale,
-			resource,
+			bundleSelectors: bundleSelectorsByRootKey.get(key.split("_")[0]!)!,
 			settings: args.settings,
 		});
 		bundles.push(bundle);
@@ -102,14 +125,15 @@ function parseMessage(args: {
 	key: string;
 	value: string;
 	locale: string;
-	resource: Record<string, any>;
+	bundleSelectors: { hasPlurals: boolean; hasContext: boolean };
 	settings?: PluginSettings;
 }): { bundle: BundleImport; message: MessageImport; variant: VariantImport } {
 	const pattern = parsePattern(args.value, args.settings);
 
 	// i18next suffixes keys with context or plurals
 	// "friend_female_one" -> "friend"
-	let bundleId = args.key.split("_")[0]!;
+	const keyParts = args.key.split("_");
+	let bundleId = keyParts[0]!;
 	if (args.namespace) {
 		// following i18next's convention
 		// https://www.i18next.com/principles/namespaces#sample
@@ -140,24 +164,12 @@ function parseMessage(args: {
 	// plurals, see https://www.i18next.com/misc/json-format#i18next-json-v4
 	const hasPlurals = testForPlurals(args.key);
 	// context is used see https://www.i18next.com/translation-function/context
-	const hasContext = hasPlurals
-		? args.key.split("_").length === 3
-		: args.key.split("_").length === 2;
+	const hasContext = hasPlurals ? keyParts.length === 3 : keyParts.length === 2;
 
-	// sibling keys of the same bundle (`friend` -> `friend_one`,
-	// `friend_male_one`, ...) decide which selectors the bundle has. base
-	// keys are the fallback for their context/plural siblings and get
-	// explicit catchall matches.
-	// https://www.i18next.com/translation-function/context#combining-with-plurals
-	const siblingKeys = Object.keys(args.resource).filter(
-		(key) => key.split("_")[0] === args.key.split("_")[0]
-	);
-	const bundleHasPlurals = siblingKeys.some(testForPlurals);
-	const bundleHasContext = siblingKeys.some((key) =>
-		testForPlurals(key)
-			? key.split("_").length === 3
-			: key.split("_").length === 2
-	);
+	// base keys are the fallback for their context/plural siblings and get
+	// explicit catchall matches (see the per-bundle summary in parseFile).
+	const { hasPlurals: bundleHasPlurals, hasContext: bundleHasContext } =
+		args.bundleSelectors;
 
 	const selectors: Message["selectors"] = [];
 	const matches: Variant["matches"] = [];
@@ -178,7 +190,7 @@ function parseMessage(args: {
 						// i18next always uses "context" as the key
 						// "friend_male" -> ["friend", "male"]
 						key: "context",
-						value: args.key.split("_")[1]!,
+						value: keyParts[1]!,
 					}
 				: // the base key is the fallback for all context variants
 					{
@@ -222,7 +234,7 @@ function parseMessage(args: {
 				? {
 						type: "literal-match",
 						key: "countPlural",
-						value: args.key.split("_").at(-1)!,
+						value: keyParts.at(-1)!,
 					}
 				: // the base key is the fallback for all plural variants
 					{
