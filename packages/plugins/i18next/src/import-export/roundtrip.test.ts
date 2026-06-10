@@ -170,10 +170,12 @@ test("keyMarkupNumericTransTags", async () => {
 
 test("keyMarkupMixedNamedAndNumericTransTags", async () => {
 	const imported = await runImportFiles({
-		keyMarkupMixedNamedAndNumericTransTags: "A <0>nested <b>tag</b></0> <icon/>",
+		keyMarkupMixedNamedAndNumericTransTags:
+			"A <0>nested <b>tag</b></0> <icon/>",
 	});
 	expect(await runExportFilesParsed(imported)).toStrictEqual({
-		keyMarkupMixedNamedAndNumericTransTags: "A <0>nested <b>tag</b></0> <icon/>",
+		keyMarkupMixedNamedAndNumericTransTags:
+			"A <0>nested <b>tag</b></0> <icon/>",
 	});
 
 	expect(imported.bundles[0]?.declarations).toStrictEqual([]);
@@ -560,6 +562,131 @@ test("keyPluralWithZero", async () => {
 		[
 			{ type: "catchall-match", key: "count" },
 			{ type: "literal-match", key: "countPlural", value: "other" },
+		],
+	]);
+});
+
+// i18next ordinal plurals use the reserved `_ordinal_<category>` suffix and
+// resolve with ordinal Intl.PluralRules ("1st", "2nd", ...), see
+// https://www.i18next.com/translation-function/plurals#ordinal-plurals
+// reproduces https://github.com/opral/inlang/issues/4358 (currently parsed
+// as context "ordinal" with cardinal categories)
+test("keyOrdinal", async () => {
+	const json = {
+		place_ordinal_one: "{{count}}st place",
+		place_ordinal_two: "{{count}}nd place",
+		place_ordinal_few: "{{count}}rd place",
+		place_ordinal_other: "{{count}}th place",
+	};
+	const imported = await runImportFiles(json);
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+
+	expect(imported.bundles).lengthOf(1);
+	expect(imported.bundles[0]?.id).toStrictEqual("place");
+
+	expect(imported.bundles[0]?.declarations).toStrictEqual(
+		expect.arrayContaining([
+			{ type: "input-variable", name: "count" },
+			expect.objectContaining({
+				type: "local-variable",
+				name: "countOrdinal",
+				value: {
+					type: "expression",
+					arg: { type: "variable-reference", name: "count" },
+					annotation: {
+						type: "function-reference",
+						name: "plural",
+						options: [
+							{ name: "type", value: { type: "literal", value: "ordinal" } },
+						],
+					},
+				},
+			}),
+		])
+	);
+	// ordinal keys must not be parsed as context "ordinal"
+	expect(
+		(imported.bundles[0]?.declarations ?? []).some(
+			(declaration) => declaration.name === "context"
+		)
+	).toBe(false);
+
+	expect(imported.messages[0]?.selectors).toStrictEqual([
+		{ type: "variable-reference", name: "countOrdinal" },
+	]);
+
+	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
+		[{ type: "literal-match", key: "countOrdinal", value: "one" }],
+		[{ type: "literal-match", key: "countOrdinal", value: "two" }],
+		[{ type: "literal-match", key: "countOrdinal", value: "few" }],
+		[{ type: "literal-match", key: "countOrdinal", value: "other" }],
+	]);
+});
+
+// context combines with ordinal plurals the same way as with cardinal ones
+// (`contextKey + pluralSuffix` in i18next's lookup).
+// reproduces https://github.com/opral/inlang/issues/4358 — on main these
+// keys lose their context AND ordinal marker on export (`race_one`)
+test("keyContextWithOrdinal", async () => {
+	const json = {
+		race_male_ordinal_one: "his {{count}}st race",
+		race_male_ordinal_other: "his {{count}}th race",
+	};
+	const imported = await runImportFiles(json);
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+
+	expect(imported.bundles[0]?.id).toStrictEqual("race");
+	expect(imported.messages[0]?.selectors).toStrictEqual([
+		{ type: "variable-reference", name: "context" },
+		{ type: "variable-reference", name: "countOrdinal" },
+	]);
+	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
+		[
+			{ type: "literal-match", key: "context", value: "male" },
+			{ type: "literal-match", key: "countOrdinal", value: "one" },
+		],
+		[
+			{ type: "literal-match", key: "context", value: "male" },
+			{ type: "literal-match", key: "countOrdinal", value: "other" },
+		],
+	]);
+});
+
+// cardinal and ordinal forms of the same key coexist (i18next picks by the
+// `ordinal: true` option); cardinal variants get a catchall on countOrdinal
+// and vice versa. cardinal variants come first (file order), so calls
+// without a disambiguating input resolve cardinal — matching i18next's
+// default.
+test("keyPluralCardinalAndOrdinalMixed", async () => {
+	const json = {
+		race_one: "{{count}} race",
+		race_other: "{{count}} races",
+		race_ordinal_one: "{{count}}st race",
+		race_ordinal_other: "{{count}}th race",
+	};
+	const imported = await runImportFiles(json);
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+
+	expect(imported.messages[0]?.selectors).toStrictEqual([
+		{ type: "variable-reference", name: "countOrdinal" },
+		{ type: "variable-reference", name: "countPlural" },
+	]);
+	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
+		[
+			{ type: "catchall-match", key: "countOrdinal" },
+			{ type: "literal-match", key: "countPlural", value: "one" },
+		],
+		[
+			{ type: "catchall-match", key: "countOrdinal" },
+			{ type: "literal-match", key: "countPlural", value: "other" },
+		],
+		[
+			{ type: "literal-match", key: "countOrdinal", value: "one" },
+			{ type: "catchall-match", key: "countPlural" },
+		],
+		[
+			{ type: "literal-match", key: "countOrdinal", value: "other" },
+			{ type: "catchall-match", key: "countPlural" },
 		],
 	]);
 });
