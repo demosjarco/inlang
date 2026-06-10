@@ -1,8 +1,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { Bundle, Pattern, VariableReference, Variant } from "@inlang/sdk";
+import type {
+	Bundle,
+	Message,
+	Pattern,
+	VariableReference,
+	Variant,
+} from "@inlang/sdk";
 import { type plugin } from "../plugin.js";
 import { flatten } from "flat";
 import type { BundleImport, MessageImport, VariantImport } from "@inlang/sdk";
+import { matchSpecificity } from "./matchSpecificity.js";
 import type { PluginSettings } from "../settings.js";
 
 export const importFiles: NonNullable<(typeof plugin)["importFiles"]> = async ({
@@ -57,6 +64,29 @@ function parseFile(args: {
 	const messages: MessageImport[] = [];
 	const variants: VariantImport[] = [];
 
+	// sibling keys of the same bundle (`friend` -> `friend_one`,
+	// `friend_male_one`, ...) decide which selectors the bundle has. the
+	// summary is precomputed in a single pass to avoid rescanning the
+	// resource for every key.
+	// https://www.i18next.com/translation-function/context#combining-with-plurals
+	const bundleSelectorsByRootKey = new Map<
+		string,
+		{ hasPlurals: boolean; hasContext: boolean }
+	>();
+	for (const key in resource) {
+		const keyParts = key.split("_");
+		const hasPlurals = testForPlurals(key);
+		const summary = bundleSelectorsByRootKey.get(keyParts[0]!) ?? {
+			hasPlurals: false,
+			hasContext: false,
+		};
+		summary.hasPlurals = summary.hasPlurals || hasPlurals;
+		summary.hasContext =
+			summary.hasContext ||
+			(hasPlurals ? keyParts.length === 3 : keyParts.length === 2);
+		bundleSelectorsByRootKey.set(keyParts[0]!, summary);
+	}
+
 	for (const key in resource) {
 		const value = resource[key]!;
 		const { bundle, message, variant } = parseMessage({
@@ -64,14 +94,30 @@ function parseFile(args: {
 			key,
 			value,
 			locale: args.locale,
-			resource,
+			bundleSelectors: bundleSelectorsByRootKey.get(key.split("_")[0]!)!,
 			settings: args.settings,
 		});
 		bundles.push(bundle);
 		messages.push(message);
 		variants.push(variant);
 	}
-	return { bundles, messages, variants };
+
+	// order each bundle's variants most-specific-first (`friend_male_one` >
+	// `friend_male` > `friend_one` > `friend`) so that first-match-wins
+	// consumers (e.g. the paraglide compiler) resolve context and plurals
+	// the way i18next does.
+	// https://github.com/opral/inlang/issues/4354
+	const variantsByBundleId = new Map<string, VariantImport[]>();
+	for (const variant of variants) {
+		const group = variantsByBundleId.get(variant.messageBundleId!) ?? [];
+		group.push(variant);
+		variantsByBundleId.set(variant.messageBundleId!, group);
+	}
+	const sortedVariants = [...variantsByBundleId.values()].flatMap((group) =>
+		group.sort((a, b) => matchSpecificity(b) - matchSpecificity(a))
+	);
+
+	return { bundles, messages, variants: sortedVariants };
 }
 
 function parseMessage(args: {
@@ -79,14 +125,15 @@ function parseMessage(args: {
 	key: string;
 	value: string;
 	locale: string;
-	resource: Record<string, any>;
+	bundleSelectors: { hasPlurals: boolean; hasContext: boolean };
 	settings?: PluginSettings;
 }): { bundle: BundleImport; message: MessageImport; variant: VariantImport } {
 	const pattern = parsePattern(args.value, args.settings);
 
 	// i18next suffixes keys with context or plurals
 	// "friend_female_one" -> "friend"
-	let bundleId = args.key.split("_")[0]!;
+	const keyParts = args.key.split("_");
+	let bundleId = keyParts[0]!;
 	if (args.namespace) {
 		// following i18next's convention
 		// https://www.i18next.com/principles/namespaces#sample
@@ -117,142 +164,88 @@ function parseMessage(args: {
 	// plurals, see https://www.i18next.com/misc/json-format#i18next-json-v4
 	const hasPlurals = testForPlurals(args.key);
 	// context is used see https://www.i18next.com/translation-function/context
-	const hasContext = hasPlurals
-		? args.key.split("_").length === 3
-		: args.key.split("_").length === 2;
+	const hasContext = hasPlurals ? keyParts.length === 3 : keyParts.length === 2;
 
-	// the key itself has no plurals, but the resource has plurals
-	// hence, it must be the catch all variant
-	// https://www.i18next.com/translation-function/context#combining-with-plurals
-	const isCatchAll =
-		testForPlurals(args.key) === false &&
-		Object.keys(args.resource).some(
-			// the first part of the key is identical e.g.
-			// ["friend"] -> ["friend", "one"]
-			(key) =>
-				args.key.split("_")[0] === key.split("_")[0] && testForPlurals(key)
+	// base keys are the fallback for their context/plural siblings and get
+	// explicit catchall matches (see the per-bundle summary in parseFile).
+	const { hasPlurals: bundleHasPlurals, hasContext: bundleHasContext } =
+		args.bundleSelectors;
+
+	const selectors: Message["selectors"] = [];
+	const matches: Variant["matches"] = [];
+
+	if (bundleHasContext) {
+		bundle.declarations.push({
+			type: "input-variable",
+			name: "context",
+		});
+		selectors.push({
+			type: "variable-reference",
+			name: "context",
+		});
+		matches.push(
+			hasContext
+				? {
+						type: "literal-match",
+						// i18next always uses "context" as the key
+						// "friend_male" -> ["friend", "male"]
+						key: "context",
+						value: keyParts[1]!,
+					}
+				: // the base key is the fallback for all context variants
+					{
+						type: "catchall-match",
+						key: "context",
+					}
 		);
-
-	if (hasContext && hasPlurals === false && isCatchAll === false) {
-		// "friend_male" -> ["friend", "male"]
-		const [, context] = args.key.split("_");
-		bundle.declarations.push({
-			type: "input-variable",
-			name: "context",
-		});
-		message.selectors = [
-			{
-				type: "variable-reference",
-				name: "context",
-			},
-		];
-		variant.matches = [
-			{
-				type: "literal-match",
-				// i18next always uses "context" as the key
-				key: "context",
-				value: context!,
-			},
-		];
-	} else if (hasContext && hasPlurals && isCatchAll === false) {
-		// "friend_female_one": "A girlfriend" -> ["friend", "female", "one"]
-		const [, context, plural] = args.key.split("_");
-		bundle.declarations.push({
-			type: "input-variable",
-			name: "context",
-		});
-		bundle.declarations.push({
-			type: "input-variable",
-			name: "count",
-		});
-		bundle.declarations.push({
-			type: "local-variable",
-			name: "countPlural",
-			value: {
-				type: "expression",
-				arg: {
-					type: "variable-reference",
-					name: "count",
-				},
-				annotation: {
-					type: "function-reference",
-					name: "plural",
-					options: [],
-				},
-			},
-		});
-		message.selectors = [
-			{
-				type: "variable-reference",
-				name: "context",
-			},
-			{
-				type: "variable-reference",
-				name: "countPlural",
-			},
-		];
-		variant.matches = [
-			{
-				type: "literal-match",
-				key: "context",
-				value: context!,
-			},
-			{
-				type: "literal-match",
-				// i18next only allows matching against a count variable.
-				// suffixing plural here because the inlang sdk v2 purposefully
-				// did not allow using a variable with a function like `plural`
-				// without declaring a new variable
-				key: "countPlural",
-				value: plural!,
-			},
-		];
-	} else if (hasPlurals && isCatchAll === false) {
-		variant.matches = [
-			{
-				// i18next only allows matching against a count variable
-				// suffixing plural because the inlang sdk v2 purposefully
-				// did not allow using a variable with a function like `plural`
-				// without declaring a new variable to reduce complexity
-				type: "literal-match",
-				key: "countPlural",
-				value: args.key.split("_").at(-1)!,
-			},
-		];
-		message.selectors = [
-			{
-				type: "variable-reference",
-				name: "countPlural",
-			},
-		];
-		bundle.declarations.push({
-			type: "input-variable",
-			name: "count",
-		});
-		bundle.declarations.push({
-			type: "local-variable",
-			name: "countPlural",
-			value: {
-				type: "expression",
-				arg: {
-					type: "variable-reference",
-					name: "count",
-				},
-				annotation: {
-					type: "function-reference",
-					name: "plural",
-					options: [],
-				},
-			},
-		});
-	} else if (isCatchAll) {
-		variant.matches = [
-			{
-				type: "catchall-match",
-				key: "context",
-			},
-		];
 	}
+
+	if (bundleHasPlurals) {
+		bundle.declarations.push({
+			type: "input-variable",
+			name: "count",
+		});
+		bundle.declarations.push({
+			type: "local-variable",
+			name: "countPlural",
+			value: {
+				type: "expression",
+				arg: {
+					type: "variable-reference",
+					name: "count",
+				},
+				annotation: {
+					type: "function-reference",
+					name: "plural",
+					options: [],
+				},
+			},
+		});
+		selectors.push({
+			type: "variable-reference",
+			// i18next only allows matching against a count variable.
+			// suffixing plural here because the inlang sdk v2 purposefully
+			// did not allow using a variable with a function like `plural`
+			// without declaring a new variable
+			name: "countPlural",
+		});
+		matches.push(
+			hasPlurals
+				? {
+						type: "literal-match",
+						key: "countPlural",
+						value: keyParts.at(-1)!,
+					}
+				: // the base key is the fallback for all plural variants
+					{
+						type: "catchall-match",
+						key: "countPlural",
+					}
+		);
+	}
+
+	message.selectors = selectors;
+	variant.matches = matches;
 
 	bundle.declarations = removeDuplicates(bundle.declarations);
 
@@ -284,7 +277,10 @@ function parsePattern(
 	for (let index = 0; index < value.length; index += 1) {
 		// parse interpolation first to avoid conflicts with custom patterns
 		if (openPattern && closePattern && value.startsWith(openPattern, index)) {
-			const closingIndex = value.indexOf(closePattern, index + openPattern.length);
+			const closingIndex = value.indexOf(
+				closePattern,
+				index + openPattern.length
+			);
 			if (closingIndex !== -1) {
 				flushBuffer();
 

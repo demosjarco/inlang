@@ -219,26 +219,29 @@ test("keyContext", async () => {
 		{ type: "input-variable", name: "context" },
 	]);
 
-	const variantByText = (text: string) =>
-		imported.variants.find((variant) =>
-			variant.pattern?.some(
-				(part) => part.type === "text" && part.value === text
-			)
-		);
+	// every message of the bundle declares the same selectors
+	for (const message of imported.messages) {
+		expect(message.selectors).toStrictEqual([
+			{ type: "variable-reference", name: "context" },
+		]);
+	}
 
-	// the base key is the fallback in i18next — it must not carry a literal
-	// context match
+	// variants are ordered most-specific-first so that first-match-wins
+	// consumers (e.g. the paraglide compiler) resolve context like i18next.
+	// the base key is the fallback, expressed as a catchall match.
+	// https://github.com/opral/inlang/issues/4354
+	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
+		[{ type: "literal-match", key: "context", value: "male" }],
+		[{ type: "literal-match", key: "context", value: "female" }],
+		[{ type: "catchall-match", key: "context" }],
+	]);
 	expect(
-		variantByText("the variant")?.matches?.some(
-			(match) => match.type === "literal-match" && match.key === "context"
+		imported.variants.map((variant) =>
+			variant.pattern?.[0]?.type === "text"
+				? variant.pattern[0].value
+				: undefined
 		)
-	).toBe(false);
-	expect(variantByText("the male variant")?.matches).toStrictEqual([
-		{ type: "literal-match", key: "context", value: "male" },
-	]);
-	expect(variantByText("the female variant")?.matches).toStrictEqual([
-		{ type: "literal-match", key: "context", value: "female" },
-	]);
+	).toStrictEqual(["the male variant", "the female variant", "the variant"]);
 });
 
 // context combined with plurals, mirrors the example in
@@ -283,6 +286,70 @@ test("keyPluralWithBaseKey", async () => {
 	};
 	const imported = await runImportFiles(json);
 	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+});
+
+// reproduces https://github.com/opral/inlang/issues/4354 — imported variants
+// must be ordered most-specific-first with explicit catchall matches so that
+// first-match-wins consumers (e.g. the paraglide compiler) resolve a call
+// like t("friend", { context: "male", count: 1 }) the way i18next does:
+// `friend_male_one` > `friend_male` > `friend_one` > `friend`
+// https://www.i18next.com/translation-function/context#combining-with-plurals
+test("context and plural sibling keys are ordered most-specific-first with catchall fallbacks", async () => {
+	const json = {
+		friend: "A friend",
+		friend_one: "A friend",
+		friend_other: "{{count}} friends",
+		friend_male: "A boyfriend",
+		friend_male_one: "A boyfriend",
+		friend_male_other: "{{count}} boyfriends",
+	};
+	const imported = await runImportFiles(json);
+
+	// round-trips unchanged
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+
+	expect(imported.bundles).lengthOf(1);
+	expect(imported.bundles[0]?.declarations).toStrictEqual(
+		expect.arrayContaining([
+			{ type: "input-variable", name: "context" },
+			{ type: "input-variable", name: "count" },
+		])
+	);
+
+	// every message of the bundle declares the same selectors
+	for (const message of imported.messages) {
+		expect(message.selectors).toStrictEqual([
+			{ type: "variable-reference", name: "context" },
+			{ type: "variable-reference", name: "countPlural" },
+		]);
+	}
+
+	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
+		[
+			{ type: "literal-match", key: "context", value: "male" },
+			{ type: "literal-match", key: "countPlural", value: "one" },
+		],
+		[
+			{ type: "literal-match", key: "context", value: "male" },
+			{ type: "literal-match", key: "countPlural", value: "other" },
+		],
+		[
+			{ type: "literal-match", key: "context", value: "male" },
+			{ type: "catchall-match", key: "countPlural" },
+		],
+		[
+			{ type: "catchall-match", key: "context" },
+			{ type: "literal-match", key: "countPlural", value: "one" },
+		],
+		[
+			{ type: "catchall-match", key: "context" },
+			{ type: "literal-match", key: "countPlural", value: "other" },
+		],
+		[
+			{ type: "catchall-match", key: "context" },
+			{ type: "catchall-match", key: "countPlural" },
+		],
+	]);
 });
 
 test("keyPluralSimple", async () => {
