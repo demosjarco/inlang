@@ -71,7 +71,7 @@ function parseFile(args: {
 	// https://www.i18next.com/translation-function/context#combining-with-plurals
 	const bundleSelectorsByRootKey = new Map<
 		string,
-		{ hasPlurals: boolean; hasContext: boolean }
+		{ hasPlurals: boolean; hasContext: boolean; hasZero: boolean }
 	>();
 	for (const key in resource) {
 		const keyParts = key.split("_");
@@ -79,17 +79,22 @@ function parseFile(args: {
 		const summary = bundleSelectorsByRootKey.get(keyParts[0]!) ?? {
 			hasPlurals: false,
 			hasContext: false,
+			hasZero: false,
 		};
 		summary.hasPlurals = summary.hasPlurals || hasPlurals;
 		summary.hasContext =
 			summary.hasContext ||
 			(hasPlurals ? keyParts.length === 3 : keyParts.length === 2);
+		// `_zero` is i18next's exact `count === 0` match in every language
+		// (in addition to the Intl "zero" plural category), see
+		// https://www.i18next.com/translation-function/plurals
+		summary.hasZero = summary.hasZero || key.endsWith("_zero");
 		bundleSelectorsByRootKey.set(keyParts[0]!, summary);
 	}
 
 	for (const key in resource) {
 		const value = resource[key]!;
-		const { bundle, message, variant } = parseMessage({
+		const parsed = parseMessage({
 			namespace: args.namespace,
 			key,
 			value,
@@ -97,9 +102,9 @@ function parseFile(args: {
 			bundleSelectors: bundleSelectorsByRootKey.get(key.split("_")[0]!)!,
 			settings: args.settings,
 		});
-		bundles.push(bundle);
-		messages.push(message);
-		variants.push(variant);
+		bundles.push(parsed.bundle);
+		messages.push(parsed.message);
+		variants.push(...parsed.variants);
 	}
 
 	// order each bundle's variants most-specific-first (`friend_male_one` >
@@ -125,9 +130,17 @@ function parseMessage(args: {
 	key: string;
 	value: string;
 	locale: string;
-	bundleSelectors: { hasPlurals: boolean; hasContext: boolean };
+	bundleSelectors: {
+		hasPlurals: boolean;
+		hasContext: boolean;
+		hasZero: boolean;
+	};
 	settings?: PluginSettings;
-}): { bundle: BundleImport; message: MessageImport; variant: VariantImport } {
+}): {
+	bundle: BundleImport;
+	message: MessageImport;
+	variants: VariantImport[];
+} {
 	const pattern = parsePattern(args.value, args.settings);
 
 	// i18next suffixes keys with context or plurals
@@ -165,11 +178,15 @@ function parseMessage(args: {
 	const hasPlurals = testForPlurals(args.key);
 	// context is used see https://www.i18next.com/translation-function/context
 	const hasContext = hasPlurals ? keyParts.length === 3 : keyParts.length === 2;
+	const isZero = args.key.endsWith("_zero");
 
 	// base keys are the fallback for their context/plural siblings and get
 	// explicit catchall matches (see the per-bundle summary in parseFile).
-	const { hasPlurals: bundleHasPlurals, hasContext: bundleHasContext } =
-		args.bundleSelectors;
+	const {
+		hasPlurals: bundleHasPlurals,
+		hasContext: bundleHasContext,
+		hasZero: bundleHasZero,
+	} = args.bundleSelectors;
 
 	const selectors: Message["selectors"] = [];
 	const matches: Variant["matches"] = [];
@@ -196,6 +213,30 @@ function parseMessage(args: {
 					{
 						type: "catchall-match",
 						key: "context",
+					}
+		);
+	}
+
+	if (bundleHasZero) {
+		// `_zero` matches exactly `count === 0` in i18next, in every
+		// language — expressed as a selector on the `count` input itself,
+		// ahead of the plural category (the mechanism proposed in
+		// https://github.com/opral/paraglide-js/issues/552).
+		// https://github.com/opral/inlang/issues/4357
+		selectors.push({
+			type: "variable-reference",
+			name: "count",
+		});
+		matches.push(
+			isZero
+				? {
+						type: "literal-match",
+						key: "count",
+						value: "0",
+					}
+				: {
+						type: "catchall-match",
+						key: "count",
 					}
 		);
 	}
@@ -230,7 +271,8 @@ function parseMessage(args: {
 			name: "countPlural",
 		});
 		matches.push(
-			hasPlurals
+			// the exact `count = 0` variant matches any plural category
+			hasPlurals && !isZero
 				? {
 						type: "literal-match",
 						key: "countPlural",
@@ -247,9 +289,30 @@ function parseMessage(args: {
 	message.selectors = selectors;
 	variant.matches = matches;
 
+	const variants: VariantImport[] = [variant];
+
+	if (isZero) {
+		// `_zero` additionally serves as the Intl "zero" plural category key
+		// (selected for counts other than 0 in languages like Latvian), so a
+		// second variant keeps category-based selection working alongside
+		// the exact-0 match.
+		variants.push({
+			messageBundleId: bundleId,
+			messageLocale: args.locale,
+			matches: matches.map((match) =>
+				match.key === "count"
+					? { type: "catchall-match", key: "count" }
+					: match.key === "countPlural"
+						? { type: "literal-match", key: "countPlural", value: "zero" }
+						: match
+			),
+			pattern: pattern.result,
+		});
+	}
+
 	bundle.declarations = removeDuplicates(bundle.declarations);
 
-	return { bundle, message, variant };
+	return { bundle, message, variants };
 }
 
 function parsePattern(

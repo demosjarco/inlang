@@ -92,6 +92,9 @@ function serializeMessage(
 		const contextMatch = variant.matches.find(
 			(match) => match.type === "literal-match" && match.key === "context"
 		) as LiteralMatch | undefined;
+		const countMatch = variant.matches.find(
+			(match) => match.type === "literal-match" && match.key === "count"
+		) as LiteralMatch | undefined;
 		const pluralMatch = variant.matches.find(
 			(match) => match.type === "literal-match" && match.key === "countPlural"
 		) as LiteralMatch | undefined;
@@ -105,7 +108,12 @@ function serializeMessage(
 		if (contextMatch !== undefined) {
 			key += `_${contextMatch.value}`;
 		}
-		if (pluralMatch !== undefined) {
+		if (countMatch?.value === "0") {
+			// the exact `count = 0` match serializes back to i18next's
+			// `_zero` suffix (its Intl category fallback variant derives the
+			// same key), see https://github.com/opral/inlang/issues/4357
+			key += "_zero";
+		} else if (pluralMatch !== undefined) {
 			key += `_${pluralMatch.value}`;
 		}
 		result.push({ key, value: pattern, locale: message.locale });
