@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Bundle, Pattern, VariableReference, Variant } from "@inlang/sdk";
-import { type plugin } from "../plugin.js";
+import type { plugin } from "../plugin.js";
 import { flatten } from "flat";
 import type { BundleImport, MessageImport, VariantImport } from "@inlang/sdk";
 import type { PluginSettings } from "../settings.js";

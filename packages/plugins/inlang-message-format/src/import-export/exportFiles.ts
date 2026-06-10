@@ -7,7 +7,7 @@ import type {
 	VariableReference,
 	Variant,
 } from "@inlang/sdk";
-import { type plugin } from "../plugin.js";
+import type { plugin } from "../plugin.js";
 import type {
 	ComplexMessage,
 	FileSchema,
