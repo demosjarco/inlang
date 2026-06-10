@@ -8,6 +8,7 @@ import type {
 } from "@inlang/sdk";
 import type { plugin } from "../plugin.js";
 import { unflatten } from "flat";
+import { matchSpecificity } from "./matchSpecificity.js";
 import type { PluginSettings } from "../settings.js";
 
 export const exportFiles: NonNullable<(typeof plugin)["exportFiles"]> = async ({
@@ -80,53 +81,42 @@ function serializeMessage(
 ): Array<{ key: string; value: string; locale: string }> {
 	const result = [];
 
-	const hasContext = bundle.declarations.some(
-		(declaration) =>
-			declaration.type === "input-variable" && declaration.name === "context"
+	// emit base keys first and the most specific keys last, mirroring how
+	// i18next files are conventionally written
+	const sortedVariants = [...variants].sort(
+		(a, b) => matchSpecificity(a) - matchSpecificity(b)
 	);
 
-	const hasPlurals = bundle.declarations.some(
-		(declaration) =>
-			declaration.type === "local-variable" &&
-			declaration.value.annotation?.type === "function-reference" &&
-			declaration.value.annotation?.name === "plural"
-	);
-
-	for (const variant of variants) {
+	for (const variant of sortedVariants) {
 		const pattern = serializePattern(variant.pattern, settings);
 		const contextMatch = variant.matches.find(
 			(match) => match.type === "literal-match" && match.key === "context"
+		) as LiteralMatch | undefined;
+		const countMatch = variant.matches.find(
+			(match) => match.type === "literal-match" && match.key === "count"
 		) as LiteralMatch | undefined;
 		const pluralMatch = variant.matches.find(
 			(match) => match.type === "literal-match" && match.key === "countPlural"
 		) as LiteralMatch | undefined;
 
-		const isCatchAll = variant.matches.some(
-			(match) => match.type === "catchall-match"
-		);
-
-		if (hasContext && contextMatch === undefined) {
-			throw new Error("The variant does not have a context match");
+		// i18next derives keys as `key[_context][_pluralSuffix]`.
+		// variants without a literal match — catchall matches or no match at
+		// all, i.e. the base key fallback that importFiles creates for
+		// context/plural sibling keys — add no suffix.
+		// https://www.i18next.com/translation-function/context#combining-with-plurals
+		let key = bundle.id;
+		if (contextMatch !== undefined) {
+			key += `_${contextMatch.value}`;
 		}
-		if (hasPlurals && pluralMatch === undefined) {
-			throw new Error("The variant does not have a plural match");
+		if (countMatch?.value === "0") {
+			// the exact `count = 0` match serializes back to i18next's
+			// `_zero` suffix (its Intl category fallback variant derives the
+			// same key), see https://github.com/opral/inlang/issues/4357
+			key += "_zero";
+		} else if (pluralMatch !== undefined) {
+			key += `_${pluralMatch.value}`;
 		}
-		// matches need to be appended
-		// 'keyContext' -> 'keyContext_match'
-		let key: string;
-		if (hasContext && hasPlurals && isCatchAll) {
-			key = `${bundle.id}_${contextMatch?.value}`;
-		} else if (hasContext && hasPlurals && isCatchAll === false) {
-			key = `${bundle.id}_${contextMatch?.value}_${pluralMatch?.value}`;
-		} else if (hasContext === false && hasPlurals) {
-			key = `${bundle.id}_${pluralMatch?.value}`;
-		} else if (hasContext && hasPlurals === false) {
-			key = `${bundle.id}_${contextMatch?.value}`;
-		} else {
-			key = bundle.id;
-		}
-		const value = pattern;
-		result.push({ key, value, locale: message.locale });
+		result.push({ key, value: pattern, locale: message.locale });
 	}
 
 	return result;

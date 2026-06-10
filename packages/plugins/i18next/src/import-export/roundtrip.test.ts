@@ -2,7 +2,6 @@ import { expect, test } from "vitest";
 import { importFiles } from "./importFiles.js";
 import {
 	type Bundle,
-	type LiteralMatch,
 	type Message,
 	type Pattern,
 	type Variant,
@@ -191,7 +190,9 @@ test("keyMarkupMixedNamedAndNumericTransTags", async () => {
 	] satisfies Pattern);
 });
 
-test.todo("keyContext", async () => {
+// context keys, see https://www.i18next.com/translation-function/context
+// reproduces https://github.com/opral/inlang/issues/4355
+test("keyContext", async () => {
 	const imported = await runImportFiles({
 		// catch all
 		keyContext: "the variant",
@@ -207,34 +208,149 @@ test.todo("keyContext", async () => {
 	});
 
 	expect(imported.bundles).lengthOf(1);
-	expect(imported.messages).lengthOf(1);
+	// one message per imported key, see
+	// "a key with a single variant should have no matches even if other keys are multi variant"
+	expect(imported.messages).lengthOf(3);
 	expect(imported.variants).lengthOf(3);
 
 	expect(imported.bundles[0]?.id).toStrictEqual("keyContext");
 	expect(imported.bundles[0]?.declarations).toStrictEqual([
 		{ type: "input-variable", name: "context" },
 	]);
-	expect(imported?.messages[0]?.selectors).toStrictEqual([
-		{ type: "variable-reference", name: "context" },
+
+	// every message of the bundle declares the same selectors
+	for (const message of imported.messages) {
+		expect(message.selectors).toStrictEqual([
+			{ type: "variable-reference", name: "context" },
+		]);
+	}
+
+	// variants are ordered most-specific-first so that first-match-wins
+	// consumers (e.g. the paraglide compiler) resolve context like i18next.
+	// the base key is the fallback, expressed as a catchall match.
+	// https://github.com/opral/inlang/issues/4354
+	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
+		[{ type: "literal-match", key: "context", value: "male" }],
+		[{ type: "literal-match", key: "context", value: "female" }],
+		[{ type: "catchall-match", key: "context" }],
 	]);
-	expect(imported.variants[0]).toStrictEqual(
-		expect.objectContaining({
-			matches: [{ type: "catchall-match", key: "context" }],
-			pattern: [{ type: "text", value: "the variant" }],
-		} satisfies Partial<Variant>)
+	expect(
+		imported.variants.map((variant) =>
+			variant.pattern?.[0]?.type === "text"
+				? variant.pattern[0].value
+				: undefined
+		)
+	).toStrictEqual(["the male variant", "the female variant", "the variant"]);
+});
+
+// context combined with plurals, mirrors the example in
+// https://www.i18next.com/translation-function/context#combining-with-plurals
+// reproduces https://github.com/opral/inlang/issues/4355
+test("keyContextCombinedWithPlurals", async () => {
+	// the context+plural keys mirror i18next's own test fixture in
+	// test/runtime/translator/translator.translate.combination.test.js
+	const json = {
+		friend_one: "A friend",
+		friend_other: "{{count}} friends",
+		friend_male_zero: "No boyfriend",
+		friend_male_one: "A boyfriend",
+		friend_male_other: "{{count}} boyfriends",
+		friend_female_zero: "no girlfriend",
+		friend_female_one: "a girlfriend",
+		friend_female_other: "{{count}} girlfriends",
+	};
+	const imported = await runImportFiles(json);
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+
+	expect(imported.bundles).lengthOf(1);
+	expect(imported.bundles[0]?.id).toStrictEqual("friend");
+	expect(imported.bundles[0]?.declarations).toStrictEqual(
+		expect.arrayContaining([
+			{ type: "input-variable", name: "context" },
+			{ type: "input-variable", name: "count" },
+		])
 	);
-	expect(imported.variants[1]).toStrictEqual(
-		expect.objectContaining({
-			matches: [{ type: "literal-match", key: "context", value: "male" }],
-			pattern: [{ type: "text", value: "the male variant" }],
-		} satisfies Partial<Variant>)
+	// 8 keys -> 10 variants: each `_zero` key imports as an exact
+	// `count = 0` match plus the Intl "zero" category fallback (#4357)
+	expect(imported.variants).lengthOf(10);
+});
+
+// a plural key set can ship a base key as the fallback for calls without a
+// count, see https://www.i18next.com/translation-function/plurals
+// reproduces https://github.com/opral/inlang/issues/4355
+// ("The variant does not have a plural match")
+test("keyPluralWithBaseKey", async () => {
+	const json = {
+		friend: "A friend",
+		friend_one: "A friend",
+		friend_other: "{{count}} friends",
+	};
+	const imported = await runImportFiles(json);
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+});
+
+// reproduces https://github.com/opral/inlang/issues/4354 — imported variants
+// must be ordered most-specific-first with explicit catchall matches so that
+// first-match-wins consumers (e.g. the paraglide compiler) resolve a call
+// like t("friend", { context: "male", count: 1 }) the way i18next does:
+// `friend_male_one` > `friend_male` > `friend_one` > `friend`
+// https://www.i18next.com/translation-function/context#combining-with-plurals
+test("context and plural sibling keys are ordered most-specific-first with catchall fallbacks", async () => {
+	const json = {
+		friend: "A friend",
+		friend_one: "A friend",
+		friend_other: "{{count}} friends",
+		friend_male: "A boyfriend",
+		friend_male_one: "A boyfriend",
+		friend_male_other: "{{count}} boyfriends",
+	};
+	const imported = await runImportFiles(json);
+
+	// round-trips unchanged
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+
+	expect(imported.bundles).lengthOf(1);
+	expect(imported.bundles[0]?.declarations).toStrictEqual(
+		expect.arrayContaining([
+			{ type: "input-variable", name: "context" },
+			{ type: "input-variable", name: "count" },
+		])
 	);
-	expect(imported.variants[2]).toStrictEqual(
-		expect.objectContaining({
-			matches: [{ type: "literal-match", key: "context", value: "female" }],
-			pattern: [{ type: "text", value: "the female variant" }],
-		} satisfies Partial<Variant>)
-	);
+
+	// every message of the bundle declares the same selectors
+	for (const message of imported.messages) {
+		expect(message.selectors).toStrictEqual([
+			{ type: "variable-reference", name: "context" },
+			{ type: "variable-reference", name: "countPlural" },
+		]);
+	}
+
+	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
+		[
+			{ type: "literal-match", key: "context", value: "male" },
+			{ type: "literal-match", key: "countPlural", value: "one" },
+		],
+		[
+			{ type: "literal-match", key: "context", value: "male" },
+			{ type: "literal-match", key: "countPlural", value: "other" },
+		],
+		[
+			{ type: "literal-match", key: "context", value: "male" },
+			{ type: "catchall-match", key: "countPlural" },
+		],
+		[
+			{ type: "catchall-match", key: "context" },
+			{ type: "literal-match", key: "countPlural", value: "one" },
+		],
+		[
+			{ type: "catchall-match", key: "context" },
+			{ type: "literal-match", key: "countPlural", value: "other" },
+		],
+		[
+			{ type: "catchall-match", key: "context" },
+			{ type: "catchall-match", key: "countPlural" },
+		],
+	]);
 });
 
 test("keyPluralSimple", async () => {
@@ -328,7 +444,10 @@ test("keyPluralMultipleEgArabic", async () => {
 
 	expect(imported.bundles[0]?.id).toStrictEqual("keyPluralMultipleEgArabic");
 
+	// the `_zero` sibling makes `count` itself a selector ahead of the
+	// plural category, see https://github.com/opral/inlang/issues/4357
 	expect(imported?.messages[0]?.selectors).toStrictEqual([
+		{ type: "variable-reference", name: "count" },
 		{ type: "variable-reference", name: "countPlural" },
 	]);
 
@@ -357,28 +476,91 @@ test("keyPluralMultipleEgArabic", async () => {
 		])
 	);
 
-	const matches = imported.variants.map(
-		(variant) => (variant.matches?.[0] as LiteralMatch).value
-	);
-
-	expect(matches).toStrictEqual(["zero", "one", "two", "few", "many", "other"]);
+	// 6 keys -> 7 variants: `_zero` imports as an exact `count = 0` match
+	// (i18next prefers `_zero` at count 0 in every language) plus the Intl
+	// "zero" category fallback (e.g. Arabic, Latvian)
+	expect(
+		imported.variants.map((variant) =>
+			variant.matches
+				?.map((match) =>
+					match.type === "literal-match"
+						? `${match.key}=${match.value}`
+						: `${match.key}=*`
+				)
+				.join(" ")
+		)
+	).toStrictEqual([
+		"count=0 countPlural=*",
+		"count=* countPlural=zero",
+		"count=* countPlural=one",
+		"count=* countPlural=two",
+		"count=* countPlural=few",
+		"count=* countPlural=many",
+		"count=* countPlural=other",
+	]);
 	expect(imported.variants[0]?.pattern).toStrictEqual([
 		{ type: "text", value: "the plural form 0" },
 	]);
 	expect(imported.variants[1]?.pattern).toStrictEqual([
-		{ type: "text", value: "the plural form 1" },
+		{ type: "text", value: "the plural form 0" },
 	]);
 	expect(imported.variants[2]?.pattern).toStrictEqual([
-		{ type: "text", value: "the plural form 2" },
+		{ type: "text", value: "the plural form 1" },
 	]);
 	expect(imported.variants[3]?.pattern).toStrictEqual([
-		{ type: "text", value: "the plural form 3" },
+		{ type: "text", value: "the plural form 2" },
 	]);
 	expect(imported.variants[4]?.pattern).toStrictEqual([
-		{ type: "text", value: "the plural form 4" },
+		{ type: "text", value: "the plural form 3" },
 	]);
 	expect(imported.variants[5]?.pattern).toStrictEqual([
+		{ type: "text", value: "the plural form 4" },
+	]);
+	expect(imported.variants[6]?.pattern).toStrictEqual([
 		{ type: "text", value: "the plural form 5" },
+	]);
+});
+
+// `_zero` is i18next's exact `count === 0` match in every language — not just
+// the Intl "zero" plural category, which most languages never select
+// (https://www.i18next.com/translation-function/plurals). encoded via `count`
+// as a selector ahead of `countPlural`, exactly the mechanism proposed in
+// https://github.com/opral/paraglide-js/issues/552.
+// reproduces https://github.com/opral/inlang/issues/4357
+test("keyPluralWithZero", async () => {
+	const json = {
+		item_zero: "You have no items. Create your first now.",
+		item_one: "You have one item.",
+		item_other: "You have {{count}} items.",
+	};
+	const imported = await runImportFiles(json);
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+
+	expect(imported.bundles).lengthOf(1);
+	expect(imported.messages[0]?.selectors).toStrictEqual([
+		{ type: "variable-reference", name: "count" },
+		{ type: "variable-reference", name: "countPlural" },
+	]);
+
+	// the exact `count = 0` variant is the most specific and comes first;
+	// the Intl "zero" category fallback keeps languages like Latvian working
+	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
+		[
+			{ type: "literal-match", key: "count", value: "0" },
+			{ type: "catchall-match", key: "countPlural" },
+		],
+		[
+			{ type: "catchall-match", key: "count" },
+			{ type: "literal-match", key: "countPlural", value: "zero" },
+		],
+		[
+			{ type: "catchall-match", key: "count" },
+			{ type: "literal-match", key: "countPlural", value: "one" },
+		],
+		[
+			{ type: "catchall-match", key: "count" },
+			{ type: "literal-match", key: "countPlural", value: "other" },
+		],
 	]);
 });
 
