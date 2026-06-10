@@ -1,5 +1,24 @@
 # @inlang/plugin-i18next
 
+## 6.2.0
+
+### Minor Changes
+
+- 6680ac1: fix `saveProjectToDirectory` throwing `pathPattern.replace is not a function` when a plugin's `pathPattern` is a namespace object (https://github.com/opral/inlang/issues/4356)
+
+  - `ExportFile` has a new optional `metadata` field — the counterpart of `ImportFile.toBeImportedFilesMetadata`. Plugins can use it to pass information to the writer, e.g. the namespace an exported file belongs to.
+  - `saveProjectToDirectory` resolves namespaced `pathPattern` objects (`Record<namespace, pattern>`) via `ExportFile.metadata.namespace` and writes each exported file to the path its namespace pattern describes. Files without a resolvable namespace fall back to being written by `file.name` instead of throwing.
+  - `@inlang/plugin-i18next` now provides `metadata: { namespace }` for namespaced export files. Saving a multi-namespace i18next project requires this plugin version (older plugin versions no longer crash but fall back to writing `{namespace}-{locale}.json` files relative to the project directory).
+
+### Patch Changes
+
+- 2db3126: Fix `exportFiles` throwing `The variant does not have a context match` (or `The variant does not have a plural match`) for bundles that `importFiles` itself created from i18next context and plural sibling keys. Variants without a literal context/plural match — catchall variants and the base key fallback — now serialize back to their base key, so projects using context keys round-trip again. Fixes https://github.com/opral/inlang/issues/4355
+- 138b4e6: Import i18next context and plural sibling keys with explicit catchall matches on the base key variants, consistent selectors across the bundle, and most-specific-first variant ordering (`key_context_plural` > `key_context` > `key_plural` > `key`). First-match-wins consumers like the Paraglide compiler now resolve context the way i18next does instead of always returning the base variant. Fixes https://github.com/opral/inlang/issues/4354
+- 75a0a85: Parse i18next ordinal plural keys (`key_ordinal_one`, including context combinations like `key_male_ordinal_one`) as a dedicated `countOrdinal` selector backed by `Intl.PluralRules` with `{ type: "ordinal" }`, instead of misparsing them as context `"ordinal"` with cardinal categories. Compiled messages now produce "1st/2nd/3rd/4th" correctly from a plain `count` input, and context+ordinal keys — which previously lost their context and ordinal marker on export — round-trip unchanged. Fixes https://github.com/opral/inlang/issues/4358
+- a8a801b: Import `_zero` keys with i18next's actual semantics: an exact `count = 0` match (via a `count` selector ahead of the plural category) plus the Intl "zero" category fallback. Previously `_zero` was modeled only as the Intl plural category, which most languages never select — so the zero translation was dead code at `count = 0` in e.g. English and French. Fixes https://github.com/opral/inlang/issues/4357
+- Updated dependencies [6680ac1]
+  - @inlang/sdk@2.10.0
+
 ## 6.1.5
 
 ### Patch Changes
