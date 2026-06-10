@@ -71,6 +71,18 @@ export type ExportFile = {
 	name: string;
 	/** The binary content of the resource */
 	content: Uint8Array;
+	/**
+	 * Metadata of the exported file.
+	 *
+	 * The counterpart of `ImportFile.toBeImportedFilesMetadata`. Plugins can
+	 * use it to pass information to the writer. For example, a plugin that
+	 * supports a namespaced `pathPattern` (`Record<namespace, pattern>`)
+	 * provides `{ namespace }` so that `saveProjectToDirectory` can resolve
+	 * the pattern each exported file belongs to.
+	 *
+	 * https://github.com/opral/inlang/issues/4356
+	 */
+	metadata?: Record<string, any>;
 };
 
 /**

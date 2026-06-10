@@ -828,6 +828,16 @@ test("it should handle namespaces", async () => {
 	expect(exportedLogin).toStrictEqual({
 		button: "value2",
 	});
+
+	// the namespace metadata enables the SDK to resolve namespaced
+	// pathPatterns when writing files back to disk
+	// https://github.com/opral/inlang/issues/4356
+	expect(
+		exported.find((e) => e.name === "common-en.json")?.metadata
+	).toStrictEqual({ namespace: "common" });
+	expect(
+		exported.find((e) => e.name === "login-en.json")?.metadata
+	).toStrictEqual({ namespace: "login" });
 });
 
 test("it should put new entities into the file without a namespace", async () => {
