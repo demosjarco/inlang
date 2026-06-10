@@ -79,33 +79,19 @@ function parseFile(args: {
 		}
 	>();
 	for (const key in resource) {
-		const keyParts = key.split("_");
-		const hasPluralSuffix = testForPlurals(key);
-		// i18next ordinal plurals use the reserved `_ordinal_<category>`
-		// suffix, optionally combined with context:
-		// "race_male_ordinal_one" -> ["race", "male", "ordinal", "one"]
-		// https://www.i18next.com/translation-function/plurals#ordinal-plurals
-		const isOrdinal = hasPluralSuffix && keyParts.at(-2) === "ordinal";
-		const summary = bundleSelectorsByRootKey.get(keyParts[0]!) ?? {
+		const { rootKey, isOrdinal, isCardinalPlural, isZero, hasContext } =
+			classifyKey(key);
+		const summary = bundleSelectorsByRootKey.get(rootKey) ?? {
 			hasPlurals: false,
 			hasContext: false,
 			hasZero: false,
 			hasOrdinal: false,
 		};
-		summary.hasPlurals = summary.hasPlurals || (hasPluralSuffix && !isOrdinal);
+		summary.hasPlurals = summary.hasPlurals || isCardinalPlural;
 		summary.hasOrdinal = summary.hasOrdinal || isOrdinal;
-		summary.hasContext =
-			summary.hasContext ||
-			(isOrdinal
-				? keyParts.length === 4
-				: hasPluralSuffix
-					? keyParts.length === 3
-					: keyParts.length === 2);
-		// `_zero` is i18next's exact `count === 0` match in every language
-		// (in addition to the Intl "zero" plural category) — cardinal only,
-		// see https://www.i18next.com/translation-function/plurals
-		summary.hasZero = summary.hasZero || (!isOrdinal && key.endsWith("_zero"));
-		bundleSelectorsByRootKey.set(keyParts[0]!, summary);
+		summary.hasContext = summary.hasContext || hasContext;
+		summary.hasZero = summary.hasZero || isZero;
+		bundleSelectorsByRootKey.set(rootKey, summary);
 	}
 
 	for (const key in resource) {
@@ -162,7 +148,13 @@ function parseMessage(args: {
 
 	// i18next suffixes keys with context or plurals
 	// "friend_female_one" -> "friend"
-	const keyParts = args.key.split("_");
+	const {
+		keyParts,
+		isOrdinal,
+		isCardinalPlural: hasPlurals,
+		isZero,
+		hasContext,
+	} = classifyKey(args.key);
 	let bundleId = keyParts[0]!;
 	if (args.namespace) {
 		// following i18next's convention
@@ -190,20 +182,6 @@ function parseMessage(args: {
 		matches: [],
 		pattern: pattern.result,
 	};
-
-	// plurals, see https://www.i18next.com/misc/json-format#i18next-json-v4
-	const hasPluralSuffix = testForPlurals(args.key);
-	// ordinal plurals use the reserved `_ordinal_<category>` suffix, see
-	// https://www.i18next.com/translation-function/plurals#ordinal-plurals
-	const isOrdinal = hasPluralSuffix && keyParts.at(-2) === "ordinal";
-	const hasPlurals = hasPluralSuffix && !isOrdinal;
-	// context is used see https://www.i18next.com/translation-function/context
-	const hasContext = isOrdinal
-		? keyParts.length === 4
-		: hasPluralSuffix
-			? keyParts.length === 3
-			: keyParts.length === 2;
-	const isZero = !isOrdinal && args.key.endsWith("_zero");
 
 	// base keys are the fallback for their context/plural siblings and get
 	// explicit catchall matches (see the per-bundle summary in parseFile).
@@ -525,3 +503,45 @@ const testForPlurals = (key: string) =>
 	key.endsWith("_few") ||
 	key.endsWith("_many") ||
 	key.endsWith("_other");
+
+/**
+ * Classifies an i18next key by its suffixes — the single source of truth for
+ * the per-bundle summary in `parseFile` and the per-key parsing in
+ * `parseMessage`.
+ *
+ * - cardinal plural categories: `key_one`, `key_other`, ...
+ *   (https://www.i18next.com/misc/json-format#i18next-json-v4)
+ * - ordinal plurals use the reserved `_ordinal_<category>` suffix:
+ *   `key_ordinal_one`
+ *   (https://www.i18next.com/translation-function/plurals#ordinal-plurals)
+ * - `_zero` is i18next's exact `count === 0` match in every language, in
+ *   addition to the Intl "zero" plural category — cardinal only
+ *   (https://www.i18next.com/translation-function/plurals)
+ * - context adds one segment between the root key and the plural suffix:
+ *   `key_male`, `key_male_one`, `key_male_ordinal_one`
+ *   (https://www.i18next.com/translation-function/context)
+ */
+function classifyKey(key: string): {
+	keyParts: string[];
+	rootKey: string;
+	isOrdinal: boolean;
+	isCardinalPlural: boolean;
+	isZero: boolean;
+	hasContext: boolean;
+} {
+	const keyParts = key.split("_");
+	const hasPluralSuffix = testForPlurals(key);
+	const isOrdinal = hasPluralSuffix && keyParts.at(-2) === "ordinal";
+	return {
+		keyParts,
+		rootKey: keyParts[0]!,
+		isOrdinal,
+		isCardinalPlural: hasPluralSuffix && !isOrdinal,
+		isZero: !isOrdinal && key.endsWith("_zero"),
+		hasContext: isOrdinal
+			? keyParts.length === 4
+			: hasPluralSuffix
+				? keyParts.length === 3
+				: keyParts.length === 2,
+	};
+}
