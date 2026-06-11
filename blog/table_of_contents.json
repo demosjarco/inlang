@@ -1,5 +1,11 @@
 [
   {
+    "path": "./official-i18next-inlang-init/index.md",
+    "slug": "official-i18next-inlang-init",
+    "date": "2026-06-11",
+    "authors": ["samuelstroschein"]
+  },
+  {
     "path": "./icu-messageformat-v1-plugin/index.md",
     "slug": "icu-messageformat-v1-plugin",
     "date": "2026-01-13",
