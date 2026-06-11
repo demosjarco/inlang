@@ -1,6 +1,5 @@
 import type { InlangPlugin } from "@inlang/sdk";
 import type { PluginSettings } from "./settings.js";
-import { config } from "./ideExtension/config.js";
 import { pluginV4 } from "./legacy/plugin.v4.js";
 import { importFiles } from "./import-export/importFiles.js";
 import { exportFiles } from "./import-export/exportFiles.js";
@@ -24,7 +23,10 @@ export const plugin: InlangPlugin<{
 	importFiles,
 	exportFiles,
 	toBeImportedFiles,
-	meta: {
-		"app.inlang.ideExtension": config,
-	},
+	// NOTE: no static `meta` here on purpose. Sherlock only migrates
+	// `addCustomApi({ settings })` into `meta` when `meta` is unset — and the
+	// ide-extension matchers need the plugin settings (pathPattern) baked in
+	// for namespace inference. A static meta shadows that migration and
+	// silently disables all Sherlock features for i18next projects, see
+	// https://github.com/opral/inlang/issues/4368
 };
