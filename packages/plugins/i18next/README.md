@@ -17,6 +17,8 @@ If you're using i18next for internationalization, this plugin lets you:
 
 The plugin reads and writes i18next JSON files, preserving your existing file structure (nested or flat keys, namespaces, plurals). It also tells Sherlock how to detect `t()` function calls in your code so you see inline translation previews.
 
+If you use [locize](https://locize.com/) as a hosted TMS for i18next, you can keep using the same i18next resources. The plugin lets inlang tools work alongside that setup.
+
 # Supported i18next Features
 
 | Feature | Status | Notes |
@@ -28,7 +30,8 @@ The plugin reads and writes i18next JSON files, preserving your existing file st
 | Formatting | ✅ Supported | Simple format functions like `{{value, uppercase}}` |
 | Formatting with options | ❌ Not supported | `{{value, format, option}}` will throw an error on export |
 | Plurals | ✅ Supported | All forms: `_zero`, `_one`, `_two`, `_few`, `_many`, `_other` |
-| Context | ⚠️ Partial | Basic context suffix detection (e.g., `key_male`) |
+| Ordinal plurals | ✅ Supported | Forms like `_ordinal_one`, `_ordinal_two`, `_ordinal_few`, `_ordinal_other` |
+| Context | ✅ Supported | Context suffix detection (e.g., `key_male`) including context + plural combinations |
 | Namespaces | ✅ Supported | Single and multiple namespace configurations |
 | Nesting (`$t()`) | ⚠️ Read-only | Recognized but cannot be translated inline |
 | Objects/Arrays as values | ✅ Supported | Preserved during roundtrip |
@@ -40,6 +43,18 @@ The plugin reads and writes i18next JSON files, preserving your existing file st
 - **i18next v1-v10**: Limited support (older plural format `_plural` may need migration)
 
 ## Installation
+
+### Existing i18next projects
+
+The quickest setup is the official i18next CLI:
+
+```sh
+npx i18next-cli init --inlang
+```
+
+The command creates `project.inlang/settings.json` for your existing i18next JSON files and pins a compatible `@inlang/plugin-i18next` version.
+
+### Manual setup
 
 - Add this to the modules in your `project.inlang/settings.json`
 - Change the `baseLocale` if needed 
@@ -194,7 +209,6 @@ The following i18next features are **not supported** by this plugin:
 | **Formatting with options** | `{{value, number(minimumFractionDigits: 2)}}` will throw "Not implemented" error on export |
 | **Inline nesting** | `$t(key)` references are read but cannot be edited or translated inline |
 | **Postprocessors** | Runtime-only feature, not applicable to static translation files |
-| **Context + Plural combinations** | Complex variants may not roundtrip correctly |
 | **Template literal strings** | Only single and double quoted strings are parsed in code |
 | **Custom `t` function aliases** | Only standard `t()` function calls are detected by Sherlock |
 
