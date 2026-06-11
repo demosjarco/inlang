@@ -462,10 +462,18 @@ const ideExtensionConfig = (
 		],
 		extractMessageOptions: [
 			{
-				callback: (args: { messageId: string }) => ({
-					messageId: args.messageId,
-					messageReplacement: `{t("${args.messageId}")}`,
-				}),
+				// Sherlock passes `bundleId` (the current ide-extension
+				// contract); older consumers passed `messageId`. Accept both
+				// and return both so neither contract breaks.
+				// https://github.com/opral/inlang/issues/4368
+				callback: (args: { bundleId?: string; messageId?: string }) => {
+					const id = args.bundleId ?? args.messageId;
+					return {
+						bundleId: id,
+						messageId: id,
+						messageReplacement: `{t("${id}")}`,
+					};
+				},
 			},
 		],
 		documentSelectors: [
