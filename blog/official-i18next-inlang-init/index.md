@@ -54,6 +54,8 @@ Adriano, maintainer of i18next, tested the path from an existing i18next project
 - `@inlang/sdk` 2.10.0
 - `@inlang/paraglide-js` 2.19.0
 
+locize also published a deeper look at the interoperability between inlang and i18next: [Internationalization with inlang and i18next](https://www.locize.com/blog/inlang-interop/).
+
 ## Get started
 
 In an existing i18next project, run:
