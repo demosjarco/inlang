@@ -150,6 +150,77 @@ test("imports and exports namespace files", async () => {
 	});
 });
 
+test("exports renamed imported namespace keys using the current bundle id", async () => {
+	const imported = await importFiles({
+		settings: {
+			"plugin.inlang.nextIntl": {
+				pathPattern: {
+					About: "./messages/{locale}/About.json",
+				},
+			},
+		} as any,
+		files: [
+			{
+				locale: "en",
+				content: new TextEncoder().encode(
+					JSON.stringify({ title: "About us" })
+				),
+				toBeImportedFilesMetadata: {
+					namespace: "About",
+				},
+			},
+		],
+	});
+	imported.bundles[0]!.id = "About.heading";
+	imported.messages[0]!.bundleId = "About.heading";
+	imported.variants[0]!.messageBundleId = "About.heading";
+
+	const exported = await runExportFiles(imported, {
+		"plugin.inlang.nextIntl": {
+			pathPattern: {
+				About: "./messages/{locale}/About.json",
+			},
+		},
+	});
+
+	expect(JSON.parse(new TextDecoder().decode(exported[0]?.content))).toEqual({
+		heading: "About us",
+	});
+});
+
+test("exports bundle ids equal to a namespace as regular keys", async () => {
+	const exported = await exportFiles({
+		settings: {
+			"plugin.inlang.nextIntl": {
+				pathPattern: {
+					About: "./messages/{locale}/About.json",
+				},
+			},
+		} as any,
+		bundles: [{ id: "About" }] as any,
+		messages: [
+			{
+				id: "message-1",
+				bundleId: "About",
+				locale: "en",
+				selectors: [],
+			},
+		] as any,
+		variants: [
+			{
+				id: "variant-1",
+				messageId: "message-1",
+				pattern: [{ type: "text", value: "About us" }],
+			},
+		] as any,
+	});
+
+	expect((exported[0] as any)?.metadata).toBeUndefined();
+	expect(JSON.parse(new TextDecoder().decode(exported[0]?.content))).toEqual({
+		About: "About us",
+	});
+});
+
 test("exports sourceLanguageFilePath metadata for the SDK writer", async () => {
 	const settings = {
 		baseLocale: "en",

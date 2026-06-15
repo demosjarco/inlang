@@ -66,7 +66,10 @@ export const exportFiles: NonNullable<
 				result[message.locale] ??= [];
 				result[message.locale]!.push({
 					key: bundle.id,
-					path: getMessagePath(message.id),
+					path: getCurrentMessagePath({
+						messageId: message.id,
+						currentKey: bundle.id,
+					}),
 					value,
 				});
 			} else {
@@ -75,7 +78,10 @@ export const exportFiles: NonNullable<
 				resultNamespaces[namespace]![message.locale] ??= [];
 				resultNamespaces[namespace]![message.locale]!.push({
 					key,
-					path: getMessagePath(message.id),
+					path: getCurrentMessagePath({
+						messageId: message.id,
+						currentKey: key,
+					}),
 					value,
 				});
 			}
@@ -147,19 +153,14 @@ function resolveNamespaceFromBundleId(
 ): string | undefined {
 	return [...namespaces]
 		.sort((a, b) => b.length - a.length)
-		.find(
-			(namespace) =>
-				bundleId === namespace || bundleId.startsWith(`${namespace}.`)
-		);
+		.find((namespace) => bundleId.startsWith(`${namespace}.`));
 }
 
 function removeNamespaceFromBundleId(
 	bundleId: string,
 	namespace: string
 ): string {
-	return bundleId === namespace
-		? bundleId
-		: bundleId.replace(`${namespace}.`, "");
+	return bundleId.replace(`${namespace}.`, "");
 }
 
 type ExportMessage = {
@@ -208,6 +209,14 @@ function assignPath(
 		cursor[segment] ??= {};
 		cursor = cursor[segment] as Record<string, unknown>;
 	}
+}
+
+function getCurrentMessagePath(args: {
+	messageId: string;
+	currentKey: string;
+}): string[] | undefined {
+	const path = getMessagePath(args.messageId);
+	return path?.join(".") === args.currentKey ? path : undefined;
 }
 
 function withSourceLanguageFilePathMetadata(args: {
