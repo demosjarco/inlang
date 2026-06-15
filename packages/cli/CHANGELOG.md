@@ -1,5 +1,12 @@
 # @inlang/cli
 
+## 3.1.13
+
+### Patch Changes
+
+- Updated dependencies [bf2af52]
+  - @inlang/sdk@2.10.1
+
 ## 3.1.12
 
 ### Patch Changes

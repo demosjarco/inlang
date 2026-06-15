@@ -1,5 +1,12 @@
 # @inlang/rpc
 
+## 0.3.63
+
+### Patch Changes
+
+- Updated dependencies [bf2af52]
+  - @inlang/sdk@2.10.1
+
 ## 0.3.62
 
 ### Patch Changes

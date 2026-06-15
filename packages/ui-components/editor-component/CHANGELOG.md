@@ -1,5 +1,12 @@
 # @inlang/message-bundle-component
 
+## 10.0.1
+
+### Patch Changes
+
+- Updated dependencies [bf2af52]
+  - @inlang/sdk@2.10.1
+
 ## 10.0.0
 
 ### Patch Changes
