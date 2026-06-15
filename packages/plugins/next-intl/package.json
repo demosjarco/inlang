@@ -35,7 +35,7 @@
 		"@inlang/tsconfig": "workspace:*",
 		"@types/flat": "^5.0.2",
 		"@types/lodash.merge": "^4.6.7",
-		"@inlang/sdk": "0.36.3",
+		"@inlang/sdk": "workspace:*",
 		"@types/parsimmon": "1.10.6",
 		"esbuild": "^0.24.2",
 		"flat": "^5.0.2",

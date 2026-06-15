@@ -19,14 +19,14 @@ The plugin reads and writes next-intl JSON files, preserving your existing file 
 
 # Supported next-intl Features
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Basic key-value pairs | ✅ Supported | Fully working |
-| Nested keys | ✅ Supported | Auto-detects flat vs nested structure |
-| Variable interpolation | ✅ Supported | `{variable}` with customizable patterns |
-| Rich text | ⚠️ Partial | Tags are treated as text |
-| Plurals (ICU) | ❌ Not supported | ICU message format not parsed |
-| Select (ICU) | ❌ Not supported | ICU message format not parsed |
+| Feature                | Status           | Notes                                   |
+| ---------------------- | ---------------- | --------------------------------------- |
+| Basic key-value pairs  | ✅ Supported     | Fully working                           |
+| Nested keys            | ✅ Supported     | Auto-detects flat vs nested structure   |
+| Variable interpolation | ✅ Supported     | `{variable}` with customizable patterns |
+| Rich text              | ⚠️ Partial       | Tags are treated as text                |
+| Plurals (ICU)          | ❌ Not supported | ICU message format not parsed           |
+| Select (ICU)           | ❌ Not supported | ICU message format not parsed           |
 
 ## Version Compatibility
 
@@ -45,10 +45,10 @@ The plugin reads and writes next-intl JSON files, preserving your existing file 
 	"languageTags": ["en", "de"],
 	"modules": [
 		"https://cdn.jsdelivr.net/npm/@inlang/plugin-next-intl@latest/dist/index.js"
-  	],
+	],
 	"plugin.inlang.nextIntl": {
-    	"pathPattern": "./messages/{languageTag}.json"
-  	}
+		"pathPattern": "./messages/{locale}.json"
+	}
 }
 ```
 
@@ -58,18 +58,44 @@ The plugin offers further configuration options that can be passed as arguments.
 
 ```typescript
 type PluginSettings = {
-	pathPattern: string
-	variableReferencePattern?: [string] | [string, string]
-	sourceLanguageFilePath?: string
-}
+	pathPattern: string | { [namespace: string]: string };
+	variableReferencePattern?: [string] | [string, string];
+	sourceLanguageFilePath?: string;
+};
 ```
 
 ## `pathPattern`
 
-To use the plugin, you must provide a path to the directory where your language-specific files are stored. Use the dynamic path syntax `{languageTag}` to specify the language name.
+To use the plugin, you must provide a path to the directory where your language-specific files are stored. Use the dynamic path syntax `{locale}` to specify the locale name.
+
+`{languageTag}` is still supported for legacy projects, but `{locale}` is recommended for new configurations.
 
 ```json
-"pathPattern": "./messages/{languageTag}.json"
+"pathPattern": "./messages/{locale}.json"
+```
+
+Use an object when your next-intl messages are split by namespace. Namespace maps require tools that use the new `importFiles` and `exportFiles` API; the legacy `loadMessages` and `saveMessages` hooks only support a single string `pathPattern`.
+
+```json
+"pathPattern": {
+	"About": "./messages/{locale}/About.json",
+	"HomePage": "./messages/HomePage/{locale}.json"
+}
+```
+
+For example, `./messages/en/About.json` with this content:
+
+```json
+{
+	"title": "About us"
+}
+```
+
+is exposed as the message ID `About.title`, matching next-intl usage like:
+
+```ts
+const t = useTranslations("About");
+t("title");
 ```
 
 ## `variableReferencePattern`
@@ -131,22 +157,24 @@ The **source language file determines the structure** for all other locale files
 ### Example
 
 If your source language (`en.json`) looks like this:
+
 ```json
 {
-  "About": {
-    "title": "About us",
-    "description": "Learn more about our company"
-  }
+	"About": {
+		"title": "About us",
+		"description": "Learn more about our company"
+	}
 }
 ```
 
 Then your target language (`de.json`) will be written in the same nested structure:
+
 ```json
 {
-  "About": {
-    "title": "Über uns",
-    "description": "Erfahren Sie mehr über unser Unternehmen"
-  }
+	"About": {
+		"title": "Über uns",
+		"description": "Erfahren Sie mehr über unser Unternehmen"
+	}
 }
 ```
 
@@ -154,11 +182,11 @@ Then your target language (`de.json`) will be written in the same nested structu
 
 The following next-intl features are **not supported** by this plugin:
 
-| Feature | Limitation |
-|---------|------------|
-| **ICU message format** | Plurals, select, and other ICU syntax are not parsed |
+| Feature                  | Limitation                                              |
+| ------------------------ | ------------------------------------------------------- |
+| **ICU message format**   | Plurals, select, and other ICU syntax are not parsed    |
 | **Rich text formatting** | Tags like `<bold>text</bold>` are treated as plain text |
-| **Nested `t()` calls** | References like `{t('other.key')}` are not resolved |
+| **Nested `t()` calls**   | References like `{t('other.key')}` are not resolved     |
 
 # Troubleshooting
 
@@ -167,6 +195,7 @@ The following next-intl features are **not supported** by this plugin:
 **Cause**: The source language file structure doesn't match what the plugin expects.
 
 **Solution**:
+
 1. Ensure your source language file (e.g., `en.json`) is valid JSON
 2. Check that the file structure is consistent (all nested or all flat)
 3. The source language file is the "source of truth" for key ordering
@@ -176,6 +205,7 @@ The following next-intl features are **not supported** by this plugin:
 **Cause**: Non-standard function names or unsupported file types.
 
 **Solution**:
+
 - Use standard function calls: `t("key")`, `useTranslations()`, or `getTranslations()`
 - Supported file types: `.ts`, `.tsx`, `.js`, `.jsx`
 
@@ -184,8 +214,9 @@ The following next-intl features are **not supported** by this plugin:
 **Cause**: Target files don't exist or path pattern is incorrect.
 
 **Solution**:
+
 1. Verify your `pathPattern` matches your file structure
-2. Check that the `{languageTag}` placeholder is in the correct position
+2. Check that the `{locale}` or legacy `{languageTag}` placeholder is in the correct position
 3. Directories are created automatically, but the language tag must be in your `languageTags` array
 
 # Contributing

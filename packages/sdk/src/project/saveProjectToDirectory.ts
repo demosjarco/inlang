@@ -193,7 +193,9 @@ export async function saveProjectToDirectory(args: {
 				// mapping namespaces to patterns (e.g. plugin-i18next).
 				// https://github.com/opral/inlang/issues/4356
 				let targetPaths: string[];
-				if (typeof pathPattern === "string") {
+				if (typeof file.metadata?.["pathPattern"] === "string") {
+					targetPaths = [resolvePattern(file.metadata["pathPattern"])];
+				} else if (typeof pathPattern === "string") {
 					targetPaths = [resolvePattern(pathPattern)];
 				} else if (Array.isArray(pathPattern)) {
 					// an empty array writes nothing

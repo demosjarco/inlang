@@ -259,6 +259,51 @@ test("resolves a namespaced pathPattern object via export file metadata", async 
 	expect(JSON.parse(app as string)).toEqual({ title: "My app" });
 });
 
+test("resolves an export file pathPattern metadata override", async () => {
+	const volume = Volume.fromJSON({});
+	const mockPlugin: InlangPlugin = {
+		key: "mock",
+		exportFiles: async () => [
+			{
+				locale: "en",
+				name: "en.json",
+				content: new TextEncoder().encode(JSON.stringify({ hello: "Hello" })),
+				metadata: { pathPattern: "./main.json" },
+			},
+			{
+				locale: "de",
+				name: "de.json",
+				content: new TextEncoder().encode(JSON.stringify({ hello: "Hallo" })),
+			},
+		],
+	};
+
+	const project = await loadProjectInMemory({
+		blob: await newProject({
+			settings: {
+				baseLocale: "en",
+				locales: ["en", "de"],
+				modules: [],
+				mock: {
+					pathPattern: "./{locale}.json",
+				},
+			},
+		}),
+		providePlugins: [mockPlugin],
+	});
+
+	await saveProjectToDirectory({
+		fs: volume as any,
+		project,
+		path: "/foo/bar.inlang",
+	});
+
+	const source = await volume.promises.readFile("/foo/main.json", "utf-8");
+	const target = await volume.promises.readFile("/foo/de.json", "utf-8");
+	expect(JSON.parse(source as string)).toEqual({ hello: "Hello" });
+	expect(JSON.parse(target as string)).toEqual({ hello: "Hallo" });
+});
+
 // old plugin versions don't provide namespace metadata. falling back to
 // file.name is better than throwing "pathPattern.replace is not a function"
 // https://github.com/opral/inlang/issues/4356
@@ -342,7 +387,10 @@ test("falls back to the file name when the namespace is missing from the pathPat
 		path: "/foo/bar.inlang",
 	});
 
-	const fallback = await volume.promises.readFile("/foo/stray-en.json", "utf-8");
+	const fallback = await volume.promises.readFile(
+		"/foo/stray-en.json",
+		"utf-8"
+	);
 	expect(JSON.parse(fallback as string)).toEqual({ hello: "Hello" });
 });
 

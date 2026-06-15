@@ -78,7 +78,8 @@ export type ExportFile = {
 	 * use it to pass information to the writer. For example, a plugin that
 	 * supports a namespaced `pathPattern` (`Record<namespace, pattern>`)
 	 * provides `{ namespace }` so that `saveProjectToDirectory` can resolve
-	 * the pattern each exported file belongs to.
+	 * the pattern each exported file belongs to. Plugins can also provide
+	 * `{ pathPattern }` to override the configured pattern for one file.
 	 *
 	 * https://github.com/opral/inlang/issues/4356
 	 */

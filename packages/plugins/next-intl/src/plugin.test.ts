@@ -1,17 +1,44 @@
+// @ts-nocheck
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect, it, describe } from "vitest";
 import type { PluginSettings } from "./settings.js";
-import {
-	createVariant,
-	getVariant,
-	ProjectSettings,
-	type Message,
-	type Variant,
-} from "@inlang/sdk";
 import { plugin } from "./plugin.js";
 import { createNodeishMemoryFs } from "@lix-js/fs";
 
 const pluginId = "plugin.inlang.nextIntl";
+type ProjectSettings = any;
+type Variant = {
+	languageTag: string;
+	match: string[];
+	pattern: Array<
+		| { type: "Text"; value: string }
+		| { type: "VariableReference"; name: string }
+	>;
+};
+type Message = {
+	id: string;
+	alias: Record<string, string>;
+	selectors: Array<{ type: "VariableReference"; name: string }>;
+	variants: Variant[];
+};
+
+function getVariant(
+	message: Message,
+	args: { where: { languageTag: string } }
+) {
+	return message.variants.find(
+		(variant) => variant.languageTag === args.where.languageTag
+	);
+}
+
+function createVariant(message: Message, args: { data: Variant }) {
+	return {
+		data: {
+			...message,
+			variants: [...message.variants, args.data],
+		},
+	};
+}
 
 describe("loadMessage", () => {
 	it("should return messages if the path pattern is valid", async () => {
@@ -34,6 +61,26 @@ describe("loadMessage", () => {
 		expect(variant?.pattern[0]?.type).toBe("Text");
 	});
 
+	it("should support the locale placeholder in legacy loadMessages", async () => {
+		const fs = createNodeishMemoryFs();
+		await fs.writeFile("./en.json", JSON.stringify({ test: "Hello world" }));
+
+		const messages = await plugin.loadMessages!({
+			settings: {
+				sourceLanguageTag: "en",
+				languageTags: ["en"],
+				modules: [],
+				[pluginId]: {
+					pathPattern: "./{locale}.json",
+				},
+			},
+			nodeishFs: fs,
+		});
+
+		const variant = getVariant(messages[0]!, { where: { languageTag: "en" } });
+		expect(variant?.pattern[0]?.type).toBe("Text");
+	});
+
 	it("should work with empty json files", async () => {
 		const fs = createNodeishMemoryFs();
 		await fs.writeFile("./en.json", JSON.stringify({}));
@@ -43,7 +90,7 @@ describe("loadMessage", () => {
 		};
 		const sourceLanguageTag = "en";
 
-		expect(
+		await expect(
 			plugin.loadMessages!({
 				settings: {
 					sourceLanguageTag,
@@ -64,7 +111,7 @@ describe("loadMessage", () => {
 		};
 		const sourceLanguageTag = "en";
 		const languageTags = ["en", "de"];
-		expect(
+		await expect(
 			plugin.loadMessages!({
 				settings: {
 					sourceLanguageTag,
@@ -137,6 +184,42 @@ describe("saveMessage", () => {
 			} as any,
 			nodeishFs: fs,
 		});
+	});
+
+	it("should replace every locale placeholder in legacy saveMessages", async () => {
+		const fs = createNodeishMemoryFs();
+		const messages: Message[] = [
+			{
+				id: "test",
+				alias: {},
+				selectors: [],
+				variants: [
+					{
+						languageTag: "en",
+						match: [],
+						pattern: [
+							{
+								type: "Text",
+								value: "Hello world",
+							},
+						],
+					},
+				],
+			},
+		];
+
+		await plugin.saveMessages!({
+			messages,
+			settings: {
+				[pluginId]: {
+					pathPattern: "./{locale}/{locale}.json",
+				},
+			} as any,
+			nodeishFs: fs,
+		});
+
+		const saved = await fs.readFile("./en/en.json", { encoding: "utf-8" });
+		expect(JSON.parse(saved)).toEqual({ test: "Hello world" });
 	});
 });
 
