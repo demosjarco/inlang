@@ -3,10 +3,6 @@ import type { PluginSettings } from "../settings.js";
 import { PLUGIN_KEY } from "../pluginKey.js";
 import { getMessagePath } from "./messageId.js";
 
-const SOURCE_LANGUAGE_FILE_PATH_EXPORT_NAMESPACE =
-	"__nextIntl_sourceLanguageFilePath";
-const DEFAULT_PATH_PATTERN_EXPORT_NAMESPACE = "__nextIntl_pathPattern";
-
 type Pattern = Array<
 	| { type: "text"; value: string }
 	| {
@@ -238,21 +234,14 @@ function withSourceLanguageFilePathMetadata(args: {
 		return args.files;
 	}
 
-	const pathPattern = pluginSettings.pathPattern;
-	pluginSettings.pathPattern = {
-		[SOURCE_LANGUAGE_FILE_PATH_EXPORT_NAMESPACE]:
-			pluginSettings.sourceLanguageFilePath,
-		[DEFAULT_PATH_PATTERN_EXPORT_NAMESPACE]: pathPattern,
-	};
-
 	return args.files.map((file) => ({
 		...file,
-		metadata: {
-			...file.metadata,
-			namespace:
-				file.locale === sourceLocale
-					? SOURCE_LANGUAGE_FILE_PATH_EXPORT_NAMESPACE
-					: DEFAULT_PATH_PATTERN_EXPORT_NAMESPACE,
-		},
+		metadata:
+			file.locale === sourceLocale
+				? {
+						...file.metadata,
+						pathPattern: pluginSettings.sourceLanguageFilePath,
+					}
+				: file.metadata,
 	}));
 }

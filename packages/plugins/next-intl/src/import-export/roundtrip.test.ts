@@ -189,29 +189,14 @@ test("exports sourceLanguageFilePath metadata for the SDK writer", async () => {
 			},
 		] as any,
 	});
-	const sourceNamespace = (exported as any[]).find(
-		(file) => file.locale === "en"
-	)?.metadata?.namespace;
-	const targetNamespace = (exported as any[]).find(
-		(file) => file.locale === "de"
-	)?.metadata?.namespace;
+	const sourceFile = (exported as any[]).find((file) => file.locale === "en");
+	const targetFile = (exported as any[]).find((file) => file.locale === "de");
 
-	expect(
-		(
-			settings["plugin.inlang.nextIntl"].pathPattern as unknown as Record<
-				string,
-				string
-			>
-		)[sourceNamespace]
-	).toBe("./messages/main.json");
-	expect(
-		(
-			settings["plugin.inlang.nextIntl"].pathPattern as unknown as Record<
-				string,
-				string
-			>
-		)[targetNamespace]
-	).toBe("./messages/{locale}.json");
+	expect(sourceFile?.metadata?.pathPattern).toBe("./messages/main.json");
+	expect(targetFile?.metadata?.pathPattern).toBeUndefined();
+	expect(settings["plugin.inlang.nextIntl"].pathPattern).toBe(
+		"./messages/{locale}.json"
+	);
 });
 
 function runImportFiles(json: Record<string, any>, settings?: any) {
