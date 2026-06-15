@@ -1,32 +1,80 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type {
-	Message,
-	Variant,
-	LanguageTag,
-	Plugin,
-	NodeishFilesystemSubset,
-	ProjectSettings,
-} from "@inlang/sdk";
+import type { InlangPlugin } from "@inlang/sdk";
 import { PluginSettings } from "./settings.js";
 import { replaceAll } from "./utilities.js";
 import { ideExtensionConfig } from "./ideExtension/config.js";
 import { flatten, unflatten } from "flat";
 import { detectJsonFormatting } from "@inlang/detect-json-formatting";
+import { importFiles } from "./import-export/importFiles.js";
+import { exportFiles } from "./import-export/exportFiles.js";
+import { toBeImportedFiles } from "./import-export/toBeImportedFiles.js";
+import { PLUGIN_KEY } from "./pluginKey.js";
 
 // global variable to store the formatting of the file
 let serializeWithFormatting: ReturnType<typeof detectJsonFormatting>;
 let hasNestedKeys = false;
 
-const id = "plugin.inlang.nextIntl";
+const id = PLUGIN_KEY;
 
-export const plugin: Plugin<{
-	[id]: PluginSettings;
-}> = {
+type LanguageTag = string;
+type LegacyPattern = Array<
+	{ type: "Text"; value: string } | { type: "VariableReference"; name: string }
+>;
+type Variant = {
+	languageTag: LanguageTag;
+	match: string[];
+	pattern: LegacyPattern;
+};
+type Message = {
+	id: string;
+	alias: Record<string, string>;
+	selectors: Array<{ type: "VariableReference"; name: string }>;
+	variants: Variant[];
+};
+type NodeishFilesystemSubset = {
+	readFile:
+		| ((path: string) => Promise<ArrayBuffer>)
+		| ((path: string, options?: { encoding: "utf-8" }) => Promise<string>);
+	readdir: (path: string) => Promise<string[]>;
+	writeFile: (path: string, data: ArrayBuffer | string) => Promise<void>;
+	mkdir: (path: string, options?: { recursive?: boolean }) => Promise<void>;
+};
+type LegacyProjectSettings = {
+	sourceLanguageTag: LanguageTag;
+	languageTags: LanguageTag[];
+	modules?: string[];
+};
+type NextIntlPlugin = Omit<
+	InlangPlugin<{ [id]: PluginSettings }>,
+	"loadMessages" | "saveMessages" | "addCustomApi"
+> & {
+	id: string;
+	displayName: string;
+	description: string;
+	loadMessages: (args: {
+		settings: LegacyProjectSettings & { [id]: PluginSettings };
+		nodeishFs: NodeishFilesystemSubset;
+	}) => Promise<Message[]>;
+	saveMessages: (args: {
+		messages: Message[];
+		settings: LegacyProjectSettings & { [id]: PluginSettings };
+		nodeishFs: NodeishFilesystemSubset;
+	}) => Promise<void>;
+	addCustomApi: (args: {
+		settings: { [id]: PluginSettings };
+	}) => Record<string, unknown>;
+};
+
+export const plugin: NextIntlPlugin = {
 	id,
+	key: id,
 	displayName: "Next-intl",
 	description:
 		"A plugin for the Next.js internationalization library next-intl",
 	settingsSchema: PluginSettings,
+	importFiles,
+	exportFiles,
+	toBeImportedFiles,
 
 	loadMessages: async ({ settings, nodeishFs }) => {
 		settings["plugin.inlang.nextIntl"].variableReferencePattern = settings[
@@ -60,15 +108,18 @@ export const plugin: Plugin<{
 async function loadMessages(args: {
 	nodeishFs: NodeishFilesystemSubset;
 	pluginSettings: PluginSettings;
-	settings: ProjectSettings;
+	settings: LegacyProjectSettings;
 }): Promise<Message[]> {
 	const messages: Message[] = [];
+	const pathPattern = assertLegacyStringPathPattern(
+		args.pluginSettings.pathPattern
+	);
 	for (const languageTag of resolveOrderOfLanguageTags(
 		args.settings.languageTags,
 		args.settings.sourceLanguageTag
 	)) {
 		const messagesFromFile = await getFileToParse(
-			args.pluginSettings.pathPattern,
+			pathPattern,
 			languageTag,
 			args.settings.sourceLanguageTag,
 			args.nodeishFs,
@@ -107,13 +158,13 @@ async function getFileToParse(
 	pathWithLanguage?: string
 ): Promise<Record<string, string>> {
 	if (typeof pathWithLanguage === "undefined") {
-		pathWithLanguage = path.replace("{languageTag}", languageTag);
+		pathWithLanguage = path.replace(/\{(languageTag|locale)\}/g, languageTag);
 	}
 	// get file, make sure that is not braking when the namespace doesn't exist in every languageTag dir
 	try {
-		const file = await nodeishFs.readFile(pathWithLanguage, {
+		const file = (await nodeishFs.readFile(pathWithLanguage, {
 			encoding: "utf-8",
-		});
+		})) as string;
 		//analyse format of file
 		if (sourceLanguageTag === languageTag) {
 			serializeWithFormatting = detectJsonFormatting(file);
@@ -251,6 +302,9 @@ async function saveMessages(args: {
 	pluginSettings: PluginSettings;
 	messages: Message[];
 }) {
+	const pathPattern = assertLegacyStringPathPattern(
+		args.pluginSettings.pathPattern
+	);
 	const storage:
 		| Record<LanguageTag, Record<Message["id"], Variant["pattern"]>>
 		| undefined = {};
@@ -265,7 +319,7 @@ async function saveMessages(args: {
 			typeof args.pluginSettings.sourceLanguageFilePath === "string" &&
 			languageTag === Object.keys(storage)[0] // sourceLanguage is always the first languageTag
 				? args.pluginSettings.sourceLanguageFilePath
-				: args.pluginSettings.pathPattern.replace("{languageTag}", languageTag);
+				: replaceLocale(pathPattern, languageTag);
 		try {
 			await args.nodeishFs.readdir(
 				pathWithLanguage.split("/").slice(0, -1).join("/")
@@ -283,6 +337,21 @@ async function saveMessages(args: {
 			serializeFile(value, args.pluginSettings.variableReferencePattern)
 		);
 	}
+}
+
+function assertLegacyStringPathPattern(
+	pathPattern: PluginSettings["pathPattern"]
+): string {
+	if (typeof pathPattern !== "string") {
+		throw new Error(
+			"Namespace pathPattern objects require the new import/export API."
+		);
+	}
+	return pathPattern;
+}
+
+function replaceLocale(pathPattern: string, locale: string): string {
+	return pathPattern.replace(/\{(languageTag|locale)\}/g, locale);
 }
 
 /**

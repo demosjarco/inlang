@@ -676,8 +676,8 @@ importers:
         specifier: 2.4.14
         version: 2.4.14(@sinclair/typebox@0.31.28)
       '@inlang/sdk':
-        specifier: 0.36.3
-        version: 0.36.3(babel-plugin-macros@3.1.0)
+        specifier: workspace:*
+        version: link:../../sdk
       '@inlang/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
