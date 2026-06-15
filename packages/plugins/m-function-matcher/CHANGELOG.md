@@ -1,5 +1,12 @@
 # @inlang/plugin-m-function-matcher
 
+## 2.2.8
+
+### Patch Changes
+
+- Updated dependencies [bf2af52]
+  - @inlang/sdk@2.10.1
+
 ## 2.2.7
 
 ### Patch Changes

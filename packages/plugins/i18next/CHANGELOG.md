@@ -1,5 +1,12 @@
 # @inlang/plugin-i18next
 
+## 6.2.2
+
+### Patch Changes
+
+- Updated dependencies [bf2af52]
+  - @inlang/sdk@2.10.1
+
 ## 6.2.1
 
 ### Patch Changes
