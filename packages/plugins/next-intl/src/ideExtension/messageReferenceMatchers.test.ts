@@ -398,6 +398,103 @@ it("should stop resolving an alias after a later non-translator declaration shad
 	expect(matches).toHaveLength(0);
 });
 
+it("should stop resolving an alias when a block shadow uses property access", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		{
+			const translate = t.rich;
+			<p>{translate("title")}</p>
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should stop resolving an alias when a block shadow uses a fallback expression", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		{
+			const translate = t ?? fallback;
+			<p>{translate("title")}</p>
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should stop resolving an alias when a block shadow uses an object literal", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		{
+			const translate = { t };
+			<p>{translate("title")}</p>
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should stop resolving an alias when a block shadow uses an array literal", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		{
+			const translate = [t];
+			<p>{translate("title")}</p>
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should stop resolving an alias when a block shadow uses a function literal", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		{
+			const translate = () => t("button");
+			<p>{translate("title")}</p>
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should only match the initializer call when a block shadow uses a call expression", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		{
+			const translate = t("button");
+			<p>{translate("title")}</p>
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.button");
+});
+
 it("should restore an outer alias after a block-local shadow ends", async () => {
 	const sourceCode = `
 		const t = useTranslations("DirectoryPage");
@@ -413,6 +510,123 @@ it("should restore an outer alias after a block-local shadow ends", async () => 
 	const matches = parse(sourceCode, settings);
 	expect(matches).toHaveLength(1);
 	expect(matches[0]?.messageId).toBe("DirectoryPage.title");
+});
+
+it("should restore an outer alias after a template interpolation shadow ends", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		const value = \`\${(() => { const translate = other; })()}\`;
+		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.title");
+});
+
+it("should ignore fake alias shadows in template literal text", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		const value = \`{ const translate = other; translate("title") }\`;
+		<p>{translate("after")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.after");
+});
+
+it("should ignore fake alias shadows in comments", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		// { const translate = other; translate("title") }
+		<p>{translate("after")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.after");
+});
+
+it("should not match calls to a block-local shadow of the canonical translator", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		{
+			const t = other;
+			<p>{t("title")}</p>
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not match calls to a function-local shadow of the canonical translator", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		function renderTitle() {
+			const t = other;
+			return <p>{t("title")}</p>;
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not match calls to a callback parameter shadowing the canonical translator", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		items.map((t) => <p>{t("title")}</p>);
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not match calls to a catch parameter shadowing the canonical translator", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		try {
+			render();
+		} catch (t) {
+			t("title");
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not match calls to a for-loop binding shadowing the canonical translator", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		for (const t of translators) {
+			t("title");
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
 });
 
 it("should not treat property access as a translator alias", async () => {
@@ -447,6 +661,110 @@ it("should not treat fallback expressions as translator aliases", async () => {
 		const t = useTranslations("DirectoryPage");
 		const translate = t ?? fallback;
 		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not resolve an alias inside a destructured block shadow", async () => {
+	const sourceCode = `
+		const { t: translate } = useTranslations("DirectoryPage");
+		{
+			const { t: translate } = other;
+			<p>{translate("title")}</p>
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not resolve an alias shadowed by a function parameter", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		function render(translate) {
+			return translate("title");
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not resolve an alias shadowed by a local function declaration", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		function translate(key) {
+			return key;
+		}
+		translate("title");
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not resolve an alias after it is reassigned away from the translator", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		let translate = t;
+		translate = other;
+		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should resolve a translator assigned through a later assignment", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		let translate;
+		translate = t;
+		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.title");
+});
+
+it("should not match t calls inside a function parameter shadow", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		function render(t) {
+			return t("title");
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not match t calls inside a local function declaration shadow", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		function t(key) {
+			return key;
+		}
+		t("title");
 	`;
 	const settings: PluginSettings = {
 		pathPattern: "./{language}.json",
