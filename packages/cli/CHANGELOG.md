@@ -1,5 +1,12 @@
 # @inlang/cli
 
+## 3.1.14
+
+### Patch Changes
+
+- Updated dependencies [eccea01]
+  - @inlang/sdk@2.10.2
+
 ## 3.1.13
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @inlang/sdk
 
+## 2.10.2
+
+### Patch Changes
+
+- eccea01: Fix Windows project sync path normalization to avoid rewriting unchanged files.
+
 ## 2.10.1
 
 ### Patch Changes
