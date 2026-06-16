@@ -4,7 +4,7 @@ import type { PluginSettings } from "../settings.js";
 
 type FunctionNameToNamespaces = Record<
 	string,
-	Array<{ ns?: string; declarationPosition: number }>
+	Array<{ ns?: string; declarationPosition: number; scopeEnd: number }>
 >;
 
 type NamespaceBinding = {
@@ -12,6 +12,11 @@ type NamespaceBinding = {
 	declarationPosition: number;
 	ns?: string;
 	aliasOf?: string;
+};
+
+type ScopeRange = {
+	start: number;
+	end: number;
 };
 
 const createParser = (
@@ -339,6 +344,7 @@ function parseNameSpaces(sourceCode: string): FunctionNameToNamespaces {
 	const parsedDeclarations = namespaceParser.entry!.tryParse(
 		sourceCode
 	) as NamespaceBinding[];
+	const scopeRanges = getScopeRanges(sourceCode);
 
 	const functionNameToNamespaces: FunctionNameToNamespaces = {};
 
@@ -351,6 +357,10 @@ function parseNameSpaces(sourceCode: string): FunctionNameToNamespaces {
 			declaration.varName &&
 			typeof declaration.declarationPosition === "number"
 		) {
+			const scopeEnd = getDeclarationScopeEnd(
+				declaration.declarationPosition,
+				scopeRanges
+			);
 			const namespace =
 				declaration.ns ??
 				(declaration.aliasOf
@@ -367,6 +377,7 @@ function parseNameSpaces(sourceCode: string): FunctionNameToNamespaces {
 			functionNameToNamespaces[declaration.varName]!.push({
 				ns: namespace,
 				declarationPosition: declaration.declarationPosition,
+				scopeEnd,
 			});
 		}
 	}
@@ -392,6 +403,7 @@ const getNamespaceForFunctionName = (
 	let latestDeclarationBeforeCall = null;
 	for (const declaration of declarations) {
 		if (declaration.declarationPosition >= startOffset) continue;
+		if (declaration.scopeEnd < startOffset) continue;
 
 		if (
 			latestDeclarationBeforeCall === null ||
@@ -404,6 +416,107 @@ const getNamespaceForFunctionName = (
 
 	return latestDeclarationBeforeCall?.ns;
 };
+
+function getDeclarationScopeEnd(
+	declarationPosition: number,
+	scopeRanges: ScopeRange[]
+) {
+	const containingScopes = scopeRanges.filter(
+		(scope) =>
+			scope.start < declarationPosition && declarationPosition < scope.end
+	);
+	const innermostScope = containingScopes.sort((a, b) => b.start - a.start)[0];
+	return innermostScope?.end ?? Number.POSITIVE_INFINITY;
+}
+
+function getScopeRanges(sourceCode: string): ScopeRange[] {
+	const scopeStack: number[] = [];
+	const scopeRanges: ScopeRange[] = [];
+	let state:
+		| "code"
+		| "singleQuoteString"
+		| "doubleQuoteString"
+		| "templateString"
+		| "lineComment"
+		| "blockComment" = "code";
+	let escaped = false;
+
+	for (let index = 0; index < sourceCode.length; index += 1) {
+		const char = sourceCode[index];
+		const nextChar = sourceCode[index + 1];
+
+		if (state === "lineComment") {
+			if (char === "\n") state = "code";
+			continue;
+		}
+
+		if (state === "blockComment") {
+			if (char === "*" && nextChar === "/") {
+				state = "code";
+				index += 1;
+			}
+			continue;
+		}
+
+		if (
+			state === "singleQuoteString" ||
+			state === "doubleQuoteString" ||
+			state === "templateString"
+		) {
+			if (escaped) {
+				escaped = false;
+				continue;
+			}
+			if (char === "\\") {
+				escaped = true;
+				continue;
+			}
+			if (
+				(state === "singleQuoteString" && char === "'") ||
+				(state === "doubleQuoteString" && char === '"') ||
+				(state === "templateString" && char === "`")
+			) {
+				state = "code";
+			}
+			continue;
+		}
+
+		if (char === "/" && nextChar === "/") {
+			state = "lineComment";
+			index += 1;
+			continue;
+		}
+		if (char === "/" && nextChar === "*") {
+			state = "blockComment";
+			index += 1;
+			continue;
+		}
+		if (char === "'") {
+			state = "singleQuoteString";
+			continue;
+		}
+		if (char === '"') {
+			state = "doubleQuoteString";
+			continue;
+		}
+		if (char === "`") {
+			state = "templateString";
+			continue;
+		}
+		if (char === "{") {
+			scopeStack.push(index);
+			continue;
+		}
+		if (char === "}") {
+			const scopeStart = scopeStack.pop();
+			if (scopeStart !== undefined) {
+				scopeRanges.push({ start: scopeStart, end: index });
+			}
+		}
+	}
+
+	return scopeRanges;
+}
 
 // Parse the expression
 export function parse(sourceCode: string, settings: PluginSettings) {

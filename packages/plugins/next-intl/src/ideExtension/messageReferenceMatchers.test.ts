@@ -398,6 +398,23 @@ it("should stop resolving an alias after a later non-translator declaration shad
 	expect(matches).toHaveLength(0);
 });
 
+it("should restore an outer alias after a block-local shadow ends", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		{
+			const translate = other;
+		}
+		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.title");
+});
+
 it("should not treat property access as a translator alias", async () => {
 	const sourceCode = `
 		const t = useTranslations("DirectoryPage");
