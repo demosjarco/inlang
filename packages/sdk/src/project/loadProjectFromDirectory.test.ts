@@ -473,6 +473,41 @@ describe("it should keep files between the inlang directory and lix in sync", as
 		expect(filesByPath["/settings.json"]).toBe(JSON.stringify(mockSettings));
 	});
 
+	test("does not rewrite unchanged files when nodePath.relative returns Windows separators", async () => {
+		const fs = Volume.fromJSON(mockDirectory);
+		const originalRelative = nodePath.relative.bind(nodePath);
+		const relativeSpy = vi
+			.spyOn(nodePath, "relative")
+			.mockImplementation((from, to) =>
+				originalRelative(from, to)
+					.split(nodePath.posix.sep)
+					.join(nodePath.win32.sep)
+			);
+		const writeFileSyncSpy = vi.spyOn(fs, "writeFileSync");
+		const writeFileSpy = vi.spyOn(fs.promises, "writeFile");
+
+		try {
+			const project = await loadProjectFromDirectory({
+				fs: fs as any,
+				path: "/project.inlang",
+			});
+
+			await project.close();
+
+			const writesToProjectFiles = [
+				...writeFileSyncSpy.mock.calls.map((call) => String(call[0])),
+				...writeFileSpy.mock.calls.map((call) => String(call[0])),
+			].filter((path) => path.startsWith("/project.inlang/"));
+
+			expect(relativeSpy).toHaveBeenCalled();
+			expect(writesToProjectFiles).toEqual([]);
+		} finally {
+			writeFileSpy.mockRestore();
+			writeFileSyncSpy.mockRestore();
+			relativeSpy.mockRestore();
+		}
+	});
+
 	test("file created in fs should be avaialable in lix ", async () => {
 		const syncInterval = 100;
 		const fs = Volume.fromJSON(mockDirectory);

@@ -318,7 +318,12 @@ async function syncLixFsFiles(args: {
 				// NOTE we could start with comparing the mdate and skip file read completely...
 				const data = args.fs.readFileSync(fullPath) as unknown as ArrayBuffer;
 
-				const relativePath = "/" + nodePath.relative(args.path, fullPath);
+				const relativePath =
+					"/" +
+					nodePath
+						.relative(args.path, fullPath)
+						.split(nodePath.win32.sep)
+						.join(nodePath.posix.sep);
 				if (!shouldSyncPath(relativePath)) {
 					continue;
 				}
