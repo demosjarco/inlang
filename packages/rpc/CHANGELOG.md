@@ -1,5 +1,12 @@
 # @inlang/rpc
 
+## 0.3.64
+
+### Patch Changes
+
+- Updated dependencies [eccea01]
+  - @inlang/sdk@2.10.2
+
 ## 0.3.63
 
 ### Patch Changes
