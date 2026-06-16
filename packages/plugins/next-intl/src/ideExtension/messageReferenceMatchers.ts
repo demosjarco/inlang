@@ -59,15 +59,23 @@ function parseBindings(
 	].sort((a, b) => a.declarationPosition - b.declarationPosition);
 
 	for (const candidate of candidates) {
-		const namespace =
-			candidate.ns ??
-			(candidate.aliasOf
-				? getVisibleBinding(
-						candidate.aliasOf,
-						candidate.declarationPosition,
-						bindings
-					)?.ns
-				: undefined);
+		const aliasedBinding = candidate.aliasOf
+			? getVisibleBinding(
+					candidate.aliasOf,
+					candidate.declarationPosition,
+					bindings
+				)
+			: undefined;
+		const namespace = candidate.ns ?? aliasedBinding?.ns;
+		const visibleSelfBinding = getVisibleBinding(
+			candidate.name,
+			candidate.declarationPosition,
+			bindings
+		);
+
+		if (!namespace && !visibleSelfBinding?.ns) {
+			continue;
+		}
 
 		if (!bindings[candidate.name]) {
 			bindings[candidate.name] = [];

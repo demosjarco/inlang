@@ -90,6 +90,19 @@ it("should detect t('id', ...args)", async () => {
 	).toBe("'some-id'");
 });
 
+it("should keep matching unprefixed messages for non-next-intl t bindings", async () => {
+	const sourceCode = `
+		const t = other;
+		<p>{t("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("title");
+});
+
 it("should not mismatch a string with different quotation marks", async () => {
 	const sourceCode = `
     <p>{t("yes')}</p>
