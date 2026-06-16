@@ -1,5 +1,11 @@
 # @inlang/message-bundle-component
 
+## 10.0.3
+
+### Patch Changes
+
+- d17dca4: Keep editor row controls stable when RTL direction is applied while preserving automatic text direction in pattern inputs.
+
 ## 10.0.2
 
 ### Patch Changes
