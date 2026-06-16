@@ -475,7 +475,8 @@ it("should stop resolving an alias when a block shadow uses a function literal",
 		pathPattern: "./{language}.json",
 	};
 	const matches = parse(sourceCode, settings);
-	expect(matches).toHaveLength(0);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.button");
 });
 
 it("should only match the initializer call when a block shadow uses a call expression", async () => {
@@ -798,7 +799,6 @@ it("should add the defined namespace for single-quoted getTranslations object as
 	expect(matches).toHaveLength(1);
 	expect(matches[0]?.messageId).toBe("Metadata.title");
 });
-
 
 it("should correctly reference messages with multiple useTranslations hooks", async () => {
 	const sourceCode = `
