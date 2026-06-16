@@ -4,8 +4,15 @@ import type { PluginSettings } from "../settings.js";
 
 type FunctionNameToNamespaces = Record<
 	string,
-	Array<{ ns: string; declarationPosition: number }>
+	Array<{ ns?: string; declarationPosition: number }>
 >;
+
+type NamespaceBinding = {
+	varName: string;
+	declarationPosition: number;
+	ns?: string;
+	aliasOf?: string;
+};
 
 const createParser = (
 	settings: PluginSettings,
@@ -71,12 +78,18 @@ const createParser = (
 						return null;
 					}
 
-					const finalMessageId = getFinalMessageId(
+					const namespace = getNamespaceForFunctionName(
 						invokedFuncName,
-						messageId,
 						keyStartIndex.offset,
 						functionNameToNamespaces
 					);
+					if (invokedFuncName !== "t" && !namespace) {
+						return null;
+					}
+
+					const finalMessageId = namespace
+						? `${namespace}.${messageId}`
+						: messageId;
 
 					return {
 						messageId: finalMessageId,
@@ -100,13 +113,20 @@ const createParser = (
 const createNamespaceParser = () => {
 	return Parsimmon.createLanguage({
 		entry: (r) => {
-			return Parsimmon.alt(r.FunctionCall!, Parsimmon.any)
+			return Parsimmon.alt(
+				r.TranslationFunctionDeclaration!,
+				r.TranslationFunctionAlias!,
+				Parsimmon.any
+			)
 				.many()
 				.map((matches) => {
 					// Filter for matches that have varName and ns
 					return matches.filter(
 						(match) =>
-							typeof match === "object" && match && match.varName && match.ns
+							typeof match === "object" &&
+							match &&
+							match.varName &&
+							(match.ns || match.aliasOf)
 					);
 				});
 		},
@@ -185,6 +205,9 @@ const createNamespaceParser = () => {
 				stringLiteral: Parsimmon.regexp(/"([^"\\]|\\.)*"/).map((value) =>
 					JSON.parse(value)
 				), // Match double-quoted strings and parse them
+				singleQuotedStringLiteral: Parsimmon.regexp(/'([^'\\]|\\.)*'/).map(
+					(value) => value.slice(1, -1)
+				),
 				variableName: Parsimmon.regexp(
 					/[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)*/
 				), // Match variable names
@@ -193,6 +216,7 @@ const createNamespaceParser = () => {
 
 			const valueParser = Parsimmon.alt(
 				x.stringLiteral,
+				x.singleQuotedStringLiteral,
 				x.variableName,
 				x.functionLiteral
 			);
@@ -222,7 +246,7 @@ const createNamespaceParser = () => {
 			);
 		},
 
-		FunctionCall: function (r) {
+		TranslationFunctionDeclaration: function (r) {
 			// Parser for the useTranslations() or getTranslations() call itself
 			const useOrGetTranslationsCall = Parsimmon.seqMap(
 				// Parsimmon.regex(/\b(?:use|get)Translations\b/), // OLD: no await
@@ -279,29 +303,69 @@ const createNamespaceParser = () => {
 				}
 			);
 		},
+
+		TranslationFunctionAlias: function (r) {
+			return Parsimmon.seqMap(
+				Parsimmon.index,
+				Parsimmon.regex(/\b(?:const|let|var)\b\s+/),
+				r.identifier!,
+				r.whitespace!,
+				Parsimmon.string("="),
+				r.whitespace!,
+				r.identifier!,
+				Parsimmon.regex(/[ \t]*(?=;|\r?\n|$)/),
+				(
+					declPosition,
+					_keyword,
+					varName,
+					_ws1,
+					_eq,
+					_ws2,
+					aliasOf,
+					_trailing
+				) => ({
+					varName,
+					aliasOf,
+					declarationPosition: declPosition.offset,
+				})
+			);
+		},
 	});
 };
 
 function parseNameSpaces(sourceCode: string): FunctionNameToNamespaces {
 	const namespaceParser = createNamespaceParser();
 	// parsedDeclarations will be an array of { varName: string, ns: string, declarationPosition: number }
-	const parsedDeclarations = namespaceParser.entry!.tryParse(sourceCode);
+	const parsedDeclarations = namespaceParser.entry!.tryParse(
+		sourceCode
+	) as NamespaceBinding[];
 
 	const functionNameToNamespaces: FunctionNameToNamespaces = {};
 
-	for (const declaration of parsedDeclarations) {
+	for (const declaration of parsedDeclarations.sort(
+		(a, b) => a.declarationPosition - b.declarationPosition
+	)) {
 		// Ensure declaration is not null and has the expected properties
 		if (
 			declaration &&
 			declaration.varName &&
-			declaration.ns &&
 			typeof declaration.declarationPosition === "number"
 		) {
+			const namespace =
+				declaration.ns ??
+				(declaration.aliasOf
+					? getNamespaceForFunctionName(
+							declaration.aliasOf,
+							declaration.declarationPosition,
+							functionNameToNamespaces
+						)
+					: undefined);
+
 			if (!functionNameToNamespaces[declaration.varName]) {
 				functionNameToNamespaces[declaration.varName] = [];
 			}
 			functionNameToNamespaces[declaration.varName]!.push({
-				ns: declaration.ns,
+				ns: namespace,
 				declarationPosition: declaration.declarationPosition,
 			});
 		}
@@ -317,44 +381,28 @@ function parseNameSpaces(sourceCode: string): FunctionNameToNamespaces {
 	return functionNameToNamespaces;
 }
 
-/**
- * Returns the fully qualified messageId by prepending the correct namespace, if available.
- * Looks up the most recent namespace declaration for the given variable name that appears before the function call.
- * If no suitable declaration is found, returns the original messageId.
- */
-const getFinalMessageId = (
-	invokedFuncName: string,
-	messageId: string,
+const getNamespaceForFunctionName = (
+	functionName: string,
 	startOffset: number,
 	functionNameToNamespaces: FunctionNameToNamespaces
-): string => {
-	// Get all namespace declarations for the invoked function variable
-	const declarations = functionNameToNamespaces[invokedFuncName];
-	if (!declarations) return messageId; // No declarations found, return as is
+): string | undefined => {
+	const declarations = functionNameToNamespaces[functionName];
+	if (!declarations) return undefined;
 
-	// Track the most recent (latest) declaration before the function call
 	let latestDeclarationBeforeCall = null;
 	for (const declaration of declarations) {
-		// Skip declarations that appear after or at the function call
-		const isDeclarationAfterOrAtCall =
-			declaration.declarationPosition >= startOffset;
-		if (isDeclarationAfterOrAtCall) continue;
+		if (declaration.declarationPosition >= startOffset) continue;
 
-		// If this is the first valid declaration, or it's closer to the function call than the previous one, update
-		const isFirstOrCloser =
+		if (
 			latestDeclarationBeforeCall === null ||
 			declaration.declarationPosition >
-				latestDeclarationBeforeCall.declarationPosition;
-
-		if (isFirstOrCloser) {
+				latestDeclarationBeforeCall.declarationPosition
+		) {
 			latestDeclarationBeforeCall = declaration;
 		}
 	}
 
-	// If no valid declaration was found, return the original messageId
-	if (latestDeclarationBeforeCall === null) return messageId;
-	// Prepend the namespace to the messageId
-	return `${latestDeclarationBeforeCall.ns}.${messageId}`;
+	return latestDeclarationBeforeCall?.ns;
 };
 
 // Parse the expression

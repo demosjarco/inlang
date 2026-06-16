@@ -314,6 +314,156 @@ it("should add the defined namespace by useTranslations hook", async () => {
 	expect(matches[0]?.messageId).toBe("DirectoryPage.title");
 });
 
+it("should add the defined namespace for renamed destructured useTranslations hook", async () => {
+	const sourceCode = `
+		const { t: translate } = useTranslations("DirectoryPage");
+		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.title");
+});
+
+it("should resolve simple aliases of namespaced translation functions", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.title");
+});
+
+it("should resolve chained aliases of namespaced translation functions", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		const label = translate;
+		<p>{label("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.title");
+});
+
+it("should not resolve aliases declared before the namespaced translation function", async () => {
+	const sourceCode = `
+		const translate = t;
+		const t = useTranslations("DirectoryPage");
+		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not emit raw matches for alias calls before the alias declaration", async () => {
+	const sourceCode = `
+		<p>{translate("title")}</p>
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should stop resolving an alias after a later non-translator declaration shadows it", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t;
+		{
+			const translate = other;
+			<p>{translate("title")}</p>
+		}
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not treat property access as a translator alias", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t.rich;
+		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should not treat function calls as translator aliases", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t("button");
+		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("DirectoryPage.button");
+});
+
+it("should not treat fallback expressions as translator aliases", async () => {
+	const sourceCode = `
+		const t = useTranslations("DirectoryPage");
+		const translate = t ?? fallback;
+		<p>{translate("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(0);
+});
+
+it("should add the defined namespace for direct getTranslations object assignment", async () => {
+	const sourceCode = `
+		const t = await getTranslations({ locale: "en", namespace: "Metadata" });
+		<p>{t("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("Metadata.title");
+});
+
+it("should add the defined namespace for single-quoted getTranslations object assignment", async () => {
+	const sourceCode = `
+		const t = await getTranslations({ locale: 'en', namespace: 'Metadata' });
+		<p>{t("title")}</p>
+	`;
+	const settings: PluginSettings = {
+		pathPattern: "./{language}.json",
+	};
+	const matches = parse(sourceCode, settings);
+	expect(matches).toHaveLength(1);
+	expect(matches[0]?.messageId).toBe("Metadata.title");
+});
+
 
 it("should correctly reference messages with multiple useTranslations hooks", async () => {
 	const sourceCode = `
