@@ -294,6 +294,7 @@ export default class InlangPatternEditor extends LitElement {
 				<div
 					class="inlang-pattern-editor-contenteditable"
 					contenteditable
+					dir="auto"
 					${ref(this.contentEditableElementRef)}
 				></div>
 				${this._patternState === undefined ||

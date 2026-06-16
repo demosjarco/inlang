@@ -29,6 +29,7 @@ export default class InlangVariant extends LitElement {
       }
       :host {
         border-top: 1px solid var(--sl-input-border-color) !important;
+        direction: ltr;
       }
       :host(:first-child) {
         border-top: none !important;
@@ -148,6 +149,23 @@ export default class InlangVariant extends LitElement {
 
     //get all sl-inputs and set the color to the inlang colors
     overridePrimitiveColors();
+    await this._syncMatchInputDirections();
+  }
+
+  override updated() {
+    void this._syncMatchInputDirections();
+  }
+
+  private async _syncMatchInputDirections() {
+    const inputs = Array.from(
+      this.shadowRoot?.querySelectorAll<SlInput>(".match") ?? []
+    );
+
+    await Promise.all(inputs.map((input) => input.updateComplete));
+
+    for (const input of inputs) {
+      input.input?.setAttribute("dir", "auto");
+    }
   }
 
   override render() {
@@ -161,6 +179,7 @@ export default class InlangVariant extends LitElement {
                     id="${this.variant.id}-${match.key}"
                     class="match"
                     size="small"
+                    dir="auto"
                     value=${match.type === "literal-match" ? match.value : "*"}
                     @sl-blur=${(e: Event) => {
 											const element = this.shadowRoot?.getElementById(

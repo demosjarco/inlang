@@ -29,6 +29,7 @@ export default class InlangMessage extends LitElement {
 			:host {
 				position: relative;
 				display: flex;
+				direction: ltr;
 				min-height: 44px;
 				border: 1px solid var(--sl-input-border-color) !important;
 				border-top: none !important;
