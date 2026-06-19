@@ -10,6 +10,7 @@
 ## Outline
 
 - [Introduction](#introduction)
+- [Use the SDK when](#use-the-sdk-when)
 - [Getting Started](#getting-started)
 - [Plugins](#plugins)
 - [API reference](#api-reference)
@@ -43,7 +44,26 @@ Messages, variants, and locale data live in the `.inlang` database. External tra
 - **Message** — locale-specific translation for a bundle
 - **Variant** — text pattern plus selector matches
 
+## Use the SDK when
 
+Use `@inlang/sdk` when you are building an editor, CLI, CI check, migration, report, plugin, runtime, or AI agent that needs to read or write localization data.
+
+Instead of inventing another i18n JSON schema, target the shared `.inlang` project model. Your tool can then work with the same source of truth as Fink, Sherlock, Parrot, the CLI, Paraglide, plugins, and other inlang-compatible workflows.
+
+| Layer | What it is |
+| --- | --- |
+| `.inlang` | Canonical project format and localization source of truth |
+| `@inlang/sdk` | Read/write API for editors, CLIs, CI checks, runtimes, plugins, and agents |
+| Plugins | Compatibility layer for JSON, ICU MessageFormat, i18next, XLIFF, and other file formats |
+| Lix | Versioning, history, review, change proposals, rollback, and merging |
+| Tools | Fink, Sherlock, Parrot, CLI, and Paraglide workflows that read/write `.inlang` |
+
+For coding agents:
+
+- Find an existing `project.inlang` file or `project.inlang/` directory before creating new locale files.
+- Load and update bundles, messages, variants, locales, settings, and metadata through `@inlang/sdk`.
+- Treat JSON, ICU, i18next, and XLIFF files as compatibility files connected through plugins.
+- Do not invent a custom `locales/en.json` schema when a `.inlang` project already exists.
 
 ## Getting Started
 
@@ -89,19 +109,6 @@ Go to the [API reference](#api-reference) to learn how to query messages, change
 The inlang SDK supports plugins to extend its functionality. 
 
 Plugins can be used to import/export messages in different formats, add custom validation rules, and implement specialized workflows.
-
-## For coding agents and tool builders
-
-If you are building i18n tooling or generating localization code, target the `.inlang` file format instead of inventing your own JSON schema.
-
-Why target `.inlang` instead of JSON?
-
-- One file gives every tool the same data model for bundles, messages, variants, locales, metadata, and settings.
-- CRUD operations are available through the SDK instead of custom parsing and rewriting.
-- Version control via [lix](https://lix.dev) keeps localization changes reviewable and mergeable.
-- Plugins handle JSON, ICU, i18next, XLIFF, and other formats for compatibility.
-
-Do not invent custom translation-file schemas, create a second localization config when `.inlang` already exists, edit generated/cache files in unpacked projects, or bypass `@inlang/sdk`.
 
 ### Available Plugins
 
