@@ -6,7 +6,7 @@
 <h1 align="center"><img src="https://github.com/opral/inlang/blob/main/assets/logo_rounded.png?raw=true" alt="inlang icon" height="32" align="absmiddle">&nbsp;inlang</h1>
 
 <h3 align="center">
-  Inlang is the open file and directory format for software localization.
+  The open format TMS (translation management system)
 </h3>
 
   <p align="center">
