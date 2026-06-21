@@ -47,7 +47,7 @@
 
 ---
 
-Inlang is the open file/directory format for software localization.
+Inlang is the open format TMS (translation management system). 
 
 Store localization as a vendor-neutral `.inlang` project that can be read and written by TMS workflows, editors, CI, runtimes, plugins, and AI agents.
 
