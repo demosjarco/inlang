@@ -227,7 +227,7 @@ describe("Paraglide Message Parser", () => {
     const sourceCode = `
 		import { createSignal } from "solid-js"
 		import { showToast } from "./Toast.jsx"
-		import { rpc } from "@inlang/rpc"
+		import { api } from "./api"
 		import * as m from "../../i18n-generated/messages";
 
 		export function NewsletterForm() {
@@ -236,7 +236,7 @@ describe("Paraglide Message Parser", () => {
 
 			const fetchSubscriber = async (email: any) => {
 				setLoading(true)
-				const response = await rpc.subscribeNewsletter({ email })
+				const response = await api.subscribeNewsletter({ email })
 				if (!response.error) {
 					if (response.data === "already subscribed") {
 						showToast({
