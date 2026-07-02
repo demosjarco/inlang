@@ -1,5 +1,11 @@
 # @inlang/cli
 
+## 3.1.15
+
+### Patch Changes
+
+- 8f99e90: Remove the hosted RPC fallback for `machine translate`. Users must set `INLANG_GOOGLE_TRANSLATE_API_KEY` with their own Google Cloud Translation API key before running machine translation.
+
 ## 3.1.14
 
 ### Patch Changes
