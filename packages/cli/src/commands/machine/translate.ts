@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Command } from "commander";
-import { rpc } from "@inlang/rpc";
 import { getInlangProject } from "../../utilities/getInlangProject.js";
 import { log, logError } from "../../utilities/log.js";
 import {
@@ -44,6 +43,17 @@ export const translate = new Command()
 
 export async function translateCommandAction(args: { project: InlangProject }) {
   const options = translate.opts();
+  const googleApiKey = process.env.INLANG_GOOGLE_TRANSLATE_API_KEY;
+
+  if (!googleApiKey) {
+    throw new Error(
+      [
+        "INLANG_GOOGLE_TRANSLATE_API_KEY must be set to use machine translate.",
+        "Create your own Google Cloud Translation API key and export it before running this command.",
+        "See https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok",
+      ].join("\n")
+    );
+  }
 
   const bar = options.nobar
     ? undefined
@@ -72,37 +82,18 @@ export async function translateCommandAction(args: { project: InlangProject }) {
       return;
     }
 
-    const googleApiKey = process.env.INLANG_GOOGLE_TRANSLATE_API_KEY;
-    const useRpcFallback = !googleApiKey;
-
-    if (useRpcFallback) {
-      log.info(
-        [
-          "Using inlang's free machine translate service.",
-          "Provide your own INLANG_GOOGLE_TRANSLATE_API_KEY for higher reliability and control.",
-          "See https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok",
-        ].join("\n")
-      );
-    }
-
     bar?.start(bundles.length, 0);
 
     const promises: Promise<MachineTranslateResult>[] = [];
     const errors: string[] = [];
 
     for (const bundle of bundles) {
-      const translationPromise = useRpcFallback
-        ? rpc.machineTranslateBundle({
-            bundle,
-            sourceLocale: settings.baseLocale,
-            targetLocales: targetLocales,
-          })
-        : machineTranslateBundle({
-            bundle,
-            sourceLocale: settings.baseLocale,
-            targetLocales: targetLocales,
-            googleApiKey,
-          });
+      const translationPromise = machineTranslateBundle({
+        bundle,
+        sourceLocale: settings.baseLocale,
+        targetLocales: targetLocales,
+        googleApiKey,
+      });
 
       const trackedPromise = (
         translationPromise as Promise<MachineTranslateResult>

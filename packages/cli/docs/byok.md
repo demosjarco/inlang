@@ -1,11 +1,13 @@
 ---
 title: BYOK
-description: Use your own Google Cloud Translation API key with the inlang CLI for higher reliability and control over machine translations.
+description: Set your own Google Cloud Translation API key for machine translations with the inlang CLI.
 ---
 
 # Bring Your Own Google Translate API Key
 
-By default, the `machine translate` command uses inlang's free translation service. For higher reliability and control, you can provide your own Google Cloud Translation API key.
+The `machine translate` command requires your own Google Cloud Translation API key. Set it with `INLANG_GOOGLE_TRANSLATE_API_KEY` before running the command.
+
+For many projects, coding agents can produce better translation drafts than generic machine translation because they can use surrounding product and code context. Consider using an agent-driven workflow when translation quality matters more than fully automated CI output.
 
 ## Setup
 

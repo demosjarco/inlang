@@ -16,7 +16,7 @@ npx @inlang/cli [command]
 
 ## Features
 
-- **Machine Translation** — Translate missing messages automatically via Google Cloud Translation or the free inlang translation service
+- **Machine Translation** — Translate missing messages automatically with your own Google Cloud Translation API key
 - **Validation** — Verify your project config is correct before committing
 - **CI/CD Ready** — Run non-interactively with `--force` for pipelines
 - **Plugin System** — Supports JSON, i18next, next-intl, ICU message format, and more
@@ -71,6 +71,12 @@ Create `messages/en.json`:
 ```
 
 **3. Machine translate to other languages**
+
+Set `INLANG_GOOGLE_TRANSLATE_API_KEY` to your own Google Cloud Translation API key first:
+
+```bash
+export INLANG_GOOGLE_TRANSLATE_API_KEY="your-google-api-key"
+```
 
 ```bash
 npx @inlang/cli machine translate --project ./project.inlang
@@ -160,7 +166,9 @@ The machine command is used to automate localization processes.
 
 The translate command machine translates all resources.
 
-By default, the CLI uses inlang's free translation service. For higher reliability and control, you can [bring your own Google Translate API key](https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok).
+The CLI requires `INLANG_GOOGLE_TRANSLATE_API_KEY` to be set to your own Google Cloud Translation API key. See the [BYOK setup guide](https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok).
+
+For many projects, coding agents can produce better translation drafts than generic machine translation because they can use surrounding product and code context. Consider using an agent-driven workflow when translation quality matters more than fully automated CI output.
 
 To initiate machine translation, run the following command:
 
@@ -177,7 +185,7 @@ The translate command has the following options:
 - `--locale <source>`: Specifies the base locale.
 - `--targetLocales <targets...>`: Specifies the target locales as comma seperated list (e.g. sk,zh,pt-BR).
 
-The translations are performed using machine translation services. The translated messages are added to the respective language resources. Finally, the updated resources are written back to the file system.
+The translations are performed with the Google Cloud Translation API key from `INLANG_GOOGLE_TRANSLATE_API_KEY`. The translated messages are added to the respective language resources. Finally, the updated resources are written back to the file system.
 
 ## `validate`
 

@@ -1,4 +1,4 @@
-import { test, expect } from "vitest";
+import { afterEach, test, expect, vi } from "vitest";
 import { translateCommandAction } from "./translate.js";
 import {
   insertBundleNested,
@@ -6,6 +6,18 @@ import {
   newProject,
   selectBundleNested,
 } from "@inlang/sdk";
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+test("requires INLANG_GOOGLE_TRANSLATE_API_KEY", async () => {
+  vi.stubEnv("INLANG_GOOGLE_TRANSLATE_API_KEY", "");
+
+  await expect(
+    translateCommandAction({ project: {} as any })
+  ).rejects.toThrow("INLANG_GOOGLE_TRANSLATE_API_KEY must be set");
+});
 
 test.runIf(process.env.INLANG_GOOGLE_TRANSLATE_API_KEY)(
   "should tanslate the missing languages",
