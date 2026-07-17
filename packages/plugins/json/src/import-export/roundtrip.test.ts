@@ -1,4 +1,6 @@
 import { expect, test } from "vitest";
+import { loadProjectInMemory, newProject } from "@inlang/sdk";
+import { plugin } from "../plugin.js";
 import { exportFiles } from "./exportFiles.js";
 import { importFiles } from "./importFiles.js";
 
@@ -44,6 +46,59 @@ test("imports and exports generic JSON while preserving nested and dotted keys",
 		"flat.dotted": "Stay flat",
 		empty: "",
 	});
+});
+
+test("keeps literal dotted and nested keys distinct through SDK import", async () => {
+	const expected = {
+		"a.b": "Flat",
+		a: { b: "Nested" },
+	};
+	const project = await loadProjectInMemory({
+		blob: await newProject({
+			settings: {
+				baseLocale: "en",
+				locales: ["en"],
+				modules: [],
+				"plugin.inlang.json": {
+					pathPattern: "./{locale}.json",
+				},
+			},
+		}),
+		providePlugins: [plugin as any],
+	});
+
+	try {
+		const files = [
+			{
+				locale: "en",
+				content: new TextEncoder().encode(JSON.stringify(expected)),
+			},
+		];
+		await project.importFiles({
+			pluginKey: plugin.key,
+			files,
+		});
+		await project.importFiles({ pluginKey: plugin.key, files });
+
+		const messages = await project.db
+			.selectFrom("message")
+			.selectAll()
+			.execute();
+		const variants = await project.db
+			.selectFrom("variant")
+			.selectAll()
+			.execute();
+		expect(messages).toHaveLength(2);
+		expect(variants).toHaveLength(2);
+		expect(new Set(variants.map((variant) => variant.messageId))).toEqual(
+			new Set(messages.map((message) => message.id))
+		);
+
+		const [file] = await project.exportFiles({ pluginKey: plugin.key });
+		expect(parseFile(file!)).toEqual(expected);
+	} finally {
+		await project.close();
+	}
 });
 
 test("uses colon-delimited legacy bundle IDs for namespaces", async () => {
@@ -228,15 +283,7 @@ async function exportImported(
 		settings: settings as any,
 		bundles: imported.bundles as any,
 		messages: imported.messages as any,
-		variants: imported.variants.map((variant, index) => ({
-			...variant,
-			id: `variant-${index}`,
-			messageId: imported.messages.find(
-				(message) =>
-					message.bundleId === variant.messageBundleId &&
-					message.locale === variant.messageLocale
-			)?.id,
-		})) as any,
+		variants: imported.variants as any,
 	});
 }
 

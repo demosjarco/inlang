@@ -8,6 +8,10 @@ export function createMessageId(args: {
 	return `${MESSAGE_ID_PREFIX}${encodeURIComponent(JSON.stringify(args))}`;
 }
 
+export function createVariantId(messageId: string): string {
+	return `${MESSAGE_ID_PREFIX}variant:${encodeURIComponent(messageId)}`;
+}
+
 export function getMessagePath(messageId: string): string[] | undefined {
 	if (messageId.startsWith(MESSAGE_ID_PREFIX) === false) {
 		return undefined;

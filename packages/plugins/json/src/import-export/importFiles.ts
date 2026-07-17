@@ -6,7 +6,7 @@ import type {
 } from "@inlang/sdk";
 import type { PluginSettings } from "../settings.js";
 import { PLUGIN_KEY } from "../pluginKey.js";
-import { createMessageId } from "./messageId.js";
+import { createMessageId, createVariantId } from "./messageId.js";
 
 type JsonPlugin = InlangPlugin<{ [PLUGIN_KEY]: PluginSettings }>;
 type InputDeclaration = { type: "input-variable"; name: string };
@@ -54,19 +54,21 @@ export const importFiles: NonNullable<JsonPlugin["importFiles"]> = async ({
 				]);
 			}
 
+			const messageId = createMessageId({
+				locale: file.locale,
+				bundleId,
+				path,
+			});
+
 			messages.push({
-				id: createMessageId({
-					locale: file.locale,
-					bundleId,
-					path,
-				}),
+				id: messageId,
 				bundleId,
 				locale: file.locale,
 				selectors: [],
 			});
 			variants.push({
-				messageBundleId: bundleId,
-				messageLocale: file.locale,
+				id: createVariantId(messageId),
+				messageId,
 				matches: [],
 				pattern,
 			});
