@@ -4,9 +4,10 @@
 
 This plugin is a general purpose plugin to read and write messages of json files.
 
-> The plugin uses the inlang SDK v1 API but can be used in V2 projects.
->
-> A slight difference is that `languageTag` is called `locale` in v2 projects. Use `languageTag` for this plugin.
+> The plugin implements the current resource-plugin API (`toBeImportedFiles`,
+> `importFiles`, and `exportFiles`) and retains its legacy callbacks for older
+> consumers. In v2 projects, use `locale`; `{languageTag}` remains supported
+> for existing configurations.
 
 ## Manual Installation
 
@@ -22,7 +23,7 @@ This plugin is a general purpose plugin to read and write messages of json files
 	"languageTags": ["en", "de"],
 	"modules": ["https://cdn.jsdelivr.net/npm/@inlang/plugin-json@latest/dist/index.js"],
 	"plugin.inlang.json": {
-		"pathPattern": "./resources/{languageTag}.json"
+		"pathPattern": "./resources/{locale}.json"
 	}
 }
 ```
@@ -63,13 +64,13 @@ type PluginSettings = {
 
 ## `pathPattern`
 
-To use our plugin, you need to provide a path to the directory where your language-specific files are stored. Use the dynamic path syntax `{languageTag}` to specify the language name.
+To use our plugin, you need to provide a path to the directory where your language-specific files are stored. Use the dynamic path syntax `{locale}` to specify the language name. The legacy `{languageTag}` placeholder remains supported.
 
 ### Without namespaces
 
 ```json
 "plugin.inlang.json": {
-	"pathPattern": "./resources/{languageTag}.json"
+	"pathPattern": "./resources/{locale}.json"
 }
 ```
 
@@ -80,8 +81,8 @@ To use our plugin, you need to provide a path to the directory where your langua
 ```json
 "plugin.inlang.json": {
 	"pathPattern": {
-		"website": "./resources/{languageTag}/website.json",
-		"app": "./resources/{languageTag}/app.json"
+		"website": "./resources/{locale}/website.json",
+		"app": "./resources/{locale}/app.json"
 	}
 }
 ```

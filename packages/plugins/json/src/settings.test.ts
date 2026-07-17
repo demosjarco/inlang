@@ -14,6 +14,7 @@ test("valid path patterns", async () => {
     "../folder/{languageTag}/file.json",
     "./{languageTag}.json",
     "./{languageTag}/folder/file.json",
+    "./{locale}.json",
   ];
 
   for (const pathPattern of validPathPatterns) {

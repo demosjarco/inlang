@@ -1,17 +1,49 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect, it, describe } from "vitest";
 import type { PluginSettings } from "./settings.js";
-import {
-  Message,
-  ProjectSettings,
-  Variant,
-  createVariant,
-  getVariant,
-} from "@inlang/sdk";
 import { plugin } from "./plugin.js";
 import { createNodeishMemoryFs } from "@lix-js/fs";
 
 const pluginId = "plugin.inlang.json";
+
+type LegacyPattern = Array<
+  { type: "Text"; value: string } | { type: "VariableReference"; name: string }
+>;
+type Variant = {
+  languageTag: string;
+  match: string[];
+  pattern: LegacyPattern;
+};
+type Message = {
+  id: string;
+  alias: Record<string, string>;
+  selectors: Array<{ type: "VariableReference"; name: string }>;
+  variants: Variant[];
+};
+type ProjectSettings = {
+  sourceLanguageTag: string;
+  languageTags: string[];
+  modules: string[];
+  [key: string]: unknown;
+};
+
+function getVariant(
+  message: Message,
+  args: { where: { languageTag: string } },
+): Variant | undefined {
+  return message.variants.find(
+    (variant) => variant.languageTag === args.where.languageTag,
+  );
+}
+
+function createVariant(message: Message, args: { data: Variant }): { data: Message } {
+  return {
+    data: {
+      ...message,
+      variants: [...message.variants, args.data],
+    },
+  };
+}
 
 describe("loadMessage", () => {
   it("should return messages if the path pattern is valid", async () => {
@@ -37,6 +69,28 @@ describe("loadMessage", () => {
     expect(variant?.pattern[0]?.type).toBe("Text");
   });
 
+  it("supports the locale placeholder through legacy callbacks", async () => {
+    const fs = createNodeishMemoryFs();
+    await fs.writeFile("./en.json", JSON.stringify({ title: "Hello" }));
+
+    const settings = {
+      sourceLanguageTag: "en",
+      languageTags: ["en"],
+      modules: [],
+      [pluginId]: {
+        pathPattern: "./{locale}.json",
+      } satisfies PluginSettings,
+    } satisfies ProjectSettings;
+
+    const messages = await plugin.loadMessages!({ settings, nodeishFs: fs });
+    expect(messages.map((message) => message.id)).toEqual(["title"]);
+
+    await plugin.saveMessages!({ messages, settings, nodeishFs: fs });
+    expect(JSON.parse(await fs.readFile("./en.json", { encoding: "utf-8" }))).toEqual({
+      title: "Hello",
+    });
+  });
+
   it("should work with empty json files", async () => {
     const fs = createNodeishMemoryFs();
     await fs.writeFile("./en.json", JSON.stringify({}));
@@ -52,7 +106,7 @@ describe("loadMessage", () => {
       } satisfies PluginSettings,
     } satisfies ProjectSettings;
 
-    expect(
+    await expect(
       plugin.loadMessages!({ settings, nodeishFs: fs }),
     ).resolves.toBeTruthy();
   });
@@ -72,7 +126,7 @@ describe("loadMessage", () => {
       } satisfies PluginSettings,
     } satisfies ProjectSettings;
 
-    expect(
+    await expect(
       plugin.loadMessages!({ settings, nodeishFs: fs }),
     ).resolves.toBeTruthy();
   });
@@ -149,7 +203,7 @@ describe("loadMessage", () => {
       } satisfies PluginSettings,
     } satisfies ProjectSettings;
 
-    expect(
+    await expect(
       plugin.loadMessages!({ settings, nodeishFs: fs }),
     ).resolves.toBeTruthy();
   });
@@ -173,7 +227,7 @@ describe("loadMessage", () => {
       } satisfies PluginSettings,
     } satisfies ProjectSettings;
 
-    expect(
+    await expect(
       plugin.loadMessages!({ settings, nodeishFs: fs }),
     ).resolves.toBeTruthy();
   });
