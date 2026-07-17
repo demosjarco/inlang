@@ -1,5 +1,12 @@
 # @inlang/plugin-json
 
+## 5.1.57
+
+### Patch Changes
+
+- 27a9a79: Add the modern resource-plugin contract while retaining the legacy JSON API.
+  This enables plugin-driven file watching, including namespaced JSON resources.
+
 ## 5.1.55
 
 ### Patch Changes
