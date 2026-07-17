@@ -8,6 +8,10 @@ export function replaceAll(str: string, find: string, replace: string) {
   return str.replace(new RegExp(escapeRegExp(find), "g"), replace);
 }
 
+export function replaceLocale(path: string, locale: string) {
+  return path.replace(/\{(locale|languageTag)\}/g, locale);
+}
+
 function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }

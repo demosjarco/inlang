@@ -1,14 +1,14 @@
 // pluginOptions for json plugin
 import { Type, type Static } from "@sinclair/typebox";
 const PathPattern = Type.String({
-  pattern: "^(\\./|\\../|/)[^*]*\\{languageTag\\}[^*]*\\.json",
+  pattern: "^(\\./|\\../|/)[^*]*\\{(languageTag|locale)\\}[^*]*\\.json",
   title: "Path to language files",
   description:
-    "Specify the pathPattern to locate language files in your repository. It must include `{languageTag}` and end with `.json`.",
+    "Specify the pathPattern to locate language files in your repository. It must include `{locale}` or legacy `{languageTag}` and end with `.json`.",
   examples: [
-    "./{languageTag}/file.json",
-    "../folder/{languageTag}/file.json",
-    "./{languageTag}.json",
+    "./{locale}/file.json",
+    "../folder/{locale}/file.json",
+    "./{locale}.json",
   ],
 });
 export type PluginSettings = Static<typeof PluginSettings>;

@@ -1,29 +1,75 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type {
-  Message,
-  Variant,
-  LanguageTag,
-  Plugin,
-  NodeishFilesystemSubset,
-} from "@inlang/sdk";
+import type { InlangPlugin } from "@inlang/sdk";
 import { PluginSettings } from "./settings.js";
-import { replaceAll } from "./utilities.js";
+import { replaceAll, replaceLocale } from "./utilities.js";
 import { flatten, unflatten } from "flat";
 import { detectJsonFormatting } from "@inlang/detect-json-formatting";
+import { importFiles } from "./import-export/importFiles.js";
+import { exportFiles } from "./import-export/exportFiles.js";
+import { toBeImportedFiles } from "./import-export/toBeImportedFiles.js";
+import { PLUGIN_KEY } from "./pluginKey.js";
 
 // global variables to store the formatting of the file
 let serializeWithFormatting: ReturnType<typeof detectJsonFormatting>;
 let hasNestedKeys = false;
 
-const id = "plugin.inlang.json";
+const id = PLUGIN_KEY;
 
-export const plugin: Plugin<{
-  [id]: PluginSettings;
-}> = {
+type LanguageTag = string;
+type LegacyPattern = Array<
+  { type: "Text"; value: string } | { type: "VariableReference"; name: string }
+>;
+type Variant = {
+  languageTag: LanguageTag;
+  match: string[];
+  pattern: LegacyPattern;
+};
+type Message = {
+  id: string;
+  alias: Record<string, string>;
+  selectors: Array<{ type: "VariableReference"; name: string }>;
+  variants: Variant[];
+};
+type NodeishFilesystemSubset = {
+  readFile(path: string): Promise<Uint8Array | ArrayBuffer>;
+  readFile(path: string, options: { encoding: "utf-8" }): Promise<string>;
+  readdir: (path: string) => Promise<string[]>;
+  writeFile: (path: string, data: Uint8Array | string) => Promise<void>;
+  mkdir(path: string): Promise<unknown>;
+  mkdir(path: string, options: { recursive: true }): Promise<unknown>;
+};
+type LegacyProjectSettings = {
+  sourceLanguageTag: LanguageTag;
+  languageTags: LanguageTag[];
+  modules?: string[];
+};
+type JsonPlugin = Omit<
+  InlangPlugin<{ [id]: PluginSettings }>,
+  "loadMessages" | "saveMessages" | "addCustomApi"
+> & {
+  id: string;
+  displayName: string;
+  description: string;
+  loadMessages: (args: {
+    settings: LegacyProjectSettings & { [id]: PluginSettings };
+    nodeishFs: NodeishFilesystemSubset;
+  }) => Promise<Message[]>;
+  saveMessages: (args: {
+    messages: Message[];
+    settings: LegacyProjectSettings & { [id]: PluginSettings };
+    nodeishFs: NodeishFilesystemSubset;
+  }) => Promise<void>;
+};
+
+export const plugin: JsonPlugin = {
   id,
+  key: id,
   displayName: "JSON",
   description: "Plugin for JSON files",
   settingsSchema: PluginSettings,
+  toBeImportedFiles,
+  importFiles,
+  exportFiles,
   loadMessages: async ({ settings, nodeishFs }) => {
     settings[id].variableReferencePattern = settings[id]
       .variableReferencePattern || ["{", "}"];
@@ -120,7 +166,7 @@ async function getFileToParse(
   sourceLanguageTag: string,
   nodeishFs: NodeishFilesystemSubset
 ): Promise<Record<string, string>> {
-  const pathWithLanguage = path.replace("{languageTag}", languageTag);
+  const pathWithLanguage = replaceLocale(path, languageTag);
   // get file, make sure that is not braking when the namespace doesn't exist in every languageTag dir
   try {
     const file = await nodeishFs.readFile(pathWithLanguage, {
@@ -284,8 +330,7 @@ async function saveMessages(args: {
     for (const [languageTag, _value] of Object.entries(storage)) {
       for (const path of Object.values(args.pluginSettings.pathPattern)) {
         // check if directory exists
-        const directoryPath = path
-          .replace("{languageTag}", languageTag)
+        const directoryPath = replaceLocale(path, languageTag)
           .split("/")
           .slice(0, -1)
           .join("/");
@@ -296,9 +341,10 @@ async function saveMessages(args: {
         }
       }
       for (const [prefix, value] of Object.entries(_value)) {
-        const pathWithLanguage = (
-          args.pluginSettings.pathPattern[prefix] as string
-        ).replace("{languageTag}", languageTag);
+        const pathWithLanguage = replaceLocale(
+          args.pluginSettings.pathPattern[prefix] as string,
+          languageTag
+        );
         await args.nodeishFs.writeFile(
           pathWithLanguage,
           serializeFile(value, args.pluginSettings.variableReferencePattern)
@@ -317,8 +363,8 @@ async function saveMessages(args: {
       }
     }
     for (const [languageTag, value] of Object.entries(storage)) {
-      const pathWithLanguage = args.pluginSettings.pathPattern.replace(
-        "{languageTag}",
+      const pathWithLanguage = replaceLocale(
+        args.pluginSettings.pathPattern,
         languageTag
       );
       try {
