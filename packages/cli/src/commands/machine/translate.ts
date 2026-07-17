@@ -15,6 +15,7 @@ import {
   machineTranslateBundle,
   type MachineTranslateResult,
 } from "./machineTranslateBundle.js";
+import { resolveMachineTranslateProvider } from "./providers/resolveProvider.js";
 
 export const translate = new Command()
   .command("translate")
@@ -43,17 +44,7 @@ export const translate = new Command()
 
 export async function translateCommandAction(args: { project: InlangProject }) {
   const options = translate.opts();
-  const googleApiKey = process.env.INLANG_GOOGLE_TRANSLATE_API_KEY;
-
-  if (!googleApiKey) {
-    throw new Error(
-      [
-        "INLANG_GOOGLE_TRANSLATE_API_KEY must be set to use machine translate.",
-        "Create your own Google Cloud Translation API key and export it before running this command.",
-        "See https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok",
-      ].join("\n")
-    );
-  }
+  const provider = resolveMachineTranslateProvider();
 
   const bar = options.nobar
     ? undefined
@@ -92,7 +83,7 @@ export async function translateCommandAction(args: { project: InlangProject }) {
         bundle,
         sourceLocale: settings.baseLocale,
         targetLocales: targetLocales,
-        googleApiKey,
+        provider,
       });
 
       const trackedPromise = (

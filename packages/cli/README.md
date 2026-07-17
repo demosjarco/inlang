@@ -16,7 +16,7 @@ npx @inlang/cli [command]
 
 ## Features
 
-- **Machine Translation** — Translate missing messages automatically with your own Google Cloud Translation API key
+- **Machine Translation** — Translate missing messages automatically with your own Google Cloud Translation or DeepL API key
 - **Validation** — Verify your project config is correct before committing
 - **CI/CD Ready** — Run non-interactively with `--force` for pipelines
 - **Plugin System** — Supports JSON, i18next, next-intl, ICU message format, and more
@@ -72,10 +72,18 @@ Create `messages/en.json`:
 
 **3. Machine translate to other languages**
 
-Set `INLANG_GOOGLE_TRANSLATE_API_KEY` to your own Google Cloud Translation API key first:
+Set your translation provider and API key first. Google Translate is the default provider:
 
 ```bash
+export INLANG_MACHINE_TRANSLATE_PROVIDER="google"
 export INLANG_GOOGLE_TRANSLATE_API_KEY="your-google-api-key"
+```
+
+Or use DeepL:
+
+```bash
+export INLANG_MACHINE_TRANSLATE_PROVIDER="deepl"
+export INLANG_DEEPL_API_KEY="your-deepl-api-key"
 ```
 
 ```bash
@@ -166,7 +174,7 @@ The machine command is used to automate localization processes.
 
 The translate command machine translates all resources.
 
-The CLI requires `INLANG_GOOGLE_TRANSLATE_API_KEY` to be set to your own Google Cloud Translation API key. See the [BYOK setup guide](https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok).
+The CLI requires a translation API key for the configured provider. Set `INLANG_MACHINE_TRANSLATE_PROVIDER` to `google` (default) or `deepl`, then set the matching API key environment variable. See the [BYOK setup guide](https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok).
 
 For many projects, coding agents can produce better translation drafts than generic machine translation because they can use surrounding product and code context. Consider using an agent-driven workflow when translation quality matters more than fully automated CI output.
 
@@ -185,7 +193,7 @@ The translate command has the following options:
 - `--locale <source>`: Specifies the base locale.
 - `--targetLocales <targets...>`: Specifies the target locales as comma seperated list (e.g. sk,zh,pt-BR).
 
-The translations are performed with the Google Cloud Translation API key from `INLANG_GOOGLE_TRANSLATE_API_KEY`. The translated messages are added to the respective language resources. Finally, the updated resources are written back to the file system.
+The translations are performed with the configured provider (`INLANG_MACHINE_TRANSLATE_PROVIDER`) using the API key from `INLANG_GOOGLE_TRANSLATE_API_KEY` or `INLANG_DEEPL_API_KEY`. The translated messages are added to the respective language resources. Finally, the updated resources are written back to the file system.
 
 ## `validate`
 

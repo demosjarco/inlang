@@ -1,5 +1,11 @@
 # @inlang/cli
 
+## Unreleased
+
+### Minor Changes
+
+- Add DeepL API support for `machine translate`. Set `INLANG_MACHINE_TRANSLATE_PROVIDER=deepl` and `INLANG_DEEPL_API_KEY` to use DeepL. Google Translate remains the default provider.
+
 ## 3.1.15
 
 ### Patch Changes

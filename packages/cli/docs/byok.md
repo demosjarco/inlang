@@ -1,15 +1,24 @@
 ---
 title: BYOK
-description: Set your own Google Cloud Translation API key for machine translations with the inlang CLI.
+description: Set your own Google Cloud Translation or DeepL API key for machine translations with the inlang CLI.
 ---
 
-# Bring Your Own Google Translate API Key
+# Bring Your Own Translation API Key
 
-The `machine translate` command requires your own Google Cloud Translation API key. Set it with `INLANG_GOOGLE_TRANSLATE_API_KEY` before running the command.
+The `machine translate` command requires your own translation API key. Choose a provider with `INLANG_MACHINE_TRANSLATE_PROVIDER` and set the matching API key environment variable before running the command.
 
 For many projects, coding agents can produce better translation drafts than generic machine translation because they can use surrounding product and code context. Consider using an agent-driven workflow when translation quality matters more than fully automated CI output.
 
-## Setup
+## Provider selection
+
+Set `INLANG_MACHINE_TRANSLATE_PROVIDER` to choose the translation service:
+
+| Provider | Env var | API key env var |
+| -------- | ------- | --------------- |
+| Google Translate (default) | `google` or unset | `INLANG_GOOGLE_TRANSLATE_API_KEY` |
+| DeepL | `deepl` | `INLANG_DEEPL_API_KEY` |
+
+## Google Translate setup
 
 ### 1. Create a Google Cloud project
 
@@ -27,26 +36,55 @@ Follow the [Cloud Translation setup guide](https://cloud.google.com/translate/do
 2. Click **Create Credentials** and select **API key**
 3. Copy the generated key
 
-### 4. Set the environment variable
-
-Export the API key as `INLANG_GOOGLE_TRANSLATE_API_KEY`:
+### 4. Set the environment variables
 
 ```bash
+export INLANG_MACHINE_TRANSLATE_PROVIDER="google"
 export INLANG_GOOGLE_TRANSLATE_API_KEY="your-google-api-key"
 ```
 
 To make this permanent, add it to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.):
 
 ```bash
+echo 'export INLANG_MACHINE_TRANSLATE_PROVIDER="google"' >> ~/.bashrc
 echo 'export INLANG_GOOGLE_TRANSLATE_API_KEY="your-google-api-key"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
 For CI/CD pipelines, add the key as a secret environment variable in your CI provider's settings.
 
+## DeepL setup
+
+### 1. Create a DeepL API account
+
+Sign up for a [DeepL API plan](https://www.deepl.com/pro#developer) (Free or Pro).
+
+### 2. Generate an API key
+
+Copy your API key from the DeepL account dashboard. Free API keys end with `:fx` and use the `api-free.deepl.com` endpoint automatically.
+
+### 3. Set the environment variables
+
+```bash
+export INLANG_MACHINE_TRANSLATE_PROVIDER="deepl"
+export INLANG_DEEPL_API_KEY="your-deepl-api-key"
+```
+
+To make this permanent, add it to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.):
+
+```bash
+echo 'export INLANG_MACHINE_TRANSLATE_PROVIDER="deepl"' >> ~/.bashrc
+echo 'export INLANG_DEEPL_API_KEY="your-deepl-api-key"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+For CI/CD pipelines, add both variables as secrets in your CI provider's settings.
+
+See the [DeepL API quickstart](https://developers.deepl.com/docs/getting-started/quickstart) for more details.
+
 ## Usage
 
-Once the environment variable is set, the CLI will automatically use your API key:
+Once the environment variables are set, run machine translate:
 
 ```bash
 npx @inlang/cli machine translate --project ./project.inlang
