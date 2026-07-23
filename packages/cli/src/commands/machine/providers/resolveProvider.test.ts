@@ -5,9 +5,25 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-test("defaults to google provider", () => {
+test("uses google when its key is set and no provider is configured", () => {
   vi.stubEnv("INLANG_GOOGLE_TRANSLATE_API_KEY", "google-key");
   vi.stubEnv("INLANG_MACHINE_TRANSLATE_PROVIDER", "");
+
+  const provider = resolveMachineTranslateProvider();
+  expect(provider).toBeDefined();
+});
+
+test("falls back to the free inlang service when no keys are set", () => {
+  vi.stubEnv("INLANG_MACHINE_TRANSLATE_PROVIDER", "");
+  vi.stubEnv("INLANG_GOOGLE_TRANSLATE_API_KEY", "");
+  vi.stubEnv("INLANG_DEEPL_API_KEY", "");
+
+  const provider = resolveMachineTranslateProvider();
+  expect(provider).toBeDefined();
+});
+
+test("uses the free inlang service when explicitly selected", () => {
+  vi.stubEnv("INLANG_MACHINE_TRANSLATE_PROVIDER", "inlang");
 
   const provider = resolveMachineTranslateProvider();
   expect(provider).toBeDefined();
