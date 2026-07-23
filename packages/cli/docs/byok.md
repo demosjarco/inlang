@@ -5,7 +5,7 @@ description: Set your own Google Cloud Translation or DeepL API key for machine 
 
 # Bring Your Own Translation API Key
 
-The `machine translate` command requires your own translation API key. Choose a provider with `INLANG_MACHINE_TRANSLATE_PROVIDER` and set the matching API key environment variable before running the command.
+By default the `machine translate` command uses a free hosted translation service so you can get started without any setup. For production use, bringing your own API key is recommended. Choose a provider with `INLANG_MACHINE_TRANSLATE_PROVIDER` and set the matching API key environment variable before running the command.
 
 For many projects, coding agents can produce better translation drafts than generic machine translation because they can use surrounding product and code context. Consider using an agent-driven workflow when translation quality matters more than fully automated CI output.
 
@@ -15,8 +15,27 @@ Set `INLANG_MACHINE_TRANSLATE_PROVIDER` to choose the translation service:
 
 | Provider | Env var | API key env var |
 | -------- | ------- | --------------- |
-| Google Translate (default) | `google` or unset | `INLANG_GOOGLE_TRANSLATE_API_KEY` |
+| Free hosted service (default) | `inlang` or unset (when no API key is set) | none |
+| Google Translate | `google` | `INLANG_GOOGLE_TRANSLATE_API_KEY` |
 | DeepL | `deepl` | `INLANG_DEEPL_API_KEY` |
+
+When `INLANG_MACHINE_TRANSLATE_PROVIDER` is unset, the CLI uses Google or DeepL if the matching API key is set, and otherwise falls back to the free hosted service.
+
+## Free hosted service
+
+The free service at [translate.demosjarco.dev](https://translate.demosjarco.dev) is used by default when no API key is configured. It requires no setup and no API key:
+
+```bash
+npx @inlang/cli machine translate --project ./project.inlang
+```
+
+Stability is not guaranteed and the service may be unavailable at any time, so providing your own API key is recommended for anything beyond quick experiments. If the service is unreachable, the CLI tells you how to switch to your own provider.
+
+You can optionally pin a specific model with `INLANG_TRANSLATE_MODEL`. When unset, the service picks its default model.
+
+```bash
+export INLANG_TRANSLATE_MODEL="@cf/google/gemma-4-26b-a4b-it"
+```
 
 ## Google Translate setup
 

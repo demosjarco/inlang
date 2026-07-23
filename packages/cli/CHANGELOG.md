@@ -14,6 +14,8 @@
 
 ### Minor Changes
 
+- Add a free hosted translation service as the default fallback for `machine translate`. When `INLANG_MACHINE_TRANSLATE_PROVIDER` is unset and no API key is configured, the CLI uses the free service at translate.demosjarco.dev and prints a notice that stability is not guaranteed. Select it explicitly with `INLANG_MACHINE_TRANSLATE_PROVIDER=inlang` and optionally pin a model with `INLANG_TRANSLATE_MODEL`.
+
 - Add DeepL API support for `machine translate`. Set `INLANG_MACHINE_TRANSLATE_PROVIDER=deepl` and `INLANG_DEEPL_API_KEY` to use DeepL. Google Translate remains the default provider.
 
 ## 3.1.15
