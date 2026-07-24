@@ -37,6 +37,12 @@ You can optionally pin a specific model with `INLANG_TRANSLATE_MODEL`. When unse
 export INLANG_TRANSLATE_MODEL="@cf/google/gemma-4-26b-a4b-it"
 ```
 
+You can also opt in to Zero Data Retention (ZDR) with `INLANG_TRANSLATE_ZDR`. When set to `true`, the CLI asks the free service to process your request without retaining any data. This applies only to the free third-party service and has no effect on the Google or DeepL providers.
+
+```bash
+export INLANG_TRANSLATE_ZDR="true"
+```
+
 ## Google Translate setup
 
 ### 1. Create a Google Cloud project

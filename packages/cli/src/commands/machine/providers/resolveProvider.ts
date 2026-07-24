@@ -8,6 +8,7 @@ export const PROVIDER_ENV = "INLANG_MACHINE_TRANSLATE_PROVIDER";
 export const GOOGLE_API_KEY_ENV = "INLANG_GOOGLE_TRANSLATE_API_KEY";
 export const DEEPL_API_KEY_ENV = "INLANG_DEEPL_API_KEY";
 export const INLANG_MODEL_ENV = "INLANG_TRANSLATE_MODEL";
+export const INLANG_ZDR_ENV = "INLANG_TRANSLATE_ZDR";
 
 export type MachineTranslateProviderName = "google" | "deepl" | "inlang";
 
@@ -67,7 +68,9 @@ export function resolveMachineTranslateProvider(): MachineTranslateProvider {
         `See ${BYOK_URL}`,
       ].join("\n"),
     );
-    return createInlangTranslateProvider(process.env[INLANG_MODEL_ENV]);
+    // Scoped to the free service only: opt in to Zero Data Retention upstream.
+    const zdr = process.env[INLANG_ZDR_ENV]?.trim().toLowerCase() === "true";
+    return createInlangTranslateProvider(process.env[INLANG_MODEL_ENV], zdr);
   }
 
   if (providerName === "deepl") {

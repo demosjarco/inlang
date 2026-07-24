@@ -195,7 +195,7 @@ The translate command has the following options:
 - `--locale <source>`: Specifies the base locale.
 - `--targetLocales <targets...>`: Specifies the target locales as comma seperated list (e.g. sk,zh,pt-BR).
 
-The translations are performed with the configured provider (`INLANG_MACHINE_TRANSLATE_PROVIDER`). A free, third-party translation service (not affiliated with inlang) is used by default; set `INLANG_GOOGLE_TRANSLATE_API_KEY` or `INLANG_DEEPL_API_KEY` to use your own provider, and optionally `INLANG_TRANSLATE_MODEL` to pin a model for the free service. The translated messages are added to the respective language resources. Finally, the updated resources are written back to the file system.
+The translations are performed with the configured provider (`INLANG_MACHINE_TRANSLATE_PROVIDER`). A free, third-party translation service (not affiliated with inlang) is used by default; set `INLANG_GOOGLE_TRANSLATE_API_KEY` or `INLANG_DEEPL_API_KEY` to use your own provider, and optionally `INLANG_TRANSLATE_MODEL` to pin a model for the free service (and `INLANG_TRANSLATE_ZDR=true` to request Zero Data Retention from it). The translated messages are added to the respective language resources. Finally, the updated resources are written back to the file system.
 
 ## `validate`
 
