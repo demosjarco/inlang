@@ -34,8 +34,10 @@ export function createInlangTranslateProvider(
         q: args.text,
         target: args.targetLocale,
         source: args.sourceLocale,
-        // The service currently only supports plain-text translation.
-        format: "text",
+        // Matches the Google and DeepL providers: patterns are serialized with
+        // placeholders wrapped in `<span class="notranslate">`, which only html
+        // mode is guaranteed to leave untouched.
+        format: "html",
       });
 
       // The service doesn't use API keys; an optional model can be pinned via
