@@ -7,8 +7,8 @@ import type { MachineTranslateProvider } from "./types.js";
 export const PROVIDER_ENV = "INLANG_MACHINE_TRANSLATE_PROVIDER";
 export const GOOGLE_API_KEY_ENV = "INLANG_GOOGLE_TRANSLATE_API_KEY";
 export const DEEPL_API_KEY_ENV = "INLANG_DEEPL_API_KEY";
-export const INLANG_MODEL_ENV = "INLANG_TRANSLATE_MODEL";
-export const INLANG_ZDR_ENV = "INLANG_TRANSLATE_ZDR";
+export const INLANG_MODEL_ENV = "INLANG_FREE_TRANSLATE_MODEL";
+export const INLANG_ZDR_ENV = "INLANG_FREE_TRANSLATE_ZDR";
 
 export type MachineTranslateProviderName = "google" | "deepl" | "inlang";
 

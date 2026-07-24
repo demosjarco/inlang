@@ -31,16 +31,16 @@ npx @inlang/cli machine translate --project ./project.inlang
 
 Stability is not guaranteed and the service may be unavailable at any time. Provide your own API key for higher reliability and control. If the service is unreachable, the CLI tells you how to switch to your own provider.
 
-You can optionally pin a specific model with `INLANG_TRANSLATE_MODEL`. When unset, the service picks its default model.
+You can optionally pin a specific model with `INLANG_FREE_TRANSLATE_MODEL`. When unset, the service picks its default model.
 
 ```bash
-export INLANG_TRANSLATE_MODEL="@cf/google/gemma-4-26b-a4b-it"
+export INLANG_FREE_TRANSLATE_MODEL="@cf/google/gemma-4-26b-a4b-it"
 ```
 
-You can also opt in to Zero Data Retention (ZDR) with `INLANG_TRANSLATE_ZDR`. When set to `true`, the CLI asks the free service to process your request without retaining any data. This applies only to the free third-party service and has no effect on the Google or DeepL providers.
+You can also opt in to Zero Data Retention (ZDR) with `INLANG_FREE_TRANSLATE_ZDR`. When set to `true`, the CLI asks the free service to process your request without retaining any data. This applies only to the free third-party service and has no effect on the Google or DeepL providers.
 
 ```bash
-export INLANG_TRANSLATE_ZDR="true"
+export INLANG_FREE_TRANSLATE_ZDR="true"
 ```
 
 ## Google Translate setup
