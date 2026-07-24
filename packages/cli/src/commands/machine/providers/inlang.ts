@@ -26,6 +26,7 @@ export const SERVICE_UNAVAILABLE_ERROR = [
 
 export function createInlangTranslateProvider(
   model?: string,
+  zdr?: boolean,
 ): MachineTranslateProvider {
   return {
     async translateText(args: TranslateTextArgs) {
@@ -38,9 +39,16 @@ export function createInlangTranslateProvider(
       });
 
       // The service doesn't use API keys; an optional model can be pinned via
-      // INLANG_TRANSLATE_MODEL, otherwise the gateway-configured default is used.
+      // INLANG_FREE_TRANSLATE_MODEL, otherwise the gateway-configured default is used.
       if (model && model.length > 0) {
         query.set("model", model);
+      }
+
+      // Opt-in Zero Data Retention: when enabled via INLANG_FREE_TRANSLATE_ZDR, ask
+      // the upstream service to run the request without retaining any data. The
+      // value is a boolean serialized as a string literal, as the API expects.
+      if (zdr) {
+        query.set("zdr", "true");
       }
 
       let response: Response;

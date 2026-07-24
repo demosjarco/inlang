@@ -70,6 +70,55 @@ describe("createInlangTranslateProvider", () => {
     );
   });
 
+  test("requests zero data retention when enabled", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: { translations: [{ translatedText: "Hallo Welt" }] },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const provider = createInlangTranslateProvider(undefined, true);
+    await provider.translateText({
+      text: "Hello World",
+      sourceLocale: "en",
+      targetLocale: "de",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${INLANG_TRANSLATE_API_URL}?` +
+        new URLSearchParams({
+          q: "Hello World",
+          target: "de",
+          source: "en",
+          format: "text",
+          zdr: "true",
+        }),
+      { method: "POST" },
+    );
+  });
+
+  test("does not request zero data retention by default", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: { translations: [{ translatedText: "Hallo Welt" }] },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const provider = createInlangTranslateProvider();
+    await provider.translateText({
+      text: "Hello World",
+      sourceLocale: "en",
+      targetLocale: "de",
+    });
+
+    const calledUrl = fetchMock.mock.calls[0]?.[0] as string;
+    expect(calledUrl).not.toContain("zdr");
+  });
+
   test("reports the service as unavailable on a network error", async () => {
     vi.stubGlobal(
       "fetch",
