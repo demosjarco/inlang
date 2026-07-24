@@ -17,7 +17,7 @@ const BYOK_URL = "https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok";
  * has been shut down). Points users at bringing their own API key instead.
  */
 export const SERVICE_UNAVAILABLE_ERROR = [
-  "Free translation service is not available.",
+  "inlang's free translation service is not available.",
   'Set INLANG_MACHINE_TRANSLATE_PROVIDER to "google" or "deepl" and provide your own API key.',
   `See ${BYOK_URL}`,
 ].join("\n");

@@ -60,9 +60,9 @@ export function resolveMachineTranslateProvider(): MachineTranslateProvider {
   if (providerName === "inlang") {
     log.warn(
       [
-        "Using the free inlang translation service. Stability is not guaranteed.",
-        "Providing your own API key is recommended.",
-        `Set ${PROVIDER_ENV} to "google" or "deepl" and provide the matching API key to use your own provider.`,
+        "Using inlang's free machine translate service. Stability is not guaranteed.",
+        "Provide your own API key for higher reliability and control.",
+        `Set ${PROVIDER_ENV} to "google" or "deepl" and the matching API key to use your own provider.`,
         `See ${BYOK_URL}`,
       ].join("\n"),
     );
