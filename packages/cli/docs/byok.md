@@ -5,7 +5,7 @@ description: Set your own Google Cloud Translation or DeepL API key for machine 
 
 # Bring Your Own Translation API Key
 
-By default, the `machine translate` command uses inlang's free translation service. For higher reliability and control, you can bring your own Google Cloud Translation or DeepL API key. Choose a provider with `INLANG_MACHINE_TRANSLATE_PROVIDER` and set the matching API key environment variable before running the command.
+By default, the `machine translate` command uses a free, third-party translation service that is not owned, operated, or maintained by inlang. For higher reliability and control, you can bring your own Google Cloud Translation or DeepL API key. Choose a provider with `INLANG_MACHINE_TRANSLATE_PROVIDER` and set the matching API key environment variable before running the command.
 
 For many projects, coding agents can produce better translation drafts than generic machine translation because they can use surrounding product and code context. Consider using an agent-driven workflow when translation quality matters more than fully automated CI output.
 
@@ -15,15 +15,15 @@ Set `INLANG_MACHINE_TRANSLATE_PROVIDER` to choose the translation service:
 
 | Provider | Env var | API key env var |
 | -------- | ------- | --------------- |
-| inlang's free translation service (default) | `inlang` or unset (when no API key is set) | none |
+| Free third-party translation service (default) | `inlang` or unset (when no API key is set) | none |
 | Google Translate | `google` | `INLANG_GOOGLE_TRANSLATE_API_KEY` |
 | DeepL | `deepl` | `INLANG_DEEPL_API_KEY` |
 
-When `INLANG_MACHINE_TRANSLATE_PROVIDER` is unset, the CLI uses Google or DeepL if the matching API key is set, and otherwise falls back to inlang's free translation service.
+When `INLANG_MACHINE_TRANSLATE_PROVIDER` is unset, the CLI uses Google or DeepL if the matching API key is set, and otherwise falls back to the free third-party translation service.
 
-## inlang's free translation service
+## Free third-party translation service
 
-The free service at [translate.demosjarco.dev](https://translate.demosjarco.dev) is used by default when no API key is configured. It requires no setup and no API key:
+The free service at [translate.demosjarco.dev](https://translate.demosjarco.dev) is used by default when no API key is configured. It is a community-run, third-party service — it is not owned, operated, or maintained by inlang. It requires no setup and no API key:
 
 ```bash
 npx @inlang/cli machine translate --project ./project.inlang
