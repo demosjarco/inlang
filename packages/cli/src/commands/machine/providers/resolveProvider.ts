@@ -20,8 +20,8 @@ const DEEPL_DOCS_URL =
  *
  * When `INLANG_MACHINE_TRANSLATE_PROVIDER` is set, that provider is used. When
  * it is unset, an already-configured BYOK provider (Google or DeepL) is used if
- * its API key is present; otherwise the CLI falls back to the free hosted
- * inlang translation service.
+ * its API key is present; otherwise the CLI falls back to a free, third-party
+ * translation service that is not owned, operated, or maintained by inlang.
  */
 function resolveMachineTranslateProviderName(): MachineTranslateProviderName {
   const rawProvider = process.env[PROVIDER_ENV]?.trim();
@@ -44,7 +44,7 @@ function resolveMachineTranslateProviderName(): MachineTranslateProviderName {
   }
 
   // No provider configured: prefer a BYOK provider whose key is already set,
-  // otherwise fall back to the free hosted inlang translation service.
+  // otherwise fall back to the free third-party translation service.
   if (process.env[GOOGLE_API_KEY_ENV]) {
     return "google";
   }
@@ -60,7 +60,8 @@ export function resolveMachineTranslateProvider(): MachineTranslateProvider {
   if (providerName === "inlang") {
     log.warn(
       [
-        "Using inlang's free machine translate service. Stability is not guaranteed.",
+        "Using a free, third-party translation service. Stability is not guaranteed.",
+        "This service is not owned, operated, or maintained by inlang.",
         "Provide your own API key for higher reliability and control.",
         `Set ${PROVIDER_ENV} to "google" or "deepl" and the matching API key to use your own provider.`,
         `See ${BYOK_URL}`,

@@ -1,9 +1,10 @@
 import type { MachineTranslateProvider, TranslateTextArgs } from "./types.js";
 
 /**
- * The free, hosted translation service used as the default fallback when no
- * BYOK provider is configured. It mirrors the Google Cloud Translation v2 API
- * surface, so the response shape matches the Google provider.
+ * A free, third-party hosted translation service used as the default fallback
+ * when no BYOK provider is configured. It is community-run and is not owned,
+ * operated, or maintained by inlang. It mirrors the Google Cloud Translation
+ * v2 API surface, so the response shape matches the Google provider.
  *
  * @see https://translate.demosjarco.dev
  */
@@ -13,11 +14,12 @@ export const INLANG_TRANSLATE_API_URL =
 const BYOK_URL = "https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok";
 
 /**
- * Shown when the hosted service can't be reached (network error or the service
- * has been shut down). Points users at bringing their own API key instead.
+ * Shown when the third-party service can't be reached (network error or the
+ * service has been shut down). Points users at bringing their own API key
+ * instead.
  */
 export const SERVICE_UNAVAILABLE_ERROR = [
-  "inlang's free translation service is not available.",
+  "The free third-party translation service is not available.",
   'Set INLANG_MACHINE_TRANSLATE_PROVIDER to "google" or "deepl" and provide your own API key.',
   `See ${BYOK_URL}`,
 ].join("\n");
