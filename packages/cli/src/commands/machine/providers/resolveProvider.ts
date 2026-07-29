@@ -1,16 +1,16 @@
 import { log } from "../../../utilities/log.js";
 import { createDeepLTranslateProvider } from "./deepl.js";
 import { createGoogleTranslateProvider } from "./google.js";
-import { createInlangTranslateProvider } from "./inlang.js";
+import { createDemosjarcoTranslateProvider } from "./demosjarco.js";
 import type { MachineTranslateProvider } from "./types.js";
 
 export const PROVIDER_ENV = "INLANG_MACHINE_TRANSLATE_PROVIDER";
 export const GOOGLE_API_KEY_ENV = "INLANG_GOOGLE_TRANSLATE_API_KEY";
 export const DEEPL_API_KEY_ENV = "INLANG_DEEPL_API_KEY";
-export const INLANG_MODEL_ENV = "INLANG_FREE_TRANSLATE_MODEL";
-export const INLANG_ZDR_ENV = "INLANG_FREE_TRANSLATE_ZDR";
+export const DEMOSJARCO_MODEL_ENV = "DEMOSJARCO_TRANSLATE_MODEL";
+export const DEMOSJARCO_ZDR_ENV = "DEMOSJARCO_TRANSLATE_ZDR";
 
-export type MachineTranslateProviderName = "google" | "deepl" | "inlang";
+export type MachineTranslateProviderName = "google" | "deepl" | "demosjarco";
 
 const BYOK_URL = "https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok";
 const DEEPL_DOCS_URL =
@@ -21,8 +21,9 @@ const DEEPL_DOCS_URL =
  *
  * When `INLANG_MACHINE_TRANSLATE_PROVIDER` is set, that provider is used. When
  * it is unset, an already-configured BYOK provider (Google or DeepL) is used if
- * its API key is present; otherwise the CLI falls back to a free, third-party
- * translation service that is not owned, operated, or maintained by inlang.
+ * its API key is present; otherwise the CLI falls back to a free, third-party,
+ * community-operated translation service at translate.demosjarco.dev that is
+ * not owned, operated, or maintained by inlang.
  */
 function resolveMachineTranslateProviderName(): MachineTranslateProviderName {
   const rawProvider = process.env[PROVIDER_ENV]?.trim();
@@ -32,12 +33,12 @@ function resolveMachineTranslateProviderName(): MachineTranslateProviderName {
     if (
       providerName !== "google" &&
       providerName !== "deepl" &&
-      providerName !== "inlang"
+      providerName !== "demosjarco"
     ) {
       throw new Error(
         [
           `Unsupported ${PROVIDER_ENV} value: "${process.env[PROVIDER_ENV]}".`,
-          "Supported values: google, deepl, inlang.",
+          "Supported values: google, deepl, demosjarco.",
         ].join("\n"),
       );
     }
@@ -45,23 +46,23 @@ function resolveMachineTranslateProviderName(): MachineTranslateProviderName {
   }
 
   // No provider configured: prefer a BYOK provider whose key is already set,
-  // otherwise fall back to the free third-party translation service.
+  // otherwise fall back to the free, community-operated translation service.
   if (process.env[GOOGLE_API_KEY_ENV]) {
     return "google";
   }
   if (process.env[DEEPL_API_KEY_ENV]) {
     return "deepl";
   }
-  return "inlang";
+  return "demosjarco";
 }
 
 export function resolveMachineTranslateProvider(): MachineTranslateProvider {
   const providerName = resolveMachineTranslateProviderName();
 
-  if (providerName === "inlang") {
+  if (providerName === "demosjarco") {
     log.warn(
       [
-        "Using a free, third-party translation service. Stability is not guaranteed.",
+        "Using the community-operated translation service at translate.demosjarco.dev. Stability is not guaranteed.",
         "This service is not owned, operated, or maintained by inlang.",
         "Provide your own API key for higher reliability and control.",
         `Set ${PROVIDER_ENV} to "google" or "deepl" and the matching API key to use your own provider.`,
@@ -69,8 +70,12 @@ export function resolveMachineTranslateProvider(): MachineTranslateProvider {
       ].join("\n"),
     );
     // Scoped to the free service only: opt in to Zero Data Retention upstream.
-    const zdr = process.env[INLANG_ZDR_ENV]?.trim().toLowerCase() === "true";
-    return createInlangTranslateProvider(process.env[INLANG_MODEL_ENV], zdr);
+    const zdr =
+      process.env[DEMOSJARCO_ZDR_ENV]?.trim().toLowerCase() === "true";
+    return createDemosjarcoTranslateProvider(
+      process.env[DEMOSJARCO_MODEL_ENV],
+      zdr,
+    );
   }
 
   if (providerName === "deepl") {
