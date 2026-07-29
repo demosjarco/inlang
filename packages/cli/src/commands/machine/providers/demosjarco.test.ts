@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   createDemosjarcoTranslateProvider,
   DEMOSJARCO_TRANSLATE_API_URL,
+  REQUEST_TIMEOUT_MS,
   SERVICE_UNAVAILABLE_ERROR,
 } from "./demosjarco.js";
 
@@ -139,10 +140,38 @@ describe("createDemosjarcoTranslateProvider", () => {
     });
   });
 
-  test("reports the service as unavailable when the request times out", async () => {
+  test("bounds every request with a request timeout", async () => {
+    const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockRejectedValue(new DOMException("Aborted", "TimeoutError")),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: { translations: [{ translatedText: "Hallo Welt" }] },
+        }),
+      }),
+    );
+
+    const provider = createDemosjarcoTranslateProvider();
+    await provider.translateText({
+      text: "Hello World",
+      sourceLocale: "en",
+      targetLocale: "de",
+    });
+
+    expect(timeoutSpy).toHaveBeenCalledWith(REQUEST_TIMEOUT_MS);
+  });
+
+  test("reports the service as unavailable when the request times out", async () => {
+    // This is exactly what Node/undici's fetch rejects with when the
+    // AbortSignal.timeout() passed to it fires.
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockRejectedValue(
+          new DOMException("The operation was aborted.", "TimeoutError"),
+        ),
     );
 
     const provider = createDemosjarcoTranslateProvider();
@@ -207,12 +236,47 @@ describe("createDemosjarcoTranslateProvider", () => {
     });
   });
 
-  test("reports the service as unavailable on a malformed response", async () => {
+  test.each([
+    ["an unexpected shape", { unexpected: "shape" }],
+    ["an empty translations array", { data: { translations: [] } }],
+    [
+      "a non-string translatedText",
+      { data: { translations: [{ translatedText: null }] } },
+    ],
+  ])(
+    "reports the service as unavailable on a malformed response body (%s)",
+    async (_case, body) => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => body,
+        }),
+      );
+
+      const provider = createDemosjarcoTranslateProvider();
+      const result = await provider.translateText({
+        text: "Hello World",
+        sourceLocale: "en",
+        targetLocale: "de",
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: SERVICE_UNAVAILABLE_ERROR,
+        unavailable: true,
+      });
+    },
+  );
+
+  test("reports the service as unavailable when the response body isn't valid JSON", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ unexpected: "shape" }),
+        json: async () => {
+          throw new SyntaxError("Unexpected token in JSON");
+        },
       }),
     );
 
