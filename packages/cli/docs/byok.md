@@ -15,13 +15,13 @@ Set `INLANG_MACHINE_TRANSLATE_PROVIDER` to choose the translation service:
 
 | Provider | Env var | API key env var |
 | -------- | ------- | --------------- |
-| Free third-party translation service (default) | `inlang` or unset (when no API key is set) | none |
+| Community-operated translation service at translate.demosjarco.dev (default) | `demosjarco` or unset (when no API key is set) | none |
 | Google Translate | `google` | `INLANG_GOOGLE_TRANSLATE_API_KEY` |
 | DeepL | `deepl` | `INLANG_DEEPL_API_KEY` |
 
-When `INLANG_MACHINE_TRANSLATE_PROVIDER` is unset, the CLI uses Google or DeepL if the matching API key is set, and otherwise falls back to the free third-party translation service.
+When `INLANG_MACHINE_TRANSLATE_PROVIDER` is unset, the CLI uses Google or DeepL if the matching API key is set, and otherwise falls back to the community-operated translation service at translate.demosjarco.dev.
 
-## Free third-party translation service
+## Community-operated translation service
 
 The free service at [translate.demosjarco.dev](https://translate.demosjarco.dev) is used by default when no API key is configured. It is a community-run, third-party service — it is not owned, operated, or maintained by inlang. It requires no setup and no API key:
 
@@ -29,18 +29,18 @@ The free service at [translate.demosjarco.dev](https://translate.demosjarco.dev)
 npx @inlang/cli machine translate --project ./project.inlang
 ```
 
-Stability is not guaranteed and the service may be unavailable at any time. Provide your own API key for higher reliability and control. If the service is unreachable, the CLI tells you how to switch to your own provider.
+Stability is not guaranteed and the service may be unavailable at any time. Provide your own API key for higher reliability and control. If the service is unreachable, throttling requests, or returns a response the CLI can't parse, the command fails with a non-zero exit code and tells you how to switch to your own provider.
 
-You can optionally pin a specific model with `INLANG_FREE_TRANSLATE_MODEL`. When unset, the service picks its default model.
+You can optionally pin a specific model with `DEMOSJARCO_TRANSLATE_MODEL`. When unset, the service picks its default model.
 
 ```bash
-export INLANG_FREE_TRANSLATE_MODEL="@cf/google/gemma-4-26b-a4b-it"
+export DEMOSJARCO_TRANSLATE_MODEL="@cf/google/gemma-4-26b-a4b-it"
 ```
 
-You can also opt in to Zero Data Retention (ZDR) with `INLANG_FREE_TRANSLATE_ZDR`. When set to `true`, the CLI asks the free service to process your request without retaining any data. This applies only to the free third-party service and has no effect on the Google or DeepL providers.
+You can also opt in to Zero Data Retention (ZDR) with `DEMOSJARCO_TRANSLATE_ZDR`. When set to `true`, the CLI asks the service to process your request without retaining any data. This applies only to the community-operated service and has no effect on the Google or DeepL providers.
 
 ```bash
-export INLANG_FREE_TRANSLATE_ZDR="true"
+export DEMOSJARCO_TRANSLATE_ZDR="true"
 ```
 
 ## Google Translate setup

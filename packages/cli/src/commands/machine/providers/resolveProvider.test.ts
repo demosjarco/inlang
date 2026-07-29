@@ -13,7 +13,7 @@ test("uses google when its key is set and no provider is configured", () => {
   expect(provider).toBeDefined();
 });
 
-test("falls back to the free inlang service when no keys are set", () => {
+test("falls back to the free demosjarco service when no keys are set", () => {
   vi.stubEnv("INLANG_MACHINE_TRANSLATE_PROVIDER", "");
   vi.stubEnv("INLANG_GOOGLE_TRANSLATE_API_KEY", "");
   vi.stubEnv("INLANG_DEEPL_API_KEY", "");
@@ -22,8 +22,8 @@ test("falls back to the free inlang service when no keys are set", () => {
   expect(provider).toBeDefined();
 });
 
-test("uses the free inlang service when explicitly selected", () => {
-  vi.stubEnv("INLANG_MACHINE_TRANSLATE_PROVIDER", "inlang");
+test("uses the free demosjarco service when explicitly selected", () => {
+  vi.stubEnv("INLANG_MACHINE_TRANSLATE_PROVIDER", "demosjarco");
 
   const provider = resolveMachineTranslateProvider();
   expect(provider).toBeDefined();

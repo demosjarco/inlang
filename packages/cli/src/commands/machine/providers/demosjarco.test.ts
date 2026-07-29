@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
-  createInlangTranslateProvider,
-  INLANG_TRANSLATE_API_URL,
+  createDemosjarcoTranslateProvider,
+  DEMOSJARCO_TRANSLATE_API_URL,
   SERVICE_UNAVAILABLE_ERROR,
-} from "./inlang.js";
+} from "./demosjarco.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("createInlangTranslateProvider", () => {
+describe("createDemosjarcoTranslateProvider", () => {
   test("translates text via the free hosted service", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -19,7 +19,7 @@ describe("createInlangTranslateProvider", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const provider = createInlangTranslateProvider();
+    const provider = createDemosjarcoTranslateProvider();
     const result = await provider.translateText({
       text: "Hello World",
       sourceLocale: "en",
@@ -28,14 +28,14 @@ describe("createInlangTranslateProvider", () => {
 
     expect(result).toEqual({ ok: true, translatedText: "Hallo Welt" });
     expect(fetchMock).toHaveBeenCalledWith(
-      `${INLANG_TRANSLATE_API_URL}?` +
+      `${DEMOSJARCO_TRANSLATE_API_URL}?` +
         new URLSearchParams({
           q: "Hello World",
           target: "de",
           source: "en",
           format: "html",
         }),
-      { method: "POST" },
+      { method: "POST", signal: expect.any(AbortSignal) },
     );
   });
 
@@ -48,7 +48,7 @@ describe("createInlangTranslateProvider", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const provider = createInlangTranslateProvider(
+    const provider = createDemosjarcoTranslateProvider(
       "@cf/google/gemma-4-26b-a4b-it",
     );
     await provider.translateText({
@@ -58,7 +58,7 @@ describe("createInlangTranslateProvider", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      `${INLANG_TRANSLATE_API_URL}?` +
+      `${DEMOSJARCO_TRANSLATE_API_URL}?` +
         new URLSearchParams({
           q: "Hello World",
           target: "de",
@@ -66,7 +66,7 @@ describe("createInlangTranslateProvider", () => {
           format: "html",
           model: "@cf/google/gemma-4-26b-a4b-it",
         }),
-      { method: "POST" },
+      { method: "POST", signal: expect.any(AbortSignal) },
     );
   });
 
@@ -79,7 +79,7 @@ describe("createInlangTranslateProvider", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const provider = createInlangTranslateProvider(undefined, true);
+    const provider = createDemosjarcoTranslateProvider(undefined, true);
     await provider.translateText({
       text: "Hello World",
       sourceLocale: "en",
@@ -87,7 +87,7 @@ describe("createInlangTranslateProvider", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      `${INLANG_TRANSLATE_API_URL}?` +
+      `${DEMOSJARCO_TRANSLATE_API_URL}?` +
         new URLSearchParams({
           q: "Hello World",
           target: "de",
@@ -95,7 +95,7 @@ describe("createInlangTranslateProvider", () => {
           format: "html",
           zdr: "true",
         }),
-      { method: "POST" },
+      { method: "POST", signal: expect.any(AbortSignal) },
     );
   });
 
@@ -108,7 +108,7 @@ describe("createInlangTranslateProvider", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const provider = createInlangTranslateProvider();
+    const provider = createDemosjarcoTranslateProvider();
     await provider.translateText({
       text: "Hello World",
       sourceLocale: "en",
@@ -125,14 +125,38 @@ describe("createInlangTranslateProvider", () => {
       vi.fn().mockRejectedValue(new Error("network down")),
     );
 
-    const provider = createInlangTranslateProvider();
+    const provider = createDemosjarcoTranslateProvider();
     const result = await provider.translateText({
       text: "Hello World",
       sourceLocale: "en",
       targetLocale: "de",
     });
 
-    expect(result).toEqual({ ok: false, error: SERVICE_UNAVAILABLE_ERROR });
+    expect(result).toEqual({
+      ok: false,
+      error: SERVICE_UNAVAILABLE_ERROR,
+      unavailable: true,
+    });
+  });
+
+  test("reports the service as unavailable when the request times out", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new DOMException("Aborted", "TimeoutError")),
+    );
+
+    const provider = createDemosjarcoTranslateProvider();
+    const result = await provider.translateText({
+      text: "Hello World",
+      sourceLocale: "en",
+      targetLocale: "de",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: SERVICE_UNAVAILABLE_ERROR,
+      unavailable: true,
+    });
   });
 
   test("reports the service as unavailable on a server error", async () => {
@@ -145,14 +169,65 @@ describe("createInlangTranslateProvider", () => {
       }),
     );
 
-    const provider = createInlangTranslateProvider();
+    const provider = createDemosjarcoTranslateProvider();
     const result = await provider.translateText({
       text: "Hello World",
       sourceLocale: "en",
       targetLocale: "de",
     });
 
-    expect(result).toEqual({ ok: false, error: SERVICE_UNAVAILABLE_ERROR });
+    expect(result).toEqual({
+      ok: false,
+      error: SERVICE_UNAVAILABLE_ERROR,
+      unavailable: true,
+    });
+  });
+
+  test("reports the service as unavailable when throttled with 429", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+      }),
+    );
+
+    const provider = createDemosjarcoTranslateProvider();
+    const result = await provider.translateText({
+      text: "Hello World",
+      sourceLocale: "en",
+      targetLocale: "de",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: SERVICE_UNAVAILABLE_ERROR,
+      unavailable: true,
+    });
+  });
+
+  test("reports the service as unavailable on a malformed response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ unexpected: "shape" }),
+      }),
+    );
+
+    const provider = createDemosjarcoTranslateProvider();
+    const result = await provider.translateText({
+      text: "Hello World",
+      sourceLocale: "en",
+      targetLocale: "de",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: SERVICE_UNAVAILABLE_ERROR,
+      unavailable: true,
+    });
   });
 
   test("returns a translation error on a client error", async () => {
@@ -165,7 +240,7 @@ describe("createInlangTranslateProvider", () => {
       }),
     );
 
-    const provider = createInlangTranslateProvider();
+    const provider = createDemosjarcoTranslateProvider();
     const result = await provider.translateText({
       text: "Hello World",
       sourceLocale: "en",
