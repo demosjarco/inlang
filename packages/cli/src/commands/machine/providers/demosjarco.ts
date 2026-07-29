@@ -14,7 +14,7 @@ export const DEMOSJARCO_TRANSLATE_API_URL =
 const BYOK_URL = "https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok";
 
 /** Bounded so a hung request fails fast instead of stalling the whole run. */
-const REQUEST_TIMEOUT_MS = 15_000;
+export const REQUEST_TIMEOUT_MS = 15_000;
 
 /**
  * Shown when the community-operated service at translate.demosjarco.dev can't
