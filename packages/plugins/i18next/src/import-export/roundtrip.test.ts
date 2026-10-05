@@ -631,6 +631,8 @@ test("keyContextWithOrdinal", async () => {
 	const json = {
 		race_male_ordinal_one: "his {{count}}st race",
 		race_male_ordinal_other: "his {{count}}th race",
+		race_female_ordinal_one: "her {{count}}st race",
+		race_female_ordinal_other: "her {{count}}th race",
 	};
 	const imported = await runImportFiles(json);
 	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
@@ -647,6 +649,14 @@ test("keyContextWithOrdinal", async () => {
 		],
 		[
 			{ type: "literal-match", key: "context", value: "male" },
+			{ type: "literal-match", key: "countOrdinal", value: "other" },
+		],
+		[
+			{ type: "literal-match", key: "context", value: "female" },
+			{ type: "literal-match", key: "countOrdinal", value: "one" },
+		],
+		[
+			{ type: "literal-match", key: "context", value: "female" },
 			{ type: "literal-match", key: "countOrdinal", value: "other" },
 		],
 	]);
@@ -689,6 +699,121 @@ test("keyPluralCardinalAndOrdinalMixed", async () => {
 			{ type: "catchall-match", key: "countPlural" },
 		],
 	]);
+});
+
+test("key with separator and context", async () => {
+	const json = {
+		"key_separator_context_male": "male value",
+		"key_separator_context_female": "female value",
+		"key_separator_context_1234": "female value",
+		"key_separator_context_male_one": "male value one",
+		"key_separator_context_female_one": "female value one",
+		"key_separator_context_male_other": "male value other",
+		"key_separator_context_female_other": "female value other",
+		"key_separator_context_male_ordinal_one": "male value ordinal one",
+		"key_separator_context_female_ordinal_one": "female value ordinal one",
+		"key_separator_context_male_ordinal_other": "male value ordinal other",
+		"key_separator_context_female_ordinal_other": "female value ordinal other",
+	};
+	const imported = await runImportFiles(json);
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+
+	expect(imported.bundles[0]?.id).toStrictEqual("key_separator_context");
+	expect(imported.bundles[0]?.declarations).toStrictEqual(
+		expect.arrayContaining([
+			{ type: "input-variable", name: "count" },
+			expect.objectContaining({
+				type: "local-variable",
+				name: "countOrdinal",
+				value: {
+					type: "expression",
+					arg: { type: "variable-reference", name: "count" },
+					annotation: {
+						type: "function-reference",
+						name: "plural",
+						options: [
+							{ name: "type", value: { type: "literal", value: "ordinal" } },
+						],
+					},
+				},
+			}),
+			expect.objectContaining({
+				type: "local-variable",
+				name: "countPlural",
+				value: {
+					type: "expression",
+					arg: { type: "variable-reference", name: "count" },
+					annotation: {
+						type: "function-reference",
+						name: "plural",
+						options: [],
+					},
+				},
+			}),
+		])
+	);
+	expect(imported.messages[0]?.selectors).toStrictEqual([
+		{ type: "variable-reference", name: "context" },
+		{ type: "variable-reference", name: "countOrdinal" },
+		{ type: "variable-reference", name: "countPlural" },
+	]);
+	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
+		[
+		  { type: 'literal-match', key: 'context', value: 'male' },
+		  { type: 'catchall-match', key: 'countOrdinal' },
+		  { type: 'literal-match', key: 'countPlural', value: 'one' }
+		],
+		[
+		  { type: 'literal-match', key: 'context', value: 'female' },
+		  { type: 'catchall-match', key: 'countOrdinal' },
+		  { type: 'literal-match', key: 'countPlural', value: 'one' }
+		],
+		[
+		  { type: 'literal-match', key: 'context', value: 'male' },
+		  { type: 'catchall-match', key: 'countOrdinal' },
+		  { type: 'literal-match', key: 'countPlural', value: 'other' }
+		],
+		[
+		  { type: 'literal-match', key: 'context', value: 'female' },
+		  { type: 'catchall-match', key: 'countOrdinal' },
+		  { type: 'literal-match', key: 'countPlural', value: 'other' }
+		],
+		[
+		  { type: 'literal-match', key: 'context', value: 'male' },
+		  { type: 'literal-match', key: 'countOrdinal', value: 'one' },
+		  { type: 'catchall-match', key: 'countPlural' }
+		],
+		[
+		  { type: 'literal-match', key: 'context', value: 'female' },
+		  { type: 'literal-match', key: 'countOrdinal', value: 'one' },
+		  { type: 'catchall-match', key: 'countPlural' }
+		],
+		[
+		  { type: 'literal-match', key: 'context', value: 'male' },
+		  { type: 'literal-match', key: 'countOrdinal', value: 'other' },
+		  { type: 'catchall-match', key: 'countPlural' }
+		],
+		[
+		  { type: 'literal-match', key: 'context', value: 'female' },
+		  { type: 'literal-match', key: 'countOrdinal', value: 'other' },
+		  { type: 'catchall-match', key: 'countPlural' }
+		],
+		[
+		  { type: 'literal-match', key: 'context', value: 'male' },
+		  { type: 'catchall-match', key: 'countOrdinal' },
+		  { type: 'catchall-match', key: 'countPlural' }
+		],
+		[
+		  { type: 'literal-match', key: 'context', value: 'female' },
+		  { type: 'catchall-match', key: 'countOrdinal' },
+		  { type: 'catchall-match', key: 'countPlural' }
+		],
+		[
+		  { type: 'literal-match', key: 'context', value: '1234' },
+		  { type: 'catchall-match', key: 'countOrdinal' },
+		  { type: 'catchall-match', key: 'countPlural' }
+		]
+	  ]);
 });
 
 test("keyWithObjectValue", async () => {
