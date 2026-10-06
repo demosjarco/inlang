@@ -562,17 +562,18 @@ describe("it should keep files between the inlang directory and lix in sync", as
 			}
 		);
 
-		// lets wait a seconds to allow the sync process catch up
-		await new Promise((resolve) => setTimeout(resolve, syncInterval + 10));
-
-		const randomFileInLix = await selectLixFile(
-			project.lix,
-			"/file-created-on-fs.txt"
-		);
-
-		expect(new TextDecoder().decode(randomFileInLix.content)).toBe(
-			"value written by fs"
-		);
+		await expect
+			.poll(
+				async () => {
+					const file = await selectLixFile(
+						project.lix,
+						"/file-created-on-fs.txt"
+					);
+					return new TextDecoder().decode(file.content);
+				},
+				{ timeout: 5000 }
+			)
+			.toBe("value written by fs");
 	});
 
 	test("file updated in fs should be avaialable in lix ", async () => {
@@ -594,17 +595,15 @@ describe("it should keep files between the inlang directory and lix in sync", as
 			})
 		);
 
-		// console.log("wrting fs settings");
-		await new Promise((resolve) => setTimeout(resolve, syncInterval + 10));
-		const fileInLix = await selectLixFile(project.lix, "/settings.json");
-
-		const settingsAfterUpdateOnDisk = JSON.parse(
-			new TextDecoder().decode(fileInLix.content)
-		);
-
-		expect(settingsAfterUpdateOnDisk.baseLocale).toBe(
-			"brand-new-locale-written-to-fs-file"
-		);
+		await expect
+			.poll(
+				async () => {
+					const file = await selectLixFile(project.lix, "/settings.json");
+					return JSON.parse(new TextDecoder().decode(file.content)).baseLocale;
+				},
+				{ timeout: 5000 }
+			)
+			.toBe("brand-new-locale-written-to-fs-file");
 	});
 
 	test("file deleted in fs should be droped from lix ", async () => {
@@ -628,15 +627,17 @@ describe("it should keep files between the inlang directory and lix in sync", as
 		// "changes to a file on disk should reflect in lix
 		fs.unlinkSync("/project.inlang/README.md");
 
-		// console.log("wrting fs settings");
-		await new Promise((resolve) => setTimeout(resolve, syncInterval + 10));
-		const fileInLixAfter = await selectLixFiles(
-			project.lix,
-			"WHERE path = $1",
-			["/README.md"]
-		);
-
-		expect(fileInLixAfter.length).toBe(0);
+		await expect
+			.poll(
+				async () => {
+					const files = await selectLixFiles(project.lix, "WHERE path = $1", [
+						"/README.md",
+					]);
+					return files.length;
+				},
+				{ timeout: 5000 }
+			)
+			.toBe(0);
 	});
 
 	test("file created in lix should be avaialable in fs ", async () => {
@@ -654,13 +655,13 @@ describe("it should keep files between the inlang directory and lix in sync", as
 			["/file-created-in.lix.txt", new TextEncoder().encode("random value lix")]
 		);
 
-		// lets wait a seconds to allow the sync process catch up
-		await new Promise((resolve) => setTimeout(resolve, syncInterval + 10));
-
-		const randomFileOnDiskContent = fs
-			.readFileSync("/project.inlang/file-created-in.lix.txt")
-			.toString();
-		expect(randomFileOnDiskContent).toBe("random value lix");
+		await expect
+			.poll(
+				() =>
+					fs.readFileSync("/project.inlang/file-created-in.lix.txt").toString(),
+				{ timeout: 5000 }
+			)
+			.toBe("random value lix");
 	});
 
 	test("file updated in lix should be avaialable in fs ", async () => {
@@ -685,13 +686,15 @@ describe("it should keep files between the inlang directory and lix in sync", as
 			]
 		);
 
-		// lets wait a seconds to allow the sync process catch up
-		await new Promise((resolve) => setTimeout(resolve, syncInterval + 10));
-
-		const fileOnDisk = fs.readFileSync("/project.inlang/settings.json");
-		const settings = JSON.parse(fileOnDisk.toString());
-
-		expect(settings.baseLocale).toBe("brand-new-locale2");
+		await expect
+			.poll(
+				() =>
+					JSON.parse(
+						fs.readFileSync("/project.inlang/settings.json").toString()
+					).baseLocale,
+				{ timeout: 5000 }
+			)
+			.toBe("brand-new-locale2");
 	});
 
 	test("file deleted in lix should be gone in fs as awell", async () => {
@@ -710,12 +713,11 @@ describe("it should keep files between the inlang directory and lix in sync", as
 			"/.gitignore",
 		]);
 
-		// lets wait a seconds to allow the sync process catch up
-		await new Promise((resolve) => setTimeout(resolve, syncInterval + 10));
-
-		const fileExistsOnDisk = fs.existsSync("/project.inlang/.gitignore");
-
-		expect(fileExistsOnDisk).toBe(false);
+		await expect
+			.poll(() => fs.existsSync("/project.inlang/.gitignore"), {
+				timeout: 5000,
+			})
+			.toBe(false);
 	});
 
 	test("file updated in fs and lix (conflicting) should result in the fs state", async () => {
@@ -746,21 +748,20 @@ describe("it should keep files between the inlang directory and lix in sync", as
 			]
 		);
 
-		// lets wait a seconds to allow the sync process catch up
-		await new Promise((resolve) => setTimeout(resolve, 1010));
-
-		const fileOnDiskUpdated = fs.readFileSync("/project.inlang/settings.json");
-		const settingsUpdated = JSON.parse(fileOnDiskUpdated.toString());
-
-		expect(settingsUpdated.baseLocale).toBe("fs-version");
-
-		const fileInLixUpdated = await selectLixFile(project.lix, "/settings.json");
-
-		const settingsAfterUpdateOnDiskAndLix = JSON.parse(
-			new TextDecoder().decode(fileInLixUpdated.content)
-		);
-
-		expect(settingsAfterUpdateOnDiskAndLix.baseLocale).toBe("fs-version");
+		await expect
+			.poll(
+				async () => {
+					const file = await selectLixFile(project.lix, "/settings.json");
+					return {
+						fs: JSON.parse(
+							fs.readFileSync("/project.inlang/settings.json").toString()
+						).baseLocale,
+						lix: JSON.parse(new TextDecoder().decode(file.content)).baseLocale,
+					};
+				},
+				{ timeout: 5000 }
+			)
+			.toEqual({ fs: "fs-version", lix: "fs-version" });
 	});
 });
 
