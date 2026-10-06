@@ -16,7 +16,8 @@
 		".": "./dist/index.js",
 		"./browser": "./dist/browser.js",
 		"./lix": "./dist/lix/index.js",
-		"./settings-schema": "./src/json-schema/settings.ts"
+		"./settings-schema": "./src/json-schema/settings.ts",
+		"./json-formatting": "./dist/utilities/detectJsonFormatting.js"
 	},
 	"files": [
 		"./dist",

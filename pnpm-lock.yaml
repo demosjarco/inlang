@@ -675,15 +675,6 @@ importers:
       '@inlang/sdk':
         specifier: workspace:*
         version: link:../../sdk
-      '@inlang/detect-json-formatting':
-        specifier: 1.0.0
-        version: 1.0.0
-      '@inlang/plugin':
-        specifier: 2.4.14
-        version: 2.4.14(@sinclair/typebox@0.31.28)
-      '@lix-js/fs':
-        specifier: 2.2.0
-        version: 2.2.0
       '@sinclair/typebox':
         specifier: 0.31.28
         version: 0.31.28
@@ -706,6 +697,9 @@ importers:
       lodash.merge:
         specifier: 4.6.2
         version: 4.6.2
+      memfs:
+        specifier: 4.6.0
+        version: 4.6.0(quill-delta@5.1.0)(rxjs@7.8.1)(tslib@2.8.1)
       typescript:
         specifier: ^5.5.2
         version: 5.7.3
@@ -743,22 +737,13 @@ importers:
       '@inlang/sdk':
         specifier: workspace:*
         version: link:../../sdk
-      '@inlang/detect-json-formatting':
-        specifier: 1.0.0
-        version: 1.0.0
       '@sinclair/typebox':
         specifier: 0.31.28
         version: 0.31.28
     devDependencies:
-      '@inlang/plugin':
-        specifier: 2.4.14
-        version: 2.4.14(@sinclair/typebox@0.31.28)
       '@inlang/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
-      '@lix-js/fs':
-        specifier: 2.2.0
-        version: 2.2.0
       '@types/flat':
         specifier: ^5.0.2
         version: 5.0.5
@@ -780,6 +765,9 @@ importers:
       parsimmon:
         specifier: ^1.18.1
         version: 1.18.1
+      memfs:
+        specifier: 4.6.0
+        version: 4.6.0(quill-delta@5.1.0)(rxjs@7.8.1)(tslib@2.8.1)
       typescript:
         specifier: ^5.5.2
         version: 5.7.3
@@ -3186,10 +3174,6 @@ packages:
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [win32]
-
-  '@inlang/detect-json-formatting@1.0.0':
-    resolution: {integrity: sha512-o0jeI8U4TgNlsPwI0y92jld8/18Loh2KEgHCYCJ42rCOdxFrA8R60cydlEd2/6jkdHFn5DxKj8rOyiKv3z9uOw==}
-    deprecated: no longer used
 
   '@inlang/json-types@1.1.0':
     resolution: {integrity: sha512-n6vS6AqETsCFbV4TdBvR/EH57waVXzKsMqeUQ+eH2Q6NUATfKhfLabgNms2A+QV3aedH/hLtb1pRmjl2ykBVZg==}
@@ -13657,10 +13641,6 @@ snapshots:
 
   '@img/sharp-win32-x64@0.33.5':
     optional: true
-
-  '@inlang/detect-json-formatting@1.0.0':
-    dependencies:
-      guess-json-indent: 2.0.0
 
   '@inlang/json-types@1.1.0(@sinclair/typebox@0.31.28)':
     dependencies:

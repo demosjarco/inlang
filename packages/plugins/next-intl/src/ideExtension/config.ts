@@ -1,10 +1,10 @@
 import type { PluginSettings } from "../settings.js";
 import { parse } from "./messageReferenceMatchers.js";
-import type { Plugin } from "@inlang/plugin";
+import type { InlangPlugin } from "@inlang/sdk";
 
 export const ideExtensionConfig = (
 	settings: PluginSettings
-): ReturnType<Exclude<Plugin["addCustomApi"], undefined>> => ({
+): ReturnType<Exclude<InlangPlugin["addCustomApi"], undefined>> => ({
 	"app.inlang.ideExtension": {
 		messageReferenceMatchers: [
 			async (args: { documentText: string }) => {

@@ -2,7 +2,13 @@
 import { expect, it, describe } from "vitest";
 import type { PluginSettings } from "./settings.js";
 import { plugin } from "./plugin.js";
-import { createNodeishMemoryFs } from "@lix-js/fs";
+import { Volume } from "memfs";
+
+const createMemoryFs = () => {
+  const volume = new Volume();
+  volume.mkdirSync(process.cwd(), { recursive: true });
+  return volume.promises as unknown as typeof import("node:fs/promises");
+};
 
 const pluginId = "plugin.inlang.json";
 
@@ -47,7 +53,7 @@ function createVariant(message: Message, args: { data: Variant }): { data: Messa
 
 describe("loadMessage", () => {
   it("should return messages if the path pattern is valid", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", JSON.stringify({ test: "Hello world" }));
 
     const settings = {
@@ -70,7 +76,7 @@ describe("loadMessage", () => {
   });
 
   it("supports the locale placeholder through legacy callbacks", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", JSON.stringify({ title: "Hello" }));
 
     const settings = {
@@ -92,7 +98,7 @@ describe("loadMessage", () => {
   });
 
   it("should work with empty json files", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", JSON.stringify({}));
 
     const settings = {
@@ -112,7 +118,7 @@ describe("loadMessage", () => {
   });
 
   it("should work with not yet existing files", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", JSON.stringify({ test: "Hello world" }));
 
     const settings = {
@@ -132,7 +138,7 @@ describe("loadMessage", () => {
   });
 
   it("should add multible variants to the same message", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", JSON.stringify({ test: "Hello world" }));
     await fs.writeFile("./de.json", JSON.stringify({ test: "Hallo welt" }));
 
@@ -161,7 +167,7 @@ describe("loadMessage", () => {
 
   // namespaces
   it("should return messages if the path pattern is valid (namespace)", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.mkdir("./en");
     await fs.writeFile(
       "./en/common.json",
@@ -188,7 +194,7 @@ describe("loadMessage", () => {
   });
 
   it("should work with empty json files (namespace)", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.mkdir("./en");
     await fs.writeFile("./en/common.json", JSON.stringify({}));
 
@@ -209,7 +215,7 @@ describe("loadMessage", () => {
   });
 
   it("should work with not yet existing files (namespace)", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.mkdir("./en");
     await fs.writeFile(
       "./en/common.json",
@@ -233,7 +239,7 @@ describe("loadMessage", () => {
   });
 
   it("should add multible variants to the same message (namespace)", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.mkdir("./en");
     await fs.mkdir("./de");
     await fs.writeFile(
@@ -272,7 +278,7 @@ describe("loadMessage", () => {
     const test = JSON.stringify({
       test: "test",
     });
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.mkdir("./en");
     await fs.mkdir("./de");
     await fs.writeFile("./en/common.json", test);
@@ -307,7 +313,7 @@ describe("loadMessage", () => {
     const test = JSON.stringify({
       test: "test",
     });
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.mkdir("./en");
     await fs.mkdir("./de");
     await fs.writeFile("./en/common.json", test);
@@ -337,7 +343,7 @@ describe("loadMessage", () => {
   });
 
   it("should not throw an error when the path to the resources is not present", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
 
     const settings = {
       sourceLanguageTag: "en",
@@ -363,7 +369,7 @@ describe("loadMessage", () => {
 
 describe("saveMessage", () => {
   it("test string pathPattern", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", JSON.stringify({}));
 
     const settings = {
@@ -398,7 +404,7 @@ describe("saveMessage", () => {
   });
 
   it("test object pathPattern", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", JSON.stringify({}));
 
     const settings = {
@@ -454,7 +460,7 @@ describe("saveMessage", () => {
 
 describe("variable reference", () => {
   it("should correctly identify variable reference (at the end)", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile(
       "./en.json",
       JSON.stringify({ test: "Hello {username}" }),
@@ -490,7 +496,7 @@ describe("variable reference", () => {
   });
 
   it("should correctly identify variable reference (at the beginning)", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile(
       "./en.json",
       JSON.stringify({ test: "{username} the great" }),
@@ -524,7 +530,7 @@ describe("variable reference", () => {
   });
 
   it("should correctly apply the variableReferencePattern", async () => {
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile(
       "./en.json",
       JSON.stringify({ test: "Hello @username" }),
@@ -567,7 +573,7 @@ describe("formatting", () => {
 	"test": "test"
 }`;
 
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", with4Spaces);
     await fs.writeFile("./fr.json", with4Spaces);
     await fs.writeFile("./de.json", withTabs);
@@ -627,7 +633,7 @@ describe("formatting", () => {
 	"test": "test"
 }`;
 
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", withNewLine);
     await fs.writeFile("./fr.json", withoutNewLine);
 
@@ -657,7 +663,7 @@ describe("formatting", () => {
 	"test.test": "test"
 }`;
 
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.mkdir("./en");
     await fs.writeFile("./en/common.json", enResource);
 
@@ -722,7 +728,7 @@ describe("formatting", () => {
 	"c.": "test"
 }`;
 
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.mkdir("./en");
     await fs.writeFile("./en/common.json", enResource);
 
@@ -798,7 +804,7 @@ describe("formatting", () => {
       undefined,
       2,
     );
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", content);
 
     const settings = {
@@ -845,7 +851,7 @@ describe("formatting", () => {
       4,
     );
 
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
 
     await fs.writeFile("./en.json", withNesting);
     await fs.writeFile("./fr.json", withNesting);
@@ -907,7 +913,7 @@ describe("roundTrip", () => {
 	"test": "{username}"
 }`;
 
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", enResource);
 
     const settings = {
@@ -958,7 +964,7 @@ describe("roundTrip", () => {
 	"test": "test"
 }`;
 
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.mkdir("./en");
     await fs.writeFile("./en/common.json", testResource);
 
@@ -1014,7 +1020,7 @@ describe("roundTrip", () => {
       undefined,
       4,
     );
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", complexContent);
 
     const settings = {
@@ -1044,7 +1050,7 @@ describe("roundTrip", () => {
     const test = JSON.stringify({
       test: "",
     });
-    const fs = createNodeishMemoryFs();
+    const fs = createMemoryFs();
     await fs.writeFile("./en.json", test);
 
     const settings = {
