@@ -4,7 +4,7 @@ import { PluginSettings } from "./settings.js";
 import { replaceAll } from "./utilities.js";
 import { ideExtensionConfig } from "./ideExtension/config.js";
 import { flatten, unflatten } from "flat";
-import { detectJsonFormatting } from "@inlang/detect-json-formatting";
+import { detectJsonFormatting } from "@inlang/sdk/json-formatting";
 import { importFiles } from "./import-export/importFiles.js";
 import { exportFiles } from "./import-export/exportFiles.js";
 import { toBeImportedFiles } from "./import-export/toBeImportedFiles.js";

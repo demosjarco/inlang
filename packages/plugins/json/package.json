@@ -28,9 +28,6 @@
 		"clean": "rm -rf ./dist ./node_modules"
 	},
 	"dependencies": {
-		"@inlang/detect-json-formatting": "1.0.0",
-		"@inlang/plugin": "2.4.14",
-		"@lix-js/fs": "2.2.0",
 		"@sinclair/typebox": "0.31.28",
 		"@inlang/sdk": "workspace:*"
 	},
@@ -42,6 +39,7 @@
 		"flat": "^5.0.2",
 		"lodash.merge": "4.6.2",
 		"typescript": "^5.5.2",
-		"vitest": "2.1.8"
+		"vitest": "2.1.8",
+		"memfs": "4.6.0"
 	}
 }

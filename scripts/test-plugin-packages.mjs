@@ -126,6 +126,25 @@ try {
       stdio: "inherit",
     },
   );
+  const deprecatedPackages = [
+    "@inlang/detect-json-formatting",
+    "@inlang/plugin",
+    "@inlang/json-types",
+    "@inlang/language-tag",
+    "@inlang/message",
+    "@inlang/project-settings",
+    "@inlang/translatable",
+    "@lix-js/fs",
+  ];
+  const installedPackages = Object.keys(
+    JSON.parse(readFileSync(join(temporary, "package-lock.json"), "utf8")).packages,
+  );
+  for (const name of deprecatedPackages) {
+    assert(
+      !installedPackages.some((path) => path.endsWith(`node_modules/${name}`)),
+      `Packed plugins install deprecated dependency ${name}`,
+    );
+  }
   const names = plugins.map(
     (path) => JSON.parse(readFileSync(join(path, "package.json"), "utf8")).name,
   );
@@ -176,6 +195,11 @@ type Assert<T extends true> = T;
       "--input-type=module",
       "-e",
       `
+    const { detectJsonFormatting } = await import("@inlang/sdk/json-formatting");
+    const formatted = JSON.stringify({ message: "hello" }, null, 2) + String.fromCharCode(10);
+    if (detectJsonFormatting(formatted)({ message: "hello" }) !== formatted) {
+      throw new Error("SDK JSON formatting export did not preserve formatting");
+    }
     for (const name of ${JSON.stringify(names)}) {
       const { default: plugin } = await import(name);
       if (typeof plugin.key !== "string") throw new Error(name + ": missing plugin export");

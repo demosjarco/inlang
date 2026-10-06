@@ -2,7 +2,6 @@
 import { expect, test } from "vitest";
 // import { Message, ProjectSettings, Variant, createVariant, getVariant } from "@inlang/sdk"
 import { plugin } from "./plugin.js";
-// import { createNodeishMemoryFs } from "@lix-js/fs"
 import { Value } from "@sinclair/typebox/value";
 
 // const pluginId = "plugin.inlang.json"
