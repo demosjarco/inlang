@@ -81,9 +81,49 @@ The plugin offers further configuration options that can be passed as arguments.
 type PluginSettings = {
 	pathPattern: string | { [key: string]: string }
 	variableReferencePattern?: [string] | [string, string]
+	contextValues?: string[]
 	sourceLanguageFilePath?: string
 }
 ```
+
+## `contextValues`
+
+i18next determines context from the `t()` call. JSON alone cannot distinguish
+`t("friend_male")` from `t("friend", { context: "male" })`. Supply the project's
+context values to import single-context resources and values containing underscores
+without truncating literal underscored keys:
+
+```json
+"plugin.inlang.i18next": {
+	"pathPattern": "./resources/{locale}.json",
+	"contextValues": ["male", "female", "male_formal", "female_formal"]
+}
+```
+
+Context suffixes are recognized after plural suffixes are removed; the longest
+configured suffix wins. `contextValues: []` disables context detection. When the
+setting is omitted, sibling or base keys establish context roots across all locales
+of each namespace. This inference is a heuristic; use explicit values for ambiguous
+resources. The setting changes import classification, not i18next's runtime options.
+
+## Mixed cardinal and ordinal bundles
+
+When a bundle contains both cardinal and ordinal forms, its imported MF2 message
+declares a `pluralType` input. Pass `"cardinal"` for a normal count lookup and
+`"ordinal"` for the equivalent of i18next's `ordinal: true` option:
+
+```js
+// i18next
+i18next.t("rank", { count: 1, ordinal: true });
+// Imported MF2 consumer (for example, a generated Paraglide function)
+m.rank({ count: 1, pluralType: "ordinal" });
+```
+
+Pure cardinal and pure ordinal bundles keep a fixed plural type and only need
+`count`. Mixed bundles evaluate categories using the requested type, prioritize
+explicit ordinal keys, and fall back to cardinal suffix keys using that same
+ordinal category. The exact `_zero` override applies only to cardinal lookups;
+`_ordinal_zero` remains an ordinal category. Export restores the original suffixes.
 
 ## `pathPattern`
 

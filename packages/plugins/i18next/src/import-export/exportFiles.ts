@@ -87,6 +87,7 @@ function serializeMessage(
 ): Array<{ key: string; value: string; locale: string }> {
 	const supportedSelectors = new Set([
 		"context",
+		"pluralType",
 		"count",
 		"countPlural",
 		"countOrdinal",
@@ -111,6 +112,9 @@ function serializeMessage(
 		const pattern = serializePattern(variant.pattern, settings);
 		const contextMatch = variant.matches.find(
 			(match) => match.type === "literal-match" && match.key === "context"
+		) as LiteralMatch | undefined;
+		const pluralTypeMatch = variant.matches.find(
+			(match) => match.type === "literal-match" && match.key === "pluralType"
 		) as LiteralMatch | undefined;
 		const countMatch = variant.matches.find(
 			(match) => match.type === "literal-match" && match.key === "count"
@@ -141,7 +145,10 @@ function serializeMessage(
 			// see https://github.com/opral/inlang/issues/4358
 			key += `_ordinal_${ordinalMatch.value}`;
 		} else if (pluralMatch !== undefined) {
-			key += `_${pluralMatch.value}`;
+			key +=
+				pluralTypeMatch?.value === "ordinal"
+					? `_ordinal_${pluralMatch.value}`
+					: `_${pluralMatch.value}`;
 		}
 		result.push({ key, value: pattern, locale: message.locale });
 	}

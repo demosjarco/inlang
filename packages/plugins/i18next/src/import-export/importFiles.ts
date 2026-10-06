@@ -20,12 +20,62 @@ export const importFiles: NonNullable<(typeof plugin)["importFiles"]> = async ({
 	const messages: MessageImport[] = [];
 	const variants: VariantImport[] = [];
 
-	for (const file of files) {
+	// Classify a namespace once across all locales. Sparse translations must
+	// not change a key's bundle id or the bundle's plural input contract.
+	const prepared = files.map((file) => ({
+		file,
+		resource: flatten(
+			JSON.parse(new TextDecoder().decode(file.content))
+		) as Record<string, string>,
+	}));
+	const keysByNamespace = new Map<string, Set<string>>();
+	for (const { file, resource } of prepared) {
+		const namespace = file.toBeImportedFilesMetadata?.namespace ?? "";
+		const keys = keysByNamespace.get(namespace) ?? new Set<string>();
+		Object.keys(resource).forEach((key) => keys.add(key));
+		keysByNamespace.set(namespace, keys);
+	}
+	const configuredContexts = settings?.["plugin.inlang.i18next"]?.contextValues;
+	const contextValues =
+		configuredContexts === undefined
+			? undefined
+			: [...configuredContexts].sort((a, b) => b.length - a.length);
+	const classifications = new Map<string, Map<string, KeyClassification>>();
+	const summaries = new Map<string, Map<string, BundleSelectors>>();
+	for (const [namespace, keys] of keysByNamespace) {
+		const roots = findContextRoots(
+			[...keys].map((key) => splitPluralSuffix(key).stem)
+		);
+		const byKey = new Map(
+			[...keys].map((key) => [key, classifyKey(key, roots, contextValues)])
+		);
+		const byRoot = new Map<string, BundleSelectors>();
+		for (const classification of byKey.values()) {
+			const { rootKey, isOrdinal, isCardinalPlural, isZero, hasContext } =
+				classification;
+			const summary = byRoot.get(rootKey) ?? {
+				hasPlurals: false,
+				hasOrdinal: false,
+				hasZero: false,
+				hasContext: false,
+			};
+			summary.hasPlurals ||= isCardinalPlural;
+			summary.hasOrdinal ||= isOrdinal;
+			summary.hasZero ||= isZero;
+			summary.hasContext ||= hasContext;
+			byRoot.set(rootKey, summary);
+		}
+		classifications.set(namespace, byKey);
+		summaries.set(namespace, byRoot);
+	}
+	for (const { file, resource } of prepared) {
 		const namespace = file.toBeImportedFilesMetadata?.namespace;
 		const result = parseFile({
 			namespace,
 			locale: file.locale,
-			content: file.content,
+			resource,
+			classifiedByKey: classifications.get(namespace ?? "")!,
+			bundleSelectorsByRootKey: summaries.get(namespace ?? "")!,
 			settings: settings?.["plugin.inlang.i18next"],
 		});
 		bundles.push(...result.bundles);
@@ -49,57 +99,20 @@ export const importFiles: NonNullable<(typeof plugin)["importFiles"]> = async ({
 function parseFile(args: {
 	namespace?: string;
 	locale: string;
-	content: ArrayBuffer;
+	resource: Record<string, string>;
+	classifiedByKey: Map<string, KeyClassification>;
+	bundleSelectorsByRootKey: Map<string, BundleSelectors>;
 	settings?: PluginSettings;
 }): {
 	bundles: BundleImport[];
 	messages: MessageImport[];
 	variants: VariantImport[];
 } {
-	const resource: Record<string, string> = flatten(
-		JSON.parse(new TextDecoder().decode(args.content))
-	);
-
+	const { resource, classifiedByKey, bundleSelectorsByRootKey } = args;
+	const keys = Object.keys(resource);
 	const bundles: BundleImport[] = [];
 	const messages: MessageImport[] = [];
 	const variants: VariantImport[] = [];
-
-	// sibling keys of the same bundle (`friend` -> `friend_one`,
-	// `friend_male_one`, ...) decide which selectors the bundle has. the
-	// summary is precomputed in a single pass to avoid rescanning the
-	// resource for every key.
-	// https://www.i18next.com/translation-function/context#combining-with-plurals
-	const keys = Object.keys(resource);
-	const contextRoots = findContextRoots(
-		keys.map((key) => splitPluralSuffix(key).stem)
-	);
-	const classifiedByKey = new Map(
-		keys.map((key) => [key, classifyKey(key, contextRoots)])
-	);
-	const bundleSelectorsByRootKey = new Map<
-		string,
-		{
-			hasPlurals: boolean;
-			hasContext: boolean;
-			hasZero: boolean;
-			hasOrdinal: boolean;
-		}
-	>();
-	for (const key of keys) {
-		const { rootKey, isOrdinal, isCardinalPlural, isZero, hasContext } =
-			classifiedByKey.get(key)!;
-		const summary = bundleSelectorsByRootKey.get(rootKey) ?? {
-			hasPlurals: false,
-			hasContext: false,
-			hasZero: false,
-			hasOrdinal: false,
-		};
-		summary.hasPlurals = summary.hasPlurals || isCardinalPlural;
-		summary.hasOrdinal = summary.hasOrdinal || isOrdinal;
-		summary.hasContext = summary.hasContext || hasContext;
-		summary.hasZero = summary.hasZero || isZero;
-		bundleSelectorsByRootKey.set(rootKey, summary);
-	}
 
 	for (const key of keys) {
 		const value = resource[key]!;
@@ -140,12 +153,7 @@ function parseMessage(args: {
 	value: string;
 	locale: string;
 	classification: KeyClassification;
-	bundleSelectors: {
-		hasPlurals: boolean;
-		hasContext: boolean;
-		hasZero: boolean;
-		hasOrdinal: boolean;
-	};
+	bundleSelectors: BundleSelectors;
 	settings?: PluginSettings;
 }): {
 	bundle: BundleImport;
@@ -203,6 +211,7 @@ function parseMessage(args: {
 		hasOrdinal: bundleHasOrdinal,
 	} = args.bundleSelectors;
 
+	const mixedPlurals = bundleHasOrdinal && bundleHasPlurals;
 	const selectors: Message["selectors"] = [];
 	const matches: Variant["matches"] = [];
 
@@ -232,6 +241,22 @@ function parseMessage(args: {
 		);
 	}
 
+	if (mixedPlurals) {
+		// MF2 literals are strings. The consumer passes "ordinal" or
+		// "cardinal", corresponding to i18next's ordinal option.
+		bundle.declarations.push({ type: "input-variable", name: "pluralType" });
+		selectors.push({ type: "variable-reference", name: "pluralType" });
+		matches.push(
+			isOrdinal || isZero
+				? {
+						type: "literal-match",
+						key: "pluralType",
+						value: isOrdinal ? "ordinal" : "cardinal",
+					}
+				: { type: "catchall-match", key: "pluralType" }
+		);
+	}
+
 	if (bundleHasZero) {
 		// `_zero` matches exactly `count === 0` in i18next, in every
 		// language — expressed as a selector on the `count` input itself,
@@ -256,7 +281,7 @@ function parseMessage(args: {
 		);
 	}
 
-	if (bundleHasOrdinal) {
+	if (bundleHasOrdinal && !mixedPlurals) {
 		bundle.declarations.push({
 			type: "input-variable",
 			name: "count",
@@ -319,7 +344,14 @@ function parseMessage(args: {
 				annotation: {
 					type: "function-reference",
 					name: "plural",
-					options: [],
+					options: mixedPlurals
+						? [
+								{
+									name: "type",
+									value: { type: "variable-reference", name: "pluralType" },
+								},
+							]
+						: [],
 				},
 			},
 		});
@@ -333,7 +365,7 @@ function parseMessage(args: {
 		});
 		matches.push(
 			// the exact `count = 0` variant matches any plural category
-			hasPlurals && !isZero
+			(hasPlurals || (mixedPlurals && isOrdinal)) && !isZero
 				? {
 						type: "literal-match",
 						key: "countPlural",
@@ -361,11 +393,13 @@ function parseMessage(args: {
 			messageBundleId: bundleId,
 			messageLocale: args.locale,
 			matches: matches.map((match) =>
-				match.key === "count"
-					? { type: "catchall-match", key: "count" }
-					: match.key === "countPlural"
-						? { type: "literal-match", key: "countPlural", value: "zero" }
-						: match
+				match.key === "pluralType"
+					? { type: "catchall-match", key: "pluralType" }
+					: match.key === "count"
+						? { type: "catchall-match", key: "count" }
+						: match.key === "countPlural"
+							? { type: "literal-match", key: "countPlural", value: "zero" }
+							: match
 			),
 			pattern: pattern.result,
 		});
@@ -516,6 +550,13 @@ const PLURAL_CATEGORIES = new Set([
 	"other",
 ]);
 
+type BundleSelectors = {
+	hasPlurals: boolean;
+	hasContext: boolean;
+	hasZero: boolean;
+	hasOrdinal: boolean;
+};
+
 type KeyClassification = {
 	keyParts: string[];
 	rootKey: string;
@@ -534,9 +575,8 @@ type KeyClassification = {
  * - ordinal plurals use the reserved `_ordinal_<category>` suffix:
  *   `key_ordinal_one`
  *   (https://www.i18next.com/translation-function/plurals#ordinal-plurals)
- * - a `zero` category (`key_zero`, `key_ordinal_zero`) is also i18next's
- *   exact `count === 0` match in every language, in addition to the Intl
- *   "zero" plural category
+ * - cardinal `key_zero` is also an exact `count === 0` match; ordinal
+ *   `key_ordinal_zero` is only the Intl ordinal "zero" category
  *   (https://www.i18next.com/translation-function/plurals)
  */
 function splitPluralSuffix(key: string): {
@@ -561,7 +601,7 @@ function splitPluralSuffix(key: string): {
 			keyParts,
 			isOrdinal: true,
 			isCardinalPlural: false,
-			isZero: category == "zero",
+			isZero: false,
 		};
 	}
 
@@ -630,23 +670,36 @@ function findContextRoots(stems: string[]): Set<string> {
  */
 function classifyKey(
 	key: string,
-	contextRoots: Set<string>
+	contextRoots: Set<string>,
+	contextValues?: string[]
 ): KeyClassification {
 	const { stem, keyParts, isOrdinal, isCardinalPlural, isZero } =
 		splitPluralSuffix(key);
 
-	const underscore = stem.lastIndexOf("_");
 	let rootKey = stem;
 	let context: string | undefined;
-
-	if (underscore > 0) {
-		const parent = stem.slice(0, underscore);
-		const last = stem.slice(underscore + 1);
-		// Context only when sibling keys (or a base key) established this
-		// prefix. Otherwise the underscore belongs to the key itself.
-		if (contextRoots.has(parent)) {
-			rootKey = parent;
-			context = last;
+	if (contextValues !== undefined) {
+		// Explicit values resolve ambiguity without truncating literal keys.
+		// Longest suffix wins when values themselves contain underscores.
+		context = contextValues.find(
+			(value) =>
+				value.length > 0 &&
+				stem.endsWith(`_${value}`) &&
+				stem.length > value.length + 1
+		);
+		if (context !== undefined) rootKey = stem.slice(0, -context.length - 1);
+	} else {
+		for (
+			let index = stem.lastIndexOf("_");
+			index > 0;
+			index = stem.lastIndexOf("_", index - 1)
+		) {
+			const parent = stem.slice(0, index);
+			if (contextRoots.has(parent)) {
+				rootKey = parent;
+				context = stem.slice(index + 1);
+				break;
+			}
 		}
 	}
 

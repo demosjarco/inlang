@@ -662,11 +662,8 @@ test("keyContextWithOrdinal", async () => {
 	]);
 });
 
-// cardinal and ordinal forms of the same key coexist (i18next picks by the
-// `ordinal: true` option); cardinal variants get a catchall on countOrdinal
-// and vice versa. cardinal variants come first (file order), so calls
-// without a disambiguating input resolve cardinal — matching i18next's
-// default.
+// Mixed bundles use an explicit string-valued pluralType input. Ordinal
+// literals outrank cardinal fallback forms, independently of file order.
 test("keyPluralCardinalAndOrdinalMixed", async () => {
 	const json = {
 		race_one: "{{count}} race",
@@ -678,42 +675,42 @@ test("keyPluralCardinalAndOrdinalMixed", async () => {
 	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
 
 	expect(imported.messages[0]?.selectors).toStrictEqual([
-		{ type: "variable-reference", name: "countOrdinal" },
+		{ type: "variable-reference", name: "pluralType" },
 		{ type: "variable-reference", name: "countPlural" },
 	]);
 	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
 		[
-			{ type: "catchall-match", key: "countOrdinal" },
+			{ type: "literal-match", key: "pluralType", value: "ordinal" },
 			{ type: "literal-match", key: "countPlural", value: "one" },
 		],
 		[
-			{ type: "catchall-match", key: "countOrdinal" },
+			{ type: "literal-match", key: "pluralType", value: "ordinal" },
 			{ type: "literal-match", key: "countPlural", value: "other" },
 		],
 		[
-			{ type: "literal-match", key: "countOrdinal", value: "one" },
-			{ type: "catchall-match", key: "countPlural" },
+			{ type: "catchall-match", key: "pluralType" },
+			{ type: "literal-match", key: "countPlural", value: "one" },
 		],
 		[
-			{ type: "literal-match", key: "countOrdinal", value: "other" },
-			{ type: "catchall-match", key: "countPlural" },
+			{ type: "catchall-match", key: "pluralType" },
+			{ type: "literal-match", key: "countPlural", value: "other" },
 		],
 	]);
 });
 
 test("key with separator and context", async () => {
 	const json = {
-		"key_separator_context_male": "male value",
-		"key_separator_context_female": "female value",
-		"key_separator_context_1234": "female value",
-		"key_separator_context_male_one": "male value one",
-		"key_separator_context_female_one": "female value one",
-		"key_separator_context_male_other": "male value other",
-		"key_separator_context_female_other": "female value other",
-		"key_separator_context_male_ordinal_one": "male value ordinal one",
-		"key_separator_context_female_ordinal_one": "female value ordinal one",
-		"key_separator_context_male_ordinal_other": "male value ordinal other",
-		"key_separator_context_female_ordinal_other": "female value ordinal other",
+		key_separator_context_male: "male value",
+		key_separator_context_female: "female value",
+		key_separator_context_1234: "female value",
+		key_separator_context_male_one: "male value one",
+		key_separator_context_female_one: "female value one",
+		key_separator_context_male_other: "male value other",
+		key_separator_context_female_other: "female value other",
+		key_separator_context_male_ordinal_one: "male value ordinal one",
+		key_separator_context_female_ordinal_one: "female value ordinal one",
+		key_separator_context_male_ordinal_other: "male value ordinal other",
+		key_separator_context_female_ordinal_other: "female value ordinal other",
 	};
 	const imported = await runImportFiles(json);
 	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
@@ -722,22 +719,8 @@ test("key with separator and context", async () => {
 	expect(imported.bundles[0]?.declarations).toStrictEqual(
 		expect.arrayContaining([
 			{ type: "input-variable", name: "count" },
-			expect.objectContaining({
-				type: "local-variable",
-				name: "countOrdinal",
-				value: {
-					type: "expression",
-					arg: { type: "variable-reference", name: "count" },
-					annotation: {
-						type: "function-reference",
-						name: "plural",
-						options: [
-							{ name: "type", value: { type: "literal", value: "ordinal" } },
-						],
-					},
-				},
-			}),
-			expect.objectContaining({
+			{ type: "input-variable", name: "pluralType" },
+			{
 				type: "local-variable",
 				name: "countPlural",
 				value: {
@@ -746,87 +729,61 @@ test("key with separator and context", async () => {
 					annotation: {
 						type: "function-reference",
 						name: "plural",
-						options: [],
+						options: [
+							{
+								name: "type",
+								value: { type: "variable-reference", name: "pluralType" },
+							},
+						],
 					},
 				},
-			}),
+			},
 		])
 	);
 	expect(imported.messages[0]?.selectors).toStrictEqual([
 		{ type: "variable-reference", name: "context" },
-		{ type: "variable-reference", name: "countOrdinal" },
+		{ type: "variable-reference", name: "pluralType" },
 		{ type: "variable-reference", name: "countPlural" },
 	]);
+	const matches = (context: string, mode?: string, category?: string) => [
+		{ type: "literal-match", key: "context", value: context },
+		mode
+			? { type: "literal-match", key: "pluralType", value: mode }
+			: { type: "catchall-match", key: "pluralType" },
+		category
+			? { type: "literal-match", key: "countPlural", value: category }
+			: { type: "catchall-match", key: "countPlural" },
+	];
 	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
-		[
-		  { type: 'literal-match', key: 'context', value: 'male' },
-		  { type: 'catchall-match', key: 'countOrdinal' },
-		  { type: 'literal-match', key: 'countPlural', value: 'one' }
-		],
-		[
-		  { type: 'literal-match', key: 'context', value: 'female' },
-		  { type: 'catchall-match', key: 'countOrdinal' },
-		  { type: 'literal-match', key: 'countPlural', value: 'one' }
-		],
-		[
-		  { type: 'literal-match', key: 'context', value: 'male' },
-		  { type: 'catchall-match', key: 'countOrdinal' },
-		  { type: 'literal-match', key: 'countPlural', value: 'other' }
-		],
-		[
-		  { type: 'literal-match', key: 'context', value: 'female' },
-		  { type: 'catchall-match', key: 'countOrdinal' },
-		  { type: 'literal-match', key: 'countPlural', value: 'other' }
-		],
-		[
-		  { type: 'literal-match', key: 'context', value: 'male' },
-		  { type: 'literal-match', key: 'countOrdinal', value: 'one' },
-		  { type: 'catchall-match', key: 'countPlural' }
-		],
-		[
-		  { type: 'literal-match', key: 'context', value: 'female' },
-		  { type: 'literal-match', key: 'countOrdinal', value: 'one' },
-		  { type: 'catchall-match', key: 'countPlural' }
-		],
-		[
-		  { type: 'literal-match', key: 'context', value: 'male' },
-		  { type: 'literal-match', key: 'countOrdinal', value: 'other' },
-		  { type: 'catchall-match', key: 'countPlural' }
-		],
-		[
-		  { type: 'literal-match', key: 'context', value: 'female' },
-		  { type: 'literal-match', key: 'countOrdinal', value: 'other' },
-		  { type: 'catchall-match', key: 'countPlural' }
-		],
-		[
-		  { type: 'literal-match', key: 'context', value: 'male' },
-		  { type: 'catchall-match', key: 'countOrdinal' },
-		  { type: 'catchall-match', key: 'countPlural' }
-		],
-		[
-		  { type: 'literal-match', key: 'context', value: 'female' },
-		  { type: 'catchall-match', key: 'countOrdinal' },
-		  { type: 'catchall-match', key: 'countPlural' }
-		],
-		[
-		  { type: 'literal-match', key: 'context', value: '1234' },
-		  { type: 'catchall-match', key: 'countOrdinal' },
-		  { type: 'catchall-match', key: 'countPlural' }
-		]
-	  ]);
+		matches("male", "ordinal", "one"),
+		matches("female", "ordinal", "one"),
+		matches("male", "ordinal", "other"),
+		matches("female", "ordinal", "other"),
+		matches("male", undefined, "one"),
+		matches("female", undefined, "one"),
+		matches("male", undefined, "other"),
+		matches("female", undefined, "other"),
+		matches("male"),
+		matches("female"),
+		matches("1234"),
+	]);
 });
 
 test("key with underscore without context", async () => {
 	const json = {
-		"this_is_a_key_without_context": "value",
-		"this_is_another_key_without_context": "value",
+		this_is_a_key_without_context: "value",
+		this_is_another_key_without_context: "value",
 	};
 	const imported = await runImportFiles(json);
 	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
 
 	expect(imported.bundles).lengthOf(2);
-	expect(imported.bundles[0]?.id).toStrictEqual("this_is_a_key_without_context");
-	expect(imported.bundles[1]?.id).toStrictEqual("this_is_another_key_without_context");
+	expect(imported.bundles[0]?.id).toStrictEqual(
+		"this_is_a_key_without_context"
+	);
+	expect(imported.bundles[1]?.id).toStrictEqual(
+		"this_is_another_key_without_context"
+	);
 	expect(imported.messages[0]?.selectors).toStrictEqual([]);
 	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
 		[],

@@ -2,6 +2,29 @@ import { expect, test } from "vitest";
 import { Value } from "@sinclair/typebox/value";
 import { PluginSettings } from "./settings.js";
 
+test("context values can be explicit, empty, or contain underscores", () => {
+	for (const contextValues of [
+		[],
+		["male"],
+		["male_formal", "female_formal"],
+	]) {
+		expect(
+			Value.Check(PluginSettings, {
+				pathPattern: "./{locale}.json",
+				contextValues,
+			})
+		).toBe(true);
+	}
+	for (const contextValues of [[""], ["male", "male"], [1]]) {
+		expect(
+			Value.Check(PluginSettings, {
+				pathPattern: "./{locale}.json",
+				contextValues,
+			})
+		).toBe(false);
+	}
+});
+
 test("valid path patterns", async () => {
 	const validPathPatterns = [
 		"/folder/{locale}.json",

@@ -24,6 +24,14 @@ const NameSpacePathPattern = Type.Record(
 export type PluginSettings = Static<typeof PluginSettings>;
 export const PluginSettings = Type.Object({
 	pathPattern: Type.Union([PathPattern, NameSpacePathPattern]),
+	contextValues: Type.Optional(
+		Type.Array(Type.String({ minLength: 1 }), {
+			title: "Context values",
+			description:
+				"Known i18next context values, including values containing underscores. When supplied, only these suffixes are contexts; an empty array disables context detection. Without this setting, contexts are inferred from sibling or base keys across locales.",
+			uniqueItems: true,
+		})
+	),
 	variableReferencePattern: Type.Optional(
 		Type.Array(Type.String(), {
 			title: "Variable reference pattern",
