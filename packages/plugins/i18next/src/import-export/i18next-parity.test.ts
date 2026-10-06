@@ -13,7 +13,7 @@ type Resources = Record<string, Record<string, string>>;
 type Imported = Awaited<ReturnType<typeof importFiles>>;
 type Inputs = Record<string, string | number | boolean>;
 
-async function setup(resources: Resources) {
+async function setup(resources: Resources, contextValues?: string[]) {
 	const runtime = i18next.createInstance();
 	await runtime.init({
 		lng: Object.keys(resources)[0],
@@ -29,7 +29,10 @@ async function setup(resources: Resources) {
 		settings: {
 			baseLocale: Object.keys(resources)[0]!,
 			locales: Object.keys(resources),
-			"plugin.inlang.i18next": { pathPattern: "./locales/{locale}.json" },
+			"plugin.inlang.i18next": {
+				pathPattern: "./locales/{locale}.json",
+				contextValues,
+			},
 		},
 		files: Object.entries(resources).map(([locale, json]) => ({
 			locale,
@@ -50,7 +53,11 @@ function evaluate(
 ) {
 	const bundle = imported.bundles.find((bundle) => bundle.id === root);
 	if (!bundle) throw new Error(`Missing imported bundle: ${root}`);
-	const variables: Inputs = { ...inputs };
+	// Adapt i18next's boolean ordinal option to the documented MF2 input.
+	const variables: Inputs = {
+		...inputs,
+		pluralType: inputs.ordinal ? "ordinal" : "cardinal",
+	};
 	for (const declaration of bundle.declarations ?? []) {
 		if (declaration.type !== "local-variable") continue;
 		const expression = declaration.value;
@@ -60,12 +67,14 @@ function evaluate(
 			expression.annotation?.name !== "plural"
 		)
 			throw new Error("Unsupported test expression");
-		const ordinal = expression.annotation.options.some(
-			(option) =>
-				option.name === "type" &&
-				option.value.type === "literal" &&
-				option.value.value === "ordinal"
-		);
+		const typeOption = expression.annotation.options.find(
+			(option) => option.name === "type"
+		)?.value;
+		const pluralType =
+			typeOption?.type === "variable-reference"
+				? variables[typeOption.name]
+				: typeOption?.value;
+		const ordinal = pluralType === "ordinal";
 		variables[declaration.name] = new Intl.PluralRules(locale, {
 			type: ordinal ? "ordinal" : "cardinal",
 		}).select(Number(variables[expression.arg.name]));
@@ -102,9 +111,10 @@ async function expectLookup(
 	root: string,
 	locale: string,
 	inputs: Inputs,
-	expected: string
+	expected: string,
+	contextValues?: string[]
 ) {
-	const { runtime, imported } = await setup(resources);
+	const { runtime, imported } = await setup(resources, contextValues);
 	expect(runtime.t(root, { lng: locale, ...inputs })).toBe(expected);
 	expect(evaluate(imported, root, locale, inputs)).toBe(expected);
 	return imported;
@@ -146,7 +156,8 @@ test("underscored root with one context and no base key", async () => {
 		"key_separator_context",
 		"en",
 		{ context: "male" },
-		"male value"
+		"male value",
+		["male"]
 	);
 });
 
@@ -156,7 +167,8 @@ test("single context needs no base key or second context", async () => {
 		"friend",
 		"en",
 		{ context: "male" },
-		"boyfriend"
+		"boyfriend",
+		["male"]
 	);
 });
 
@@ -171,7 +183,8 @@ test("single context with cardinal plurals", async () => {
 		"friend",
 		"en",
 		{ context: "male", count: 2 },
-		"2 boyfriends"
+		"2 boyfriends",
+		["male"]
 	);
 });
 
@@ -186,7 +199,8 @@ test("single context with ordinal plurals", async () => {
 		"race",
 		"en",
 		{ context: "male", count: 1, ordinal: true },
-		"his 1st race"
+		"his 1st race",
+		["male"]
 	);
 });
 
@@ -201,7 +215,8 @@ test("upstream: a single month context can contain cardinal and ordinal forms", 
 		"oTest",
 		"en",
 		{ count: 1, ordinal: true, context: "month" },
-		"Every 1st month (ctx)"
+		"Every 1st month (ctx)",
+		["month"]
 	);
 });
 
@@ -232,7 +247,8 @@ test("context values can contain underscores", async () => {
 		"friend",
 		"en",
 		{ context: "male_formal" },
-		"formal boyfriend"
+		"formal boyfriend",
+		["male_formal"]
 	);
 });
 
@@ -348,4 +364,129 @@ test("roundtrip preserves cardinal zero beside ordinal zero", async () => {
 	});
 	expect(after.t("rank", { count: 0 })).toBe(runtime.t("rank", { count: 0 }));
 	expect(json).toEqual(resources.cy);
+});
+
+test("empty context values preserve literal context-like keys", async () => {
+	await expectLookup(
+		{ en: { status_open: "open", status_closed: "closed" } },
+		"status_open",
+		"en",
+		{},
+		"open",
+		[]
+	);
+});
+
+test("omitted context values preserve ambiguous singleton roots", async () => {
+	await expectLookup(
+		{ en: { key_separator_context: "literal" } },
+		"key_separator_context",
+		"en",
+		{},
+		"literal"
+	);
+});
+
+test("the longest configured context suffix wins", async () => {
+	const imported = await expectLookup(
+		{ en: { friend_male_formal_one: "formal boyfriend" } },
+		"friend",
+		"en",
+		{ context: "male_formal", count: 1 },
+		"formal boyfriend",
+		["formal", "male_formal"]
+	);
+	expect(imported.bundles.map((bundle) => bundle.id)).toEqual(["friend"]);
+});
+
+test("context inference does not cross namespace boundaries", async () => {
+	const imported = await importFiles({
+		settings: {
+			baseLocale: "en",
+			locales: ["en"],
+			"plugin.inlang.i18next": { pathPattern: "./{namespace}/{locale}.json" },
+		},
+		files: [
+			{
+				namespace: "a",
+				json: { friend_male: "male", friend_female: "female" },
+			},
+			{ namespace: "b", json: { friend_male: "literal" } },
+		].map(({ namespace, json }) => ({
+			locale: "en",
+			toBeImportedFilesMetadata: { namespace },
+			content: new TextEncoder().encode(JSON.stringify(json)),
+		})),
+	});
+	expect(imported.bundles.map((bundle) => bundle.id)).toEqual([
+		"a:friend",
+		"b:friend_male",
+	]);
+});
+
+test("mixed plural selection is independent of resource order", async () => {
+	for (const entries of [
+		[
+			["rank_one", "cardinal"],
+			["rank_ordinal_one", "ordinal"],
+		],
+		[
+			["rank_ordinal_one", "ordinal"],
+			["rank_one", "cardinal"],
+		],
+	]) {
+		const resources = { en: Object.fromEntries(entries) };
+		await expectLookup(resources, "rank", "en", { count: 1 }, "cardinal");
+		await expectLookup(
+			resources,
+			"rank",
+			"en",
+			{ count: 1, ordinal: true },
+			"ordinal"
+		);
+	}
+});
+
+test("missing ordinal suffixes use the ordinal category for cardinal-key fallback", async () => {
+	const resources = {
+		ar: {
+			rank_one: "cardinal one",
+			rank_other: "suffix fallback",
+			rank_ordinal_one: "ordinal one",
+		},
+	};
+	await expectLookup(resources, "rank", "ar", { count: 1 }, "cardinal one");
+	await expectLookup(
+		resources,
+		"rank",
+		"ar",
+		{ count: 1, ordinal: true },
+		"suffix fallback"
+	);
+});
+
+test("mixed Welsh zero keeps exact cardinal zero separate from ordinal categories", async () => {
+	const resources = {
+		cy: {
+			rank_zero: "cardinal zero",
+			rank_other: "cardinal other",
+			rank_ordinal_zero: "ordinal zero",
+			rank_ordinal_other: "ordinal other",
+		},
+	};
+	await expectLookup(resources, "rank", "cy", { count: 0 }, "cardinal zero");
+	await expectLookup(
+		resources,
+		"rank",
+		"cy",
+		{ count: 0, ordinal: true },
+		"ordinal zero"
+	);
+	await expectLookup(
+		resources,
+		"rank",
+		"cy",
+		{ count: 7, ordinal: true },
+		"ordinal zero"
+	);
 });
