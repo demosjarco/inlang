@@ -816,6 +816,24 @@ test("key with separator and context", async () => {
 	  ]);
 });
 
+test("key with underscore without context", async () => {
+	const json = {
+		"this_is_a_key_without_context": "value",
+		"this_is_another_key_without_context": "value",
+	};
+	const imported = await runImportFiles(json);
+	expect(await runExportFilesParsed(imported)).toStrictEqual(json);
+
+	expect(imported.bundles).lengthOf(2);
+	expect(imported.bundles[0]?.id).toStrictEqual("this_is_a_key_without_context");
+	expect(imported.bundles[1]?.id).toStrictEqual("this_is_another_key_without_context");
+	expect(imported.messages[0]?.selectors).toStrictEqual([]);
+	expect(imported.variants.map((variant) => variant.matches)).toStrictEqual([
+		[],
+		[],
+	]);
+});
+
 test("keyWithObjectValue", async () => {
 	const imported = await runImportFiles({
 		keyWithObjectValue: {
