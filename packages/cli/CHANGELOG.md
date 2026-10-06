@@ -1,5 +1,14 @@
 # @inlang/cli
 
+## 3.3.9
+
+### Patch Changes
+
+- Updated dependencies [68eefaf]
+- Updated dependencies [56891d6]
+- Updated dependencies [5df91b6]
+  - @inlang/sdk@3.1.0
+
 ## 3.3.8
 
 ### Patch Changes

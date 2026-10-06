@@ -1,5 +1,16 @@
 # @inlang/plugin-json
 
+## 5.1.58
+
+### Patch Changes
+
+- 3502588: Publish TypeScript declarations and explicit type exports for all official plugins. Keep declaration dependencies available to consumers and exclude test declarations from production builds. Fix the message-format `file-schema` export to reference published JavaScript and declarations.
+- 56891d6: Remove deprecated dependencies so installing the JSON and next-intl plugins no longer pulls in legacy inlang and Lix packages. JSON formatting and existing plugin behavior are preserved.
+- Updated dependencies [68eefaf]
+- Updated dependencies [56891d6]
+- Updated dependencies [5df91b6]
+  - @inlang/sdk@3.1.0
+
 ## 5.1.57
 
 ### Patch Changes
