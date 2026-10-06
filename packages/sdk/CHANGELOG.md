@@ -1,5 +1,16 @@
 # @inlang/sdk
 
+## 3.1.0
+
+### Minor Changes
+
+- 56891d6: Expose `detectJsonFormatting` through `@inlang/sdk/json-formatting` to serialize JSON with its existing indentation and trailing newline.
+
+### Patch Changes
+
+- 68eefaf: Allow `paraglide.config.js`, `.mjs`, `.ts`, and `.cjs` in the generated project `.gitignore` so Paraglide compiler options can be committed and shared across clones and CI. Existing projects receive the updated ignore rules when the SDK upgrade regenerates project metadata. Fixes https://github.com/opral/paraglide-js/issues/775.
+- 5df91b6: Upgrade the Lix SDK dependency to 0.19.0 for improved query performance and lower memory use.
+
 ## 3.0.6
 
 ### Patch Changes

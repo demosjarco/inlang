@@ -1,5 +1,23 @@
 # @inlang/plugin-i18next
 
+## 6.3.0
+
+### Minor Changes
+
+- 067d8bc: Preserve underscored i18next keys and classify contexts consistently across locales.
+  Add `contextValues` to resolve ambiguous context suffixes, including single-context
+  resources and values containing underscores. Mixed cardinal/ordinal MF2 bundles
+  use a `pluralType` input to preserve lookup behavior; ordinal zero no longer
+  overwrites cardinal zero on export.
+
+### Patch Changes
+
+- 3502588: Publish TypeScript declarations and explicit type exports for all official plugins. Keep declaration dependencies available to consumers and exclude test declarations from production builds. Fix the message-format `file-schema` export to reference published JavaScript and declarations.
+- Updated dependencies [68eefaf]
+- Updated dependencies [56891d6]
+- Updated dependencies [5df91b6]
+  - @inlang/sdk@3.1.0
+
 ## 6.2.10
 
 ### Patch Changes
