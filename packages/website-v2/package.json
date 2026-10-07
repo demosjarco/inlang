@@ -9,10 +9,11 @@
     "lint": "tsc --noEmit && oxlint",
     "lint:fix": "tsc --noEmit && oxlint --fix",
     "format": "pnpm exec prettier . --write",
-    "test": "vitest run"
+    "test": "vitest run",
+    "deploy": "wrangler deploy",
+    "deploy:redirect": "wrangler deploy --config www-redirect/wrangler.json --name inlang-www-redirect"
   },
   "dependencies": {
-    "2027-track": "^0.1.8",
     "@inlang/marketplace-manifest": "workspace:*",
     "@inlang/marketplace-registry": "workspace:*",
     "@inlang/plugin-message-format": "workspace:*",
