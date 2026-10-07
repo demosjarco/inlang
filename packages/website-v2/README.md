@@ -11,12 +11,14 @@ Build from the repository root with Node.js 22+ and pnpm 10.23.0:
 pnpm install --frozen-lockfile
 pnpm --filter @inlang/website-v2... build
 pnpm --filter @inlang/website-v2 run deploy
+pnpm --filter @inlang/website-v2 run deploy:redirect
 ```
 
 Cloudflare Builds is connected to `opral/inlang`, with the working directory
 `/packages/website-v2`. Production builds use
-`pnpm --filter @inlang/website-v2... build`; the deployment command deploys the
-website and then `www-redirect`. Non-production branches use
+`pnpm --filter @inlang/website-v2... build`; the deployment command is `npx wrangler deploy`. Deploy the redirect Worker
+separately using `deploy:redirect`; Cloudflare Builds forces its configured Worker
+name, so its website trigger must only deploy the website. Non-production branches use
 `npx wrangler versions upload` and do not change production domains.
 
 `INLANG_WEBSITE_GITHUB_TOKEN` is an optional **build-time** credential for GitHub

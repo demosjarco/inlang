@@ -10,7 +10,8 @@
     "lint:fix": "tsc --noEmit && oxlint --fix",
     "format": "pnpm exec prettier . --write",
     "test": "vitest run",
-    "deploy": "wrangler deploy && wrangler deploy --config www-redirect/wrangler.json"
+    "deploy": "wrangler deploy",
+    "deploy:redirect": "wrangler deploy --config www-redirect/wrangler.json --name inlang-www-redirect"
   },
   "dependencies": {
     "@inlang/marketplace-manifest": "workspace:*",
