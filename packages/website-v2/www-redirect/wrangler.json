@@ -1,0 +1,13 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "inlang-www-redirect",
+  "compatibility_date": "2026-10-07",
+  "main": "worker.js",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "www.inlang.com",
+      "custom_domain": true
+    }
+  ]
+}
