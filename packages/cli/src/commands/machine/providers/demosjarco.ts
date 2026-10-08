@@ -18,7 +18,7 @@ export const DEMOSJARCO_TRANSLATE_API_URL =
 const BYOK_URL = "https://inlang.com/m/2qj2w8pu/app-inlang-cli/byok";
 
 /** Bounded so a hung request fails fast instead of stalling the whole run. */
-export const REQUEST_TIMEOUT_MS = 15_000;
+export const REQUEST_TIMEOUT_MS = 30_000;
 
 /**
  * The service runs on Cloudflare Workers, which allow at most 6 simultaneous
