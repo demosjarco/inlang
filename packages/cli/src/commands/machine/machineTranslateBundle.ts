@@ -3,7 +3,7 @@ import {
   Text,
   type BundleNested,
   type NewBundleNested,
-  type Variant,
+  type VariantRow,
 } from "@inlang/sdk";
 import {
   deserializePattern,
@@ -123,10 +123,10 @@ export async function machineTranslateBundle(
           } else {
             targetMessage.variants.push({
               id: randomUUID(),
-              messageId: targetMessage.id,
+              message_id: targetMessage.id,
               matches: sourceVariant.matches,
               pattern,
-            } satisfies Variant);
+            } satisfies VariantRow);
           }
         } else {
           const newMessageId = randomUUID();
@@ -137,10 +137,10 @@ export async function machineTranslateBundle(
             variants: [
               {
                 id: randomUUID(),
-                messageId: newMessageId,
+                message_id: newMessageId,
                 matches: sourceVariant.matches,
                 pattern,
-              } satisfies Variant,
+              } satisfies VariantRow,
             ],
           });
         }
