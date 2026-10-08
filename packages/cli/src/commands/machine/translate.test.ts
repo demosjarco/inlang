@@ -1,5 +1,9 @@
 import { afterEach, test, expect, vi } from "vitest";
-import { translateCommandAction } from "./translate.js";
+import {
+  PartialMachineTranslateError,
+  translateCommandAction,
+} from "./translate.js";
+import { SERVICE_UNAVAILABLE_ERROR } from "./providers/demosjarco.js";
 import {
   insertBundleNested,
   loadProjectInMemory,
@@ -30,9 +34,41 @@ test("requires INLANG_DEEPL_API_KEY when provider is deepl", async () => {
   );
 });
 
+/** A 503 asking to retry immediately, so retries don't slow the test down. */
+function unavailableResponse() {
+  return new Response(null, {
+    status: 503,
+    statusText: "Service Unavailable",
+    headers: { "retry-after": "0" },
+  });
+}
+
+function textBundle(id: string, text: string) {
+  return {
+    id,
+    messages: [
+      {
+        id: `${id}_en`,
+        bundleId: id,
+        locale: "en",
+        variants: [
+          {
+            id: `${id}_en`,
+            messageId: `${id}_en`,
+            pattern: [{ type: "text" as const, value: text }],
+          },
+        ],
+      },
+    ],
+  };
+}
+
 test("fails with a non-zero-triggering error when the fallback service is completely unavailable", async () => {
   vi.stubEnv("INLANG_MACHINE_TRANSLATE_PROVIDER", "demosjarco");
-  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockImplementation(async () => unavailableResponse()),
+  );
 
   const project = await loadProjectInMemory({
     blob: await newProject({
@@ -64,6 +100,63 @@ test("fails with a non-zero-triggering error when the fallback service is comple
   await expect(translateCommandAction({ project })).rejects.toThrow(
     "translate.demosjarco.dev is not available",
   );
+});
+
+test("keeps successful translations and reports a single error when only some fail", async () => {
+  vi.stubEnv("INLANG_MACHINE_TRANSLATE_PROVIDER", "demosjarco");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockImplementation(async (url: string) => {
+      const query = new URL(url).searchParams;
+      if (query.get("q") === "Goodbye" || query.get("target") === "fr") {
+        return unavailableResponse();
+      }
+      return Response.json({
+        data: {
+          translations: [
+            { translatedText: `${query.get("q")} (${query.get("target")})` },
+          ],
+        },
+      });
+    }),
+  );
+
+  const project = await loadProjectInMemory({
+    blob: await newProject({
+      settings: {
+        baseLocale: "en",
+        locales: ["en", "de", "fr"],
+      },
+    }),
+  });
+
+  await insertBundleNested(project.db, textBundle("hello", "Hello"));
+  await insertBundleNested(project.db, textBundle("goodbye", "Goodbye"));
+
+  const error = await translateCommandAction({ project }).then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+
+  // hello→fr, goodbye→de and goodbye→fr failed: one summary error, not three.
+  expect(error).toBeInstanceOf(PartialMachineTranslateError);
+  expect((error as Error).message).toBe(
+    `3 translations could not be completed.\n${SERVICE_UNAVAILABLE_ERROR}`,
+  );
+
+  const bundles = await selectBundleNested(project.db).execute();
+  const hello = bundles.find((bundle) => bundle.id === "hello");
+  const goodbye = bundles.find((bundle) => bundle.id === "goodbye");
+
+  expect(hello?.messages.map((message) => message.locale).sort()).toEqual([
+    "de",
+    "en",
+  ]);
+  expect(
+    hello?.messages.find((message) => message.locale === "de")?.variants[0]
+      ?.pattern,
+  ).toEqual([{ type: "text", value: "Hello (de)" }]);
+  expect(goodbye?.messages.map((message) => message.locale)).toEqual(["en"]);
 });
 
 test.runIf(process.env.INLANG_GOOGLE_TRANSLATE_API_KEY)(

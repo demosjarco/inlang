@@ -1,0 +1,9 @@
+---
+"@inlang/cli": patch
+---
+
+Make `machine translate` resilient on large projects when using the community-operated service at translate.demosjarco.dev.
+
+- Requests to the service are limited to 6 in flight, matching the Cloudflare Workers per-invocation connection limit, instead of firing every bundle at once. Google and DeepL are unaffected.
+- Throttled (429), server-error (5xx), timed-out and network-failed requests are retried up to 2 times (3 attempts total), honoring the `Retry-After` header and otherwise backing off exponentially.
+- When the service is still unavailable for some translations, only those translations are skipped: every translation that succeeded is saved, and the command fails once with a single summary error instead of discarding the whole run.
