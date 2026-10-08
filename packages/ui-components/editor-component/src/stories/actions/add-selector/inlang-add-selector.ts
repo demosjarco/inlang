@@ -3,9 +3,9 @@ import { customElement, property, state } from "lit/decorators.js";
 import { createChangeEvent } from "../../../helper/event.js";
 import { baseStyling } from "../../../styling/base.js";
 import {
-	type Message,
-	type Bundle,
-	type Variant,
+	type MessageRow,
+	type BundleRow,
+	type VariantRow,
 	Declaration,
 	type Match,
 } from "@inlang/sdk";
@@ -183,13 +183,13 @@ export default class InlangAddSelector extends LitElement {
   ];
 
   @property()
-  bundle: Bundle;
+  bundle: BundleRow;
 
   @property()
-  message: Message;
+  message: MessageRow;
 
   @property()
-  variants: Variant[];
+  variants: VariantRow[];
 
   @state()
   private _variable: Declaration | undefined;
@@ -287,10 +287,10 @@ export default class InlangAddSelector extends LitElement {
   private _addVariantsFromNewCombinations = (newCombinations: Match[][]) => {
     if (this.message) {
       for (const combination of newCombinations) {
-        const newVariant: Variant = {
+        const newVariant: VariantRow = {
 					id: v7(),
 					pattern: [],
-					messageId: this.message.id,
+					message_id: this.message.id,
 					matches: combination,
 				};
 
