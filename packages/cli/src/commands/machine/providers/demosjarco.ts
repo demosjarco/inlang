@@ -31,11 +31,11 @@ export const MAX_CONCURRENT_REQUESTS = 6;
 /** Retries after the first attempt, so at most 3 attempts per translation. */
 export const MAX_RETRIES = 2;
 
-/** Base for exponential backoff when the service doesn't send `Retry-After`. */
-export const RETRY_BASE_DELAY_MS = 1_000;
-
-/** Upper bound for a single wait, so a huge `Retry-After` can't stall the run. */
-export const MAX_RETRY_DELAY_MS = 10_000;
+/**
+ * Fixed wait between attempts. With the request timeout this bounds a single
+ * translation to 3 x 20s attempts plus 2 x 10s waits (80s).
+ */
+export const RETRY_DELAY_MS = 10_000;
 
 /**
  * Shown when the community-operated service at translate.demosjarco.dev can't
@@ -50,7 +50,7 @@ export const SERVICE_UNAVAILABLE_ERROR = [
 
 type AttemptResult =
   | { done: true; result: TranslateTextResult }
-  | { done: false; retryAfterMs?: number };
+  | { done: false };
 
 export function createDemosjarcoTranslateProvider(
   model?: string,
@@ -77,10 +77,7 @@ export function createDemosjarcoTranslateProvider(
       // A server error, throttling, or a shutdown gateway all mean the
       // hosted service itself is unavailable, not a bad request.
       if (response.status >= 500 || response.status === 429) {
-        return {
-          done: false,
-          retryAfterMs: parseRetryAfter(response.headers?.get("retry-after")),
-        };
+        return { done: false };
       }
       return {
         done: true,
@@ -149,10 +146,7 @@ export function createDemosjarcoTranslateProvider(
           return outcome.result;
         }
         if (retry < MAX_RETRIES) {
-          await sleep(
-            outcome.retryAfterMs ??
-              Math.min(RETRY_BASE_DELAY_MS * 2 ** retry, MAX_RETRY_DELAY_MS),
-          );
+          await sleep(RETRY_DELAY_MS);
         }
       }
 
@@ -163,30 +157,6 @@ export function createDemosjarcoTranslateProvider(
       };
     },
   };
-}
-
-/**
- * Parses a `Retry-After` header, which is either a number of seconds or an
- * HTTP date. Returns `undefined` when absent or unparseable so the caller
- * falls back to exponential backoff.
- */
-export function parseRetryAfter(
-  value: string | null | undefined,
-): number | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-  const delayMs = /^\d+$/.test(trimmed)
-    ? Number(trimmed) * 1000
-    : Date.parse(trimmed) - Date.now();
-
-  if (Number.isNaN(delayMs)) {
-    return undefined;
-  }
-
-  return Math.min(Math.max(delayMs, 0), MAX_RETRY_DELAY_MS);
 }
 
 /** Runs at most `limit` tasks at once; the rest wait in FIFO order. */

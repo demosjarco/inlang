@@ -3,7 +3,10 @@ import {
   PartialMachineTranslateError,
   translateCommandAction,
 } from "./translate.js";
-import { SERVICE_UNAVAILABLE_ERROR } from "./providers/demosjarco.js";
+import {
+  RETRY_DELAY_MS,
+  SERVICE_UNAVAILABLE_ERROR,
+} from "./providers/demosjarco.js";
 import {
   insertBundleNested,
   loadProjectInMemory,
@@ -14,6 +17,7 @@ import {
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 test("requires INLANG_GOOGLE_TRANSLATE_API_KEY", async () => {
@@ -34,13 +38,24 @@ test("requires INLANG_DEEPL_API_KEY when provider is deepl", async () => {
   );
 });
 
-/** A 503 asking to retry immediately, so retries don't slow the test down. */
 function unavailableResponse() {
   return new Response(null, {
     status: 503,
     statusText: "Service Unavailable",
-    headers: { "retry-after": "0" },
   });
+}
+
+/** Skips the provider's retry wait so retries don't slow the test down. */
+function skipRetryDelay() {
+  const realSetTimeout = globalThis.setTimeout;
+  vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+    callback: () => void,
+    ms?: number,
+  ) =>
+    realSetTimeout(
+      callback,
+      ms === RETRY_DELAY_MS ? 0 : ms,
+    )) as typeof setTimeout);
 }
 
 function textBundle(id: string, text: string) {
@@ -65,6 +80,7 @@ function textBundle(id: string, text: string) {
 
 test("fails with a non-zero-triggering error when the fallback service is completely unavailable", async () => {
   vi.stubEnv("INLANG_MACHINE_TRANSLATE_PROVIDER", "demosjarco");
+  skipRetryDelay();
   vi.stubGlobal(
     "fetch",
     vi.fn().mockImplementation(async () => unavailableResponse()),
@@ -104,6 +120,7 @@ test("fails with a non-zero-triggering error when the fallback service is comple
 
 test("keeps successful translations and reports a single error when only some fail", async () => {
   vi.stubEnv("INLANG_MACHINE_TRANSLATE_PROVIDER", "demosjarco");
+  skipRetryDelay();
   vi.stubGlobal(
     "fetch",
     vi.fn().mockImplementation(async (url: string) => {

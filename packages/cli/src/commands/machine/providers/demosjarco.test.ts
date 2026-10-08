@@ -4,9 +4,8 @@ import {
   DEMOSJARCO_TRANSLATE_API_URL,
   MAX_CONCURRENT_REQUESTS,
   MAX_RETRIES,
-  MAX_RETRY_DELAY_MS,
-  parseRetryAfter,
   REQUEST_TIMEOUT_MS,
+  RETRY_DELAY_MS,
   SERVICE_UNAVAILABLE_ERROR,
 } from "./demosjarco.js";
 
@@ -342,7 +341,7 @@ describe("createDemosjarcoTranslateProvider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  test("waits as long as the Retry-After header asks before retrying", async () => {
+  test("waits a fixed delay between attempts", async () => {
     vi.useFakeTimers();
     const fetchMock = vi
       .fn()
@@ -350,7 +349,6 @@ describe("createDemosjarcoTranslateProvider", () => {
         ok: false,
         status: 429,
         statusText: "Too Many Requests",
-        headers: new Headers({ "retry-after": "7" }),
       })
       .mockResolvedValueOnce(okResponse("Hallo Welt"));
     vi.stubGlobal("fetch", fetchMock);
@@ -362,7 +360,7 @@ describe("createDemosjarcoTranslateProvider", () => {
       targetLocale: "de",
     });
 
-    await vi.advanceTimersByTimeAsync(6_999);
+    await vi.advanceTimersByTimeAsync(RETRY_DELAY_MS - 1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     await vi.advanceTimersByTimeAsync(1);
@@ -425,28 +423,5 @@ describe("createDemosjarcoTranslateProvider", () => {
     const results = await Promise.all(pending);
     expect(results.every((result) => result.ok)).toBe(true);
     expect(maxInFlight).toBe(MAX_CONCURRENT_REQUESTS);
-  });
-});
-
-describe("parseRetryAfter", () => {
-  test("parses delay seconds", () => {
-    expect(parseRetryAfter("3")).toBe(3_000);
-  });
-
-  test("parses an HTTP date relative to now", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
-    expect(parseRetryAfter("Thu, 01 Jan 2026 00:00:05 GMT")).toBe(5_000);
-  });
-
-  test("caps long waits and clamps dates in the past", () => {
-    expect(parseRetryAfter("86400")).toBe(MAX_RETRY_DELAY_MS);
-    expect(parseRetryAfter("Thu, 01 Jan 1970 00:00:00 GMT")).toBe(0);
-  });
-
-  test("ignores a missing or unparseable header", () => {
-    expect(parseRetryAfter(null)).toBeUndefined();
-    expect(parseRetryAfter(undefined)).toBeUndefined();
-    expect(parseRetryAfter("soon")).toBeUndefined();
   });
 });
