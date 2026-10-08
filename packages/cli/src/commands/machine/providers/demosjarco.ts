@@ -35,7 +35,7 @@ export const MAX_RETRIES = 2;
 export const RETRY_BASE_DELAY_MS = 1_000;
 
 /** Upper bound for a single wait, so a huge `Retry-After` can't stall the run. */
-export const MAX_RETRY_DELAY_MS = 60_000;
+export const MAX_RETRY_DELAY_MS = 10_000;
 
 /**
  * Shown when the community-operated service at translate.demosjarco.dev can't
