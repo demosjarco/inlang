@@ -1,30 +1,22 @@
 ---
 "@inlang/sdk": minor
-"@inlang/cli": minor
+"@inlang/cli": patch
 "@inlang/editor-component": minor
-"@inlang/plugin-android": minor
-"@inlang/plugin-apple-strings": minor
-"@inlang/plugin-apple-xcstrings": minor
-"@inlang/plugin-i18next": minor
-"@inlang/plugin-icu1": minor
-"@inlang/plugin-message-format": minor
-"@inlang/plugin-json": minor
-"@inlang/plugin-next-intl": minor
 ---
 
 Use the canonical Lix SQL names in `project.db`.
 
-The SDK no longer rewrites table and column names before queries reach Lix. The Kysely schema now declares the tables and columns exactly as Lix exposes them, so the SQL you write is the SQL that runs.
+The SDK no longer rewrites table and column names before queries reach Lix, and no longer strips the `lixcol_*` columns from results. The Kysely schema declares the tables and columns exactly as Lix exposes them, so the SQL you write is the SQL that runs.
 
-| Before                  | After                                |
-| ----------------------- | ------------------------------------ |
-| `selectFrom("bundle")`  | `selectFrom("inlang_bundle")`        |
-| `selectFrom("message")` | `selectFrom("inlang_message")`       |
-| `selectFrom("variant")` | `selectFrom("inlang_variant")`       |
-| `message.bundleId`      | `message.bundle_id`                  |
-| `variant.messageId`     | `variant.message_id`                 |
-| `"bundle.id"`           | `"inlang_bundle.id"`                 |
+| Before                  | After                          |
+| ----------------------- | ------------------------------ |
+| `selectFrom("bundle")`  | `selectFrom("inlang_bundle")`  |
+| `selectFrom("message")` | `selectFrom("inlang_message")` |
+| `selectFrom("variant")` | `selectFrom("inlang_variant")` |
+| `message.bundleId`      | `message.bundle_id`            |
+| `variant.messageId`     | `variant.message_id`           |
+| `"bundle.id"`           | `"inlang_bundle.id"`           |
 
-The `Message`, `Variant`, `MessageImport` and `VariantImport` types follow the same column names, so plugins return `bundle_id` and `message_id` from `importFiles()`. `messageBundleId` and `messageLocale` on `VariantImport` are unchanged because they are import matching keys, not columns.
+Database rows are typed as `BundleRow`, `MessageRow` and `VariantRow` (plus `NewBundleRow`, `BundleRowUpdate`, …). `BundleNested`, `MessageNested` and the query utilities use these row types. `selectBundleNested(db).where("inlang_bundle.id", "=", id)` replaces `.where("bundle.id", "=", id)`.
 
-`selectBundleNested(db).where("inlang_bundle.id", "=", id)` replaces `.where("bundle.id", "=", id)`.
+The plugin API is unchanged. Plugins still return and receive `Bundle`, `Message` and `Variant` with camelCase `bundleId` and `messageId`, and the SDK maps them to and from the database columns. Existing plugins work with this SDK, and plugins built against it work with older SDKs.

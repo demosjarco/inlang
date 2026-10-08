@@ -7,7 +7,7 @@ if (!customElements.get("sl-dialog"))
   customElements.define("sl-dialog", SlDialog);
 //@ts-ignore
 import { useArgs } from "@storybook/preview-api";
-import { type Bundle, type Message, type Variant } from "@inlang/sdk";
+import { type BundleRow, type MessageRow, type VariantRow } from "@inlang/sdk";
 import { type ChangeEventDetail } from "../helper/event.ts";
 import { updateEntities } from "../mock/updateEntities.ts";
 
@@ -42,9 +42,9 @@ export const Example: StoryObj = {
   render: () => {
     const [args, updateArgs] = useArgs();
     const { bundles, messages, variants } = args.state as {
-      bundles: Bundle[];
-      messages: Message[];
-      variants: Variant[];
+      bundles: BundleRow[];
+      messages: MessageRow[];
+      variants: VariantRow[];
     };
 
     const handleSelectorModal = () => {
@@ -147,9 +147,9 @@ export const Complex: StoryObj = {
   render: () => {
     const [args, updateArgs] = useArgs();
     const { bundles, messages, variants } = args.state as {
-      bundles: Bundle[];
-      messages: Message[];
-      variants: Variant[];
+      bundles: BundleRow[];
+      messages: MessageRow[];
+      variants: VariantRow[];
     };
 
     const handleChange = (e) => {
@@ -189,9 +189,9 @@ export const Complex_Highlighted: StoryObj = {
   render: () => {
     const [args, updateArgs] = useArgs();
     const { bundles, messages, variants } = args.state as {
-      bundles: Bundle[];
-      messages: Message[];
-      variants: Variant[];
+      bundles: BundleRow[];
+      messages: MessageRow[];
+      variants: VariantRow[];
     };
 
     const handleChange = (e) => {
@@ -348,9 +348,9 @@ export const Themed: StoryObj = {
   render: () => {
     const [args] = useArgs();
     const { bundles, messages, variants } = args.state as {
-      bundles: Bundle[];
-      messages: Message[];
-      variants: Variant[];
+      bundles: BundleRow[];
+      messages: MessageRow[];
+      variants: VariantRow[];
     };
 
     return html` <style>

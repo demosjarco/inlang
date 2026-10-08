@@ -158,7 +158,7 @@ test("uses the first legacy namespace for newly-created unprefixed bundles", asy
 		messages: [
 			{
 				id: "message-1",
-				bundle_id: "new.message",
+				bundleId: "new.message",
 				locale: "en",
 				selectors: [],
 			},
@@ -166,7 +166,7 @@ test("uses the first legacy namespace for newly-created unprefixed bundles", asy
 		variants: [
 			{
 				id: "variant-1",
-				message_id: "message-1",
+				messageId: "message-1",
 				matches: [],
 				pattern: [{ type: "text", value: "New message" }],
 			},
@@ -238,7 +238,7 @@ test("rejects constructs generic JSON cannot represent", async () => {
 			messages: [
 				{
 					id: "message-1",
-					bundle_id: "message",
+					bundleId: "message",
 					locale: "en",
 					selectors: [{ type: "variable-reference", name: "count" }],
 				},
@@ -256,7 +256,7 @@ test("rejects constructs generic JSON cannot represent", async () => {
 			messages: [
 				{
 					id: "message-1",
-					bundle_id: "message",
+					bundleId: "message",
 					locale: "en",
 					selectors: [],
 				},
@@ -264,7 +264,7 @@ test("rejects constructs generic JSON cannot represent", async () => {
 			variants: [
 				{
 					id: "variant-1",
-					message_id: "message-1",
+					messageId: "message-1",
 					matches: [{ type: "literal-match", key: "count", value: "one" }],
 					pattern: [{ type: "text", value: "One message" }],
 				},

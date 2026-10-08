@@ -289,17 +289,17 @@ function assignIds(imported: {
 }) {
   for (const message of imported.messages) {
     if (!message.id) {
-      message.id = `${message.bundle_id}-${message.locale}`;
+      message.id = `${message.bundleId}-${message.locale}`;
     }
   }
   for (const variant of imported.variants) {
     if (!variant.id) {
       variant.id = `${Math.random()}`;
     }
-    if (!variant.message_id) {
-      variant.message_id = imported.messages.find(
+    if (!variant.messageId) {
+      variant.messageId = imported.messages.find(
         (message: any) =>
-          message.bundle_id === variant.messageBundleId &&
+          message.bundleId === variant.messageBundleId &&
           message.locale === variant.messageLocale,
       )?.id;
     }

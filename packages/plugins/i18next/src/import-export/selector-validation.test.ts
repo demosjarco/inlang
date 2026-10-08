@@ -14,7 +14,7 @@ test("rejects unsupported selectors rather than silently dropping variants", asy
 			messages: [
 				{
 					id: "message",
-					bundle_id: "greeting",
+					bundleId: "greeting",
 					locale: "en",
 					selectors: [{ type: "variable-reference", name: "audience" }],
 				},
@@ -22,7 +22,7 @@ test("rejects unsupported selectors rather than silently dropping variants", asy
 			variants: [
 				{
 					id: "formal",
-					message_id: "message",
+					messageId: "message",
 					matches: [
 						{ type: "literal-match", key: "audience", value: "formal" },
 					],
@@ -30,7 +30,7 @@ test("rejects unsupported selectors rather than silently dropping variants", asy
 				},
 				{
 					id: "fallback",
-					message_id: "message",
+					messageId: "message",
 					matches: [{ type: "catchall-match", key: "audience" }],
 					pattern: [{ type: "text", value: "Hi" }],
 				},

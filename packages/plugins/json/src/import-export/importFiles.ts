@@ -62,13 +62,13 @@ export const importFiles: NonNullable<JsonPlugin["importFiles"]> = async ({
 
 			messages.push({
 				id: messageId,
-				bundle_id: bundleId,
+				bundleId,
 				locale: file.locale,
 				selectors: [],
 			});
 			variants.push({
 				id: createVariantId(messageId),
-				message_id: messageId,
+				messageId,
 				matches: [],
 				pattern,
 			});

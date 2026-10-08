@@ -471,7 +471,7 @@ test("it should not write project_id to disk", async () => {
 
 test("a roundtrip should work", async () => {
 	const bundles: Bundle[] = [{ id: "mock-bundle", declarations: [] }];
-	const messages: NewMessage[] = [{ bundle_id: "mock-bundle", locale: "en" }];
+	const messages: NewMessage[] = [{ bundleId: "mock-bundle", locale: "en" }];
 	const variants: Variant[] = [];
 
 	const volume = Volume.fromJSON({
@@ -509,7 +509,15 @@ test("a roundtrip should work", async () => {
 	});
 
 	await project.db.insertInto("inlang_bundle").values(bundles).execute();
-	await project.db.insertInto("inlang_message").values(messages).execute();
+	await project.db
+		.insertInto("inlang_message")
+		.values(
+			messages.map(({ bundleId, ...message }) => ({
+				...message,
+				bundle_id: bundleId,
+			}))
+		)
+		.execute();
 
 	await saveProjectToDirectory({
 		fs: volume.promises as any,

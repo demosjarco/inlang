@@ -14,13 +14,13 @@ type Pattern = Array<
 type BundleImport = { id: string; declarations: Declaration[] };
 type MessageImport = {
 	id?: string;
-	bundle_id: string;
+	bundleId: string;
 	locale: string;
 	selectors: [];
 };
 type VariantImport = {
 	id?: undefined;
-	message_id?: undefined;
+	messageId?: undefined;
 	messageBundleId: string;
 	messageLocale: string;
 	matches: [];
@@ -84,7 +84,7 @@ export const importFiles: NonNullable<
 					bundleId,
 					path,
 				}),
-				bundle_id: bundleId,
+				bundleId,
 				locale: file.locale,
 				selectors: [],
 			});

@@ -290,17 +290,15 @@ function omitPrimaryKeyAssignments(sql: string): string {
 
 function publicRow(row: Record<string, unknown>): Record<string, unknown> {
 	return Object.fromEntries(
-		Object.entries(row)
-			.filter(([column]) => !column.startsWith("lixcol_"))
-			.map(([column, value]) => [
-				column,
-				(isIdentityColumn(column) ||
-					column === "message_locale" ||
-					column === "variant_id") &&
-				typeof value === "string"
-					? decodeIdentity(value)
-					: value,
-			])
+		Object.entries(row).map(([column, value]) => [
+			column,
+			(isIdentityColumn(column) ||
+				column === "message_locale" ||
+				column === "variant_id") &&
+			typeof value === "string"
+				? decodeIdentity(value)
+				: value,
+		])
 	);
 }
 

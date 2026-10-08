@@ -4,8 +4,16 @@ import {
 	PluginMissingError,
 } from "../plugin/errors.js";
 import type { ProjectSettings } from "../json-schema/settings.js";
-import type { InlangDatabaseSchema, NewVariant } from "../database/schema.js";
-import type { InlangPlugin, VariantImport } from "../plugin/schema.js";
+import type {
+	InlangDatabaseSchema,
+	NewVariantRow,
+} from "../database/schema.js";
+import {
+	messageFromPlugin,
+	variantFromPlugin,
+	type ImportedVariant,
+} from "./pluginRows.js";
+import type { InlangPlugin } from "../plugin/schema.js";
 import type { ImportFile } from "../project/api.js";
 import { v7 } from "uuid";
 
@@ -74,10 +82,15 @@ export async function importFiles(args: {
 		});
 	}
 
-	const imported = await plugin.importFiles({
+	const pluginResult = await plugin.importFiles({
 		files: args.files,
 		settings: structuredClone(args.settings),
 	});
+	const imported = {
+		bundles: pluginResult.bundles,
+		messages: pluginResult.messages.map(messageFromPlugin),
+		variants: pluginResult.variants.map(variantFromPlugin),
+	};
 
 	await args.db.transaction().execute(async (trx) => {
 		const hasExistingBundles = await trx
@@ -172,7 +185,7 @@ export async function importFiles(args: {
 					message.id,
 				])
 			);
-			const variantsWithMessageIds: NewVariant[] = imported.variants.map(
+			const variantsWithMessageIds: NewVariantRow[] = imported.variants.map(
 				(variant) => {
 					const messageId = messageIds.get(
 						messageReferenceKey(
@@ -286,10 +299,10 @@ export async function importFiles(args: {
 				);
 
 				// need to reset typescript's type narrowing
-				(variant as VariantImport).id = existingVariant?.id;
-				(variant as VariantImport).message_id = existingMessage.id;
+				(variant as ImportedVariant).id = existingVariant?.id;
+				(variant as ImportedVariant).message_id = existingMessage.id;
 			}
-			const toBeInsertedVariant: NewVariant = {
+			const toBeInsertedVariant: NewVariantRow = {
 				...variant,
 				// @ts-expect-error - bundle id is provided by VariantImport but not needed when inserting
 				messageBundleId: undefined,

@@ -65,13 +65,13 @@ describe("Apple String Catalog plugin", () => {
       "learn_more",
     ]);
     const pluralMessage = imported.messages.find(
-      (message) => message.bundle_id === "cart_items",
+      (message) => message.bundleId === "cart_items",
     )!;
     expect(pluralMessage.selectors).toEqual([
       { type: "variable-reference", name: "countPlural" },
     ]);
     const deviceMessage = imported.messages.find(
-      (message) => message.bundle_id === "learn_more",
+      (message) => message.bundleId === "learn_more",
     )!;
     expect(deviceMessage.selectors).toEqual([
       { type: "variable-reference", name: "device" },
@@ -230,7 +230,7 @@ describe("Apple String Catalog plugin", () => {
       messages: [
         {
           id: "message",
-          bundle_id: "cart_items",
+          bundleId: "cart_items",
           locale: "en",
           selectors: [{ type: "variable-reference", name: "countPlural" }],
         },
@@ -238,7 +238,7 @@ describe("Apple String Catalog plugin", () => {
       variants: [
         {
           id: "one",
-          message_id: "message",
+          messageId: "message",
           matches: [
             { type: "literal-match", key: "countPlural", value: "one" },
           ],
@@ -252,7 +252,7 @@ describe("Apple String Catalog plugin", () => {
         },
         {
           id: "other",
-          message_id: "message",
+          messageId: "message",
           matches: [{ type: "catchall-match", key: "countPlural" }],
           pattern: [
             {
@@ -360,7 +360,7 @@ describe("Apple String Catalog plugin", () => {
         messages: [
           {
             id: "message",
-            bundle_id: "bad",
+            bundleId: "bad",
             locale: "en",
             selectors: [
               { type: "variable-reference", name: "a" },
@@ -436,7 +436,7 @@ describe("Apple String Catalog plugin", () => {
       messages: [
         {
           id: "message",
-          bundle_id: "__proto__",
+          bundleId: "__proto__",
           locale: "en",
           selectors: [],
         },
@@ -444,7 +444,7 @@ describe("Apple String Catalog plugin", () => {
       variants: [
         {
           id: "variant",
-          message_id: "message",
+          messageId: "message",
           matches: [],
           pattern: [{ type: "text", value: "safe" }],
         },
@@ -458,7 +458,7 @@ describe("Apple String Catalog plugin", () => {
         messages: [
           {
             id: "message",
-            bundle_id: "missing",
+            bundleId: "missing",
             locale: "en",
             selectors: [],
           },
@@ -510,9 +510,9 @@ function concretize(
   const variants = imported.variants.map((variant, index) => ({
     ...variant,
     id: `variant-${index}`,
-    message_id: messages.find(
+    messageId: messages.find(
       (message) =>
-        message.bundle_id === variant.messageBundleId &&
+        message.bundleId === variant.messageBundleId &&
         message.locale === variant.messageLocale,
     )!.id,
   }));

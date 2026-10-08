@@ -1,9 +1,9 @@
-import type { Bundle, Message, Variant } from "@inlang/sdk";
+import type { BundleRow, MessageRow, VariantRow } from "@inlang/sdk";
 
 export const exampleWithoutSelectors: {
-  bundles: Bundle[];
-  messages: Message[];
-  variants: Variant[];
+  bundles: BundleRow[];
+  messages: MessageRow[];
+  variants: VariantRow[];
 } = {
   bundles: [
     {

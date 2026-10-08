@@ -40,9 +40,9 @@ describe("Android resources plugin", () => {
       variants: imported.variants.map((variant, index) => ({
         ...variant,
         id: `variant-${index}`,
-        message_id: `message-${imported.messages.findIndex(
+        messageId: `message-${imported.messages.findIndex(
           (message) =>
-            message.bundle_id === variant.messageBundleId &&
+            message.bundleId === variant.messageBundleId &&
             message.locale === variant.messageLocale,
         )}`,
       })) as any,
@@ -217,7 +217,7 @@ describe("Android resources plugin", () => {
         messages: [
           {
             id: "message",
-            bundle_id: "greeting",
+            bundleId: "greeting",
             locale: "en",
             selectors: [{ type: "variable-reference", name: "gender" }],
           },
@@ -235,12 +235,12 @@ describe("Android resources plugin", () => {
           settings,
           bundles: [{ id, declarations: [] }],
           messages: [
-            { id: "message", bundle_id: id, locale: "en", selectors: [] },
+            { id: "message", bundleId: id, locale: "en", selectors: [] },
           ],
           variants: [
             {
               id: "variant",
-              message_id: "message",
+              messageId: "message",
               matches: [],
               pattern: [{ type: "text", value: "value" }],
             },
@@ -264,9 +264,9 @@ function identify(
     variants: imported.variants.map((variant, index) => ({
       ...variant,
       id: `variant-${index}`,
-      message_id: messages.find(
+      messageId: messages.find(
         (message) =>
-          message.bundle_id === variant.messageBundleId &&
+          message.bundleId === variant.messageBundleId &&
           message.locale === variant.messageLocale,
       )!.id,
     })) as any,

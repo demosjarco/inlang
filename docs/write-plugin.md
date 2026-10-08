@@ -89,7 +89,7 @@ export const plugin: InlangPlugin = {
 
         // One message per locale
         messages.push({
-          bundle_id: key,
+          bundleId: key,
           locale: file.locale,
           selectors: [],
         });
@@ -110,7 +110,7 @@ export const plugin: InlangPlugin = {
 };
 ```
 
-Use `messageBundleId` plus `messageLocale` for variants returned from `importFiles()`. Use `message_id` only when your plugin also returns stable message ids. Direct CRUD examples use `message_id` because they operate on existing database rows.
+Use `messageBundleId` plus `messageLocale` for variants returned from `importFiles()`. Use `messageId` only when your plugin also returns stable message ids. Direct CRUD examples use `messageId` because they operate on existing database rows.
 
 ### Understanding the data model
 
@@ -122,7 +122,7 @@ For a simple `{ "greeting": "Hello" }`:
 
 ```
 Bundle: id="greeting"
-└── Message: bundle_id="greeting", locale="en"
+└── Message: bundleId="greeting", locale="en"
     └── Variant: pattern=[{ type: "text", value: "Hello" }]
 ```
 
@@ -137,7 +137,7 @@ exportFiles: async ({ bundles, messages, variants }) => {
 
   for (const message of messages) {
     // Find the variant for this message
-    const variant = variants.find((v) => v.message_id === message.id);
+    const variant = variants.find((v) => v.messageId === message.id);
 
     // Extract text from the pattern
     const text = variant?.pattern
@@ -149,7 +149,7 @@ exportFiles: async ({ bundles, messages, variants }) => {
     if (!filesByLocale[message.locale]) {
       filesByLocale[message.locale] = {};
     }
-    filesByLocale[message.locale][message.bundle_id] = text;
+    filesByLocale[message.locale][message.bundleId] = text;
   }
 
   // Convert to export format
@@ -254,7 +254,7 @@ export const plugin: InlangPlugin<{
       for (const [key, value] of Object.entries(json)) {
         bundles.push({ id: key, declarations: [] });
         messages.push({
-          bundle_id: key,
+          bundleId: key,
           locale: file.locale,
           selectors: [],
         });
@@ -274,7 +274,7 @@ export const plugin: InlangPlugin<{
     const filesByLocale: Record<string, Record<string, string>> = {};
 
     for (const message of messages) {
-      const variant = variants.find((v) => v.message_id === message.id);
+      const variant = variants.find((v) => v.messageId === message.id);
       const text =
         variant?.pattern
           .filter((p) => p.type === "text")
@@ -284,7 +284,7 @@ export const plugin: InlangPlugin<{
       if (!filesByLocale[message.locale]) {
         filesByLocale[message.locale] = {};
       }
-      filesByLocale[message.locale][message.bundle_id] = text;
+      filesByLocale[message.locale][message.bundleId] = text;
     }
 
     return Object.entries(filesByLocale).map(([locale, content]) => ({

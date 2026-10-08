@@ -78,13 +78,13 @@ test("a variant with an existing match should update the existing variant and no
 				id: "mock-message-id",
 				locale: "en",
 				selectors: [],
-				bundle_id: "mock-bundle-id",
+				bundleId: "mock-bundle-id",
 			},
 		],
 		variants: [
 			{
 				id: "mock-variant-id",
-				message_id: "mock-message-id",
+				messageId: "mock-message-id",
 				matches: [
 					{
 						type: "literal-match",
@@ -148,7 +148,7 @@ test("if a message for the bundle id and locale already exists, update it. don't
 				id: "mock-message-id",
 				locale: "en",
 				selectors: [],
-				bundle_id: "mock-bundle-id",
+				bundleId: "mock-bundle-id",
 			},
 		],
 		variants: [],
@@ -278,9 +278,9 @@ const mockPluginSimple: InlangPlugin = {
 	exportFiles: async ({ messages, variants }) => {
 		const jsons: any = {};
 		for (const message of messages) {
-			const key = message.bundle_id;
+			const key = message.bundleId;
 			const value = (
-				variants.find((v) => v.message_id === message.id)?.pattern[0] as Text
+				variants.find((v) => v.messageId === message.id)?.pattern[0] as Text
 			).value;
 			if (!jsons[message.locale]) {
 				jsons[message.locale] = {};
@@ -305,7 +305,7 @@ const mockPluginSimple: InlangPlugin = {
 					declarations: [],
 				});
 				messages.push({
-					bundle_id: key,
+					bundleId: key,
 					locale: file.locale,
 					selectors: [],
 				});

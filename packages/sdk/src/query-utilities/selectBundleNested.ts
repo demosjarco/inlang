@@ -2,8 +2,8 @@ import type { Kysely } from "kysely";
 import type {
 	BundleNested,
 	InlangDatabaseSchema,
+	VariantRow,
 	MessageNested,
-	Variant,
 } from "../database/schema.js";
 
 /**
@@ -90,7 +90,7 @@ export const selectBundleNested = (db: Kysely<InlangDatabaseSchema>) => {
 						message_id: row.message_id,
 						matches: row.variant_matches!,
 						pattern: row.variant_pattern!,
-					} satisfies Variant);
+					} satisfies VariantRow);
 				}
 			}
 			return [...bundles.values()];

@@ -19,7 +19,7 @@ import {
 	projectAtom,
 	settingsAtom,
 } from "../state.ts";
-import { BundleNested, Message, ProjectSettings, uuidv4, Variant } from "@inlang/sdk";
+import { BundleNested, MessageRow, ProjectSettings, uuidv4, VariantRow } from "@inlang/sdk";
 import {
 	SlDialog,
 	SlDropdown,
@@ -156,7 +156,7 @@ const InlangBundle = (props: {
 											const change = groupedPendingChanges.find(
 												// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 												// @ts-ignore
-												(change) => (change.value as Variant).id === variant.id
+												(change) => (change.value as VariantRow).id === variant.id
 											);
 
 											return (
@@ -316,7 +316,7 @@ const InlangBundle = (props: {
 									</ReactInlangMessage>
 								);
 							} else {
-								const message: Message = {
+								const message: MessageRow = {
 									id: uuidv4(),
 									selectors: [],
 									locale,

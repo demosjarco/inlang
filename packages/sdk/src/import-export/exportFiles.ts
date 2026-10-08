@@ -6,6 +6,7 @@ import {
 import type { ProjectSettings } from "../json-schema/settings.js";
 import type { InlangDatabaseSchema } from "../database/schema.js";
 import type { InlangPlugin } from "../plugin/schema.js";
+import { selectPluginRows } from "./pluginRows.js";
 
 export async function exportFiles(opts: {
 	readonly pluginKey: string;
@@ -22,18 +23,7 @@ export async function exportFiles(opts: {
 		});
 	}
 
-	const bundles = await opts.db
-		.selectFrom("inlang_bundle")
-		.selectAll()
-		.execute();
-	const messages = await opts.db
-		.selectFrom("inlang_message")
-		.selectAll()
-		.execute();
-	const variants = await opts.db
-		.selectFrom("inlang_variant")
-		.selectAll()
-		.execute();
+	const { bundles, messages, variants } = await selectPluginRows(opts.db);
 
 	const files = await plugin.exportFiles({
 		settings: structuredClone(opts.settings),

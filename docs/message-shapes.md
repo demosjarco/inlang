@@ -2,7 +2,7 @@
 
 This page shows the concrete JSON shapes used by bundles, messages, variants, declarations, selectors, matches, and patterns.
 
-Use these shapes when inserting data through `project.db`, `insertBundleNested()`, or a plugin's `importFiles()` return value.
+Use these shapes when inserting data through `project.db` or `insertBundleNested()`. A plugin's `importFiles()` returns the same shapes with camelCase `bundleId` and `messageId` in place of `bundle_id` and `message_id`. The SDK maps them to the database columns.
 
 ## Minimal Message
 
@@ -264,7 +264,7 @@ Rule of thumb:
 
 - Direct database writes: use `message_id`.
 - `insertBundleNested()`: use `message_id`, and reuse the same id from the message object.
-- Plugin `importFiles()`: use `messageBundleId` plus `messageLocale`, unless your plugin deliberately manages stable message ids itself.
+- Plugin `importFiles()`: use `messageBundleId` plus `messageLocale`, unless your plugin deliberately manages stable message ids itself. Then use `messageId`.
 
 ## Next Steps
 

@@ -1,4 +1,4 @@
-import { type Variant } from "@inlang/sdk";
+import { type VariantRow } from "@inlang/sdk";
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { baseStyling } from "../../styling/base.js";
@@ -106,7 +106,7 @@ export default class InlangVariant extends LitElement {
   ];
 
   @property()
-  variant: Variant;
+  variant: VariantRow;
 
   private _updateMatch = (selectorName: string, value: string) => {
     //TODO improve this function

@@ -440,3 +440,21 @@ test("cleanup of a failed controlled commit cannot release a later caller's leas
 		await lix.close();
 	}
 });
+
+test("returns the Lix columns of entity rows", async () => {
+	const lix = await openLix();
+	await registerInlangSchemas(lix);
+	const db = initDb({ lix });
+	try {
+		await db.insertInto("inlang_bundle").values({ id: "greeting" }).execute();
+		const row = await db
+			.selectFrom("inlang_bundle")
+			.selectAll()
+			.executeTakeFirstOrThrow();
+		expect(row).toMatchObject({ id: "greeting", lixcol_global: false });
+		expect(typeof row.lixcol_change_id).toBe("string");
+		expect(typeof row.lixcol_commit_id).toBe("string");
+	} finally {
+		await db.destroy();
+	}
+});

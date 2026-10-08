@@ -25,9 +25,9 @@ export const exportFiles: NonNullable<(typeof plugin)["exportFiles"]> = async ({
 
 	for (const message of messages) {
 		const serializedMessages = serializeMessage(
-			bundles.find((b) => b.id === message.bundle_id)!,
+			bundles.find((b) => b.id === message.bundleId)!,
 			message,
-			variants.filter((v) => v.message_id === message.id),
+			variants.filter((v) => v.messageId === message.id),
 			settings?.["plugin.inlang.i18next"]
 		);
 

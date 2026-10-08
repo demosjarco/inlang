@@ -12,8 +12,8 @@ test("batch imports an unambiguous fresh project", async () => {
 		importFiles: async () => ({
 			bundles: [{ id: "mock-bundle" }],
 			messages: [
-				{ bundle_id: "mock-bundle", locale: "en" },
-				{ bundle_id: "mock-bundle", locale: "de" },
+				{ bundleId: "mock-bundle", locale: "en" },
+				{ bundleId: "mock-bundle", locale: "de" },
 			],
 			variants: [
 				{ messageBundleId: "mock-bundle", messageLocale: "en" },
@@ -54,9 +54,9 @@ test("batches rows with mixed optional columns", async () => {
 		importFiles: async () => ({
 			bundles: [{ id: "plain-bundle" }, { id: "rich-bundle" }],
 			messages: [
-				{ bundle_id: "plain-bundle", locale: "en" },
+				{ bundleId: "plain-bundle", locale: "en" },
 				{
-					bundle_id: "rich-bundle",
+					bundleId: "rich-bundle",
 					locale: "de",
 					selectors: [{ type: "variable-reference", name: "platform" }],
 				},
@@ -119,7 +119,7 @@ test("preserves variant upsert semantics for duplicate matches", async () => {
 		key: "mock",
 		importFiles: async () => ({
 			bundles: [{ id: "mock-bundle" }],
-			messages: [{ bundle_id: "mock-bundle", locale: "en" }],
+			messages: [{ bundleId: "mock-bundle", locale: "en" }],
 			variants: [
 				{
 					messageBundleId: "mock-bundle",
@@ -162,8 +162,8 @@ test("does not alias message references containing NUL characters", async () => 
 		importFiles: async () => ({
 			bundles: [{ id: "a" }, { id: "a\u0000b" }],
 			messages: [
-				{ bundle_id: "a", locale: "b\u0000c" },
-				{ bundle_id: "a\u0000b", locale: "c" },
+				{ bundleId: "a", locale: "b\u0000c" },
+				{ bundleId: "a\u0000b", locale: "c" },
 			],
 			variants: [
 				{
@@ -211,7 +211,7 @@ test("it should insert a message as is if the id is provided", async () => {
 		key: "mock",
 		importFiles: async () => ({
 			bundles: [{ id: "mock-bundle" }],
-			messages: [{ id: "alfa23", bundle_id: "mock-bundle", locale: "en" }],
+			messages: [{ id: "alfa23", bundleId: "mock-bundle", locale: "en" }],
 			variants: [],
 		}),
 	};
@@ -256,7 +256,7 @@ test("it should match an existing message if the id is not provided", async () =
 			bundles: [],
 			messages: [
 				{
-					bundle_id: "mock-bundle",
+					bundleId: "mock-bundle",
 					locale: "en",
 					selectors: [{ type: "variable-reference", name: "platform" }],
 				},
@@ -292,7 +292,7 @@ test("it should create a bundle for a message if the bundle does not exist to av
 		key: "mock",
 		importFiles: async () => ({
 			bundles: [],
-			messages: [{ bundle_id: "non-existent-bundle", locale: "en" }],
+			messages: [{ bundleId: "non-existent-bundle", locale: "en" }],
 			variants: [],
 		}),
 	};
@@ -335,7 +335,7 @@ test("it should insert a variant as is if the id is provided", async () => {
 		importFiles: async () => ({
 			bundles: [],
 			messages: [],
-			variants: [{ id: "variant-id-23", message_id: "mock-message" }],
+			variants: [{ id: "variant-id-23", messageId: "mock-message" }],
 		}),
 	};
 

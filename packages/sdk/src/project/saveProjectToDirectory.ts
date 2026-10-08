@@ -7,6 +7,7 @@ import { absolutePathFromProject, withAbsolutePaths } from "./path-helpers.js";
 import { detectJsonFormatting } from "../utilities/detectJsonFormatting.js";
 import { selectBundleNested } from "../query-utilities/selectBundleNested.js";
 import { README_CONTENT } from "./README_CONTENT.js";
+import { selectPluginRows } from "../import-export/pluginRows.js";
 import { ENV_VARIABLES } from "../services/env-variables/index.js";
 import { compareSemver, pickHighestVersion, readProjectMeta } from "./meta.js";
 
@@ -176,18 +177,9 @@ export async function saveProjectToDirectory(args: {
 
 	for (const plugin of plugins) {
 		if (plugin.exportFiles) {
-			const bundles = await args.project.db
-				.selectFrom("inlang_bundle")
-				.selectAll()
-				.execute();
-			const messages = await args.project.db
-				.selectFrom("inlang_message")
-				.selectAll()
-				.execute();
-			const variants = await args.project.db
-				.selectFrom("inlang_variant")
-				.selectAll()
-				.execute();
+			const { bundles, messages, variants } = await selectPluginRows(
+				args.project.db
+			);
 			const files = await plugin.exportFiles({
 				bundles,
 				messages,

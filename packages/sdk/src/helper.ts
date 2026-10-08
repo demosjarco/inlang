@@ -5,7 +5,7 @@ import type {
 	Match,
 	NewBundleNested,
 	NewMessageNested,
-	Variant,
+	VariantRow,
 } from "./database/schema.js";
 import type { Text } from "./json-schema/pattern.js";
 
@@ -95,8 +95,8 @@ export function createVariant(args: {
 	id?: string;
 	text?: string;
 	matches?: Match[];
-	pattern?: Variant["pattern"];
-}): Variant {
+	pattern?: VariantRow["pattern"];
+}): VariantRow {
 	return {
 		message_id: args.messageId,
 		id: args.id ? args.id : uuid(),

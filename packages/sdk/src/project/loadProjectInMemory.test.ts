@@ -133,14 +133,23 @@ test("serializes bundles with nested messages and variants", async () => {
 				}) =>
 					bundle.messages.map((message) => ({
 						id: message.id,
-						bundle_id: message.bundle_id,
+						bundleId: message.bundle_id,
 						locale: message.locale,
 						selectors: message.selectors,
 					}))
 			),
 			variants: serialized.bundles.flatMap(
-				(bundle: { messages: Array<{ variants: unknown[] }> }) =>
-					bundle.messages.flatMap((message) => message.variants)
+				(bundle: {
+					messages: Array<{
+						variants: Array<{ message_id: string } & Record<string, unknown>>;
+					}>;
+				}) =>
+					bundle.messages.flatMap((message) =>
+						message.variants.map(({ message_id, ...variant }) => ({
+							...variant,
+							messageId: message_id,
+						}))
+					)
 			),
 		}),
 	]);

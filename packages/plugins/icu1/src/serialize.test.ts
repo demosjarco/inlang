@@ -25,13 +25,13 @@ function buildMessage(messageSource: string): {
     },
     message: {
       id: messageId,
-      bundle_id: "bundle",
+      bundleId: "bundle",
       locale: "en",
       selectors: parsed.selectors,
     },
     variants: parsed.variants.map((variant, index) => ({
       id: `variant-${index}`,
-      message_id: messageId,
+      messageId,
       matches: variant.matches ?? [],
       pattern: variant.pattern ?? [],
     })),
@@ -108,14 +108,14 @@ describe("serializeMessage", () => {
     };
     const message: Message = {
       id: messageId,
-      bundle_id: "bundle",
+      bundleId: "bundle",
       locale: "en",
       selectors: [],
     };
     const variants: Variant[] = [
       {
         id: "variant-0",
-        message_id: messageId,
+        messageId,
         matches: [],
         pattern: [
           { type: "text", value: "Click " },

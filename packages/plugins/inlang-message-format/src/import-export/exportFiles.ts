@@ -25,11 +25,11 @@ export const exportFiles: NonNullable<(typeof plugin)["exportFiles"]> = async ({
 	const files: Record<string, FileSchema> = {};
 
 	for (const message of messages) {
-		const bundle = bundles.find((b) => b.id === message.bundle_id);
+		const bundle = bundles.find((b) => b.id === message.bundleId);
 		const variantsOfMessage = [
 			...variants
 				.reduce((r, v) => {
-					if (v.message_id === message.id) r.set(JSON.stringify(v.matches), v);
+					if (v.messageId === message.id) r.set(JSON.stringify(v.matches), v);
 					return r;
 				}, new Map<string, (typeof variants)[number]>())
 				.values(),
@@ -75,7 +75,7 @@ function serializeMessage(
 	message: Message,
 	variants: Variant[]
 ): Record<string, SimpleMessage | ComplexMessage> {
-	const key = message.bundle_id;
+	const key = message.bundleId;
 	const value = serializeVariants(bundle, message, variants);
 	return { [key]: value };
 }

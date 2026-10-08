@@ -12,7 +12,7 @@ test("exporting does not mutate declaration or match ordering", async () => {
 	};
 	const message: Message = {
 		id: "example-en",
-		bundle_id: bundle.id,
+		bundleId: bundle.id,
 		locale: "en",
 		selectors: [
 			{ type: "variable-reference", name: "zebra" },
@@ -21,7 +21,7 @@ test("exporting does not mutate declaration or match ordering", async () => {
 	};
 	const variant: Variant = {
 		id: "example-en-variant",
-		message_id: message.id,
+		messageId: message.id,
 		matches: [
 			{ type: "literal-match", key: "zebra", value: "yes" },
 			{ type: "catchall-match", key: "alpha" },
@@ -66,13 +66,13 @@ test("inferring catchall matches does not mutate an empty match array", async ()
 	};
 	const message: Message = {
 		id: "example-en",
-		bundle_id: bundle.id,
+		bundleId: bundle.id,
 		locale: "en",
 		selectors: [],
 	};
 	const variant: Variant = {
 		id: "example-en-variant",
-		message_id: message.id,
+		messageId: message.id,
 		matches: [],
 		pattern: [
 			{
@@ -125,13 +125,13 @@ test("local declarations retain their dependency-safe ordering", async () => {
 	};
 	const message: Message = {
 		id: "example-en",
-		bundle_id: bundle.id,
+		bundleId: bundle.id,
 		locale: "en",
 		selectors: [],
 	};
 	const variant: Variant = {
 		id: "example-en-variant",
-		message_id: message.id,
+		messageId: message.id,
 		matches: [],
 		pattern: [
 			{

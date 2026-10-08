@@ -32,9 +32,9 @@ describe("Apple strings plugin", () => {
     const variants = imported.variants.map((variant, index) => ({
       ...variant,
       id: `variant-${index}`,
-      message_id: `message-${imported.messages.findIndex(
+      messageId: `message-${imported.messages.findIndex(
         (message) =>
-          message.bundle_id === variant.messageBundleId &&
+          message.bundleId === variant.messageBundleId &&
           message.locale === variant.messageLocale,
       )}`,
     }));
@@ -98,9 +98,9 @@ describe("Apple strings plugin", () => {
       variants: imported.variants.map((variant, index) => ({
         ...variant,
         id: `variant-${index}`,
-        message_id: messages.find(
+        messageId: messages.find(
           (message) =>
-            message.bundle_id === variant.messageBundleId &&
+            message.bundleId === variant.messageBundleId &&
             message.locale === variant.messageLocale,
         )!.id,
       })) as any,
@@ -144,7 +144,7 @@ describe("Apple strings plugin", () => {
       bundles: imported.bundles as any,
       messages: messages as any,
       variants: [
-        { ...imported.variants[0]!, id: "variant", message_id: "message" },
+        { ...imported.variants[0]!, id: "variant", messageId: "message" },
       ] as any,
     });
     expect(new TextDecoder().decode(file!.content)).toContain("%%@ %%d %%f %%");
@@ -168,7 +168,7 @@ describe("Apple strings plugin", () => {
         bundles: imported.bundles as any,
         messages: [{ ...imported.messages[0]!, id: "message" }] as any,
         variants: [
-          { ...imported.variants[0]!, id: "variant", message_id: "message" },
+          { ...imported.variants[0]!, id: "variant", messageId: "message" },
         ] as any,
       });
       expect(new TextDecoder().decode(file!.content)).toContain(`"${value}"`);
@@ -211,7 +211,7 @@ describe("Apple strings plugin", () => {
         messages: [
           {
             id: "message",
-            bundle_id: "cart.items",
+            bundleId: "cart.items",
             locale: "en",
             selectors: [{ type: "variable-reference", name: "countPlural" }],
           },
