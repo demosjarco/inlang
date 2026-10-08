@@ -223,6 +223,13 @@ function prepareLixQuery(compiledSql: string): PreparedLixQuery {
 	};
 }
 
+/**
+ * Fills in `id` with `uuidv7()` for inlang inserts that omit it.
+ *
+ * Lix schema v1 only allows `default_expression: "uuidv7()"` on `uuid`
+ * columns, but inlang ids are free text (e.g. `greeting`), so the schema
+ * cannot declare this default itself.
+ */
 function ensureGeneratedPrimaryKey(sql: string): string {
 	const tables = "(?:inlang_bundle|inlang_message|inlang_variant)";
 	const insertWithColumns = new RegExp(
