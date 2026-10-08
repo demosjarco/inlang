@@ -13,6 +13,7 @@ import {
   loadProjectInMemory,
   newProject,
   selectBundleNested,
+  type NewBundleNested,
 } from "@inlang/sdk";
 
 afterEach(() => {
@@ -62,18 +63,18 @@ function skipRetryDelay() {
     )) as typeof setTimeout);
 }
 
-function textBundle(id: string, text: string) {
+function textBundle(id: string, text: string): NewBundleNested {
   return {
     id,
     messages: [
       {
         id: `${id}_en`,
-        bundleId: id,
+        bundle_id: id,
         locale: "en",
         variants: [
           {
             id: `${id}_en`,
-            messageId: `${id}_en`,
+            message_id: `${id}_en`,
             pattern: [{ type: "text" as const, value: text }],
           },
         ],
