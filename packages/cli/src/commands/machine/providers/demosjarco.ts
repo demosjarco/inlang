@@ -80,6 +80,13 @@ export function createDemosjarcoTranslateProvider(
     }
 
     if (!response.ok) {
+      // fetch resolves when headers arrive. Close the unread body before the
+      // limiter releases this slot, including for non-retryable client errors.
+      try {
+        await response.body?.cancel();
+      } catch {
+        // An aborted or already failed body needs no further cleanup.
+      }
       // A server error, throttling, or a shutdown gateway all mean the
       // hosted service itself is unavailable, not a bad request.
       if (response.status >= 500 || response.status === 429) {
@@ -98,7 +105,12 @@ export function createDemosjarcoTranslateProvider(
     try {
       const json = await response.json();
       translatedText = json?.data?.translations?.[0]?.translatedText;
-    } catch {
+    } catch (error) {
+      // A body can time out or lose its connection after fetch has resolved.
+      // Retry those failures, but not a complete body containing invalid JSON.
+      if (!(error instanceof SyntaxError)) {
+        return { done: false };
+      }
       translatedText = undefined;
     }
 

@@ -341,6 +341,93 @@ describe("createDemosjarcoTranslateProvider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
+  test.each([
+    new DOMException("The body timed out.", "TimeoutError"),
+    new DOMException("The body was aborted.", "AbortError"),
+    new TypeError("terminated"),
+  ])(
+    "retries a transport failure while reading the body (%s)",
+    async (error) => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => {
+            throw error;
+          },
+        })
+        .mockResolvedValueOnce(okResponse("Hallo Welt"));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await translateFlushingTimers(
+        createDemosjarcoTranslateProvider(),
+      );
+
+      expect(result).toEqual({ ok: true, translatedText: "Hallo Welt" });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  test("does not retry invalid JSON", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => {
+        throw new SyntaxError("Unexpected token in JSON");
+      },
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await translateFlushingTimers(
+      createDemosjarcoTranslateProvider(),
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      error: SERVICE_UNAVAILABLE_ERROR,
+      unavailable: true,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([400, 429, 503])(
+    "awaits cancellation of HTTP %s bodies before releasing concurrency slots",
+    async (status) => {
+      vi.useFakeTimers();
+      let openBodies = 0;
+      let maxOpenBodies = 0;
+      const cancel = vi.fn(async () => {
+        await new Promise<void>((resolve) => setTimeout(resolve, 1));
+        openBodies--;
+      });
+      const fetchMock = vi.fn(async () => {
+        openBodies++;
+        maxOpenBodies = Math.max(maxOpenBodies, openBodies);
+        return { ok: false, status, statusText: "Error", body: { cancel } };
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const provider = createDemosjarcoTranslateProvider();
+      const pending = Promise.all(
+        Array.from({ length: 20 }, () =>
+          provider.translateText({
+            text: "Hello World",
+            sourceLocale: "en",
+            targetLocale: "de",
+          }),
+        ),
+      );
+      await vi.runAllTimersAsync();
+      const results = await pending;
+
+      expect(results.every((result) => !result.ok)).toBe(true);
+      expect(maxOpenBodies).toBe(MAX_CONCURRENT_REQUESTS);
+      expect(openBodies).toBe(0);
+      expect(cancel).toHaveBeenCalledTimes(
+        20 * (status === 400 ? 1 : 1 + MAX_RETRIES),
+      );
+    },
+  );
+
   test("doubles the wait before each retry", async () => {
     vi.useFakeTimers();
     const fetchMock = vi
