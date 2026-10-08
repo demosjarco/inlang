@@ -4,7 +4,8 @@ import {
   translateCommandAction,
 } from "./translate.js";
 import {
-  RETRY_DELAY_MS,
+  MAX_RETRIES,
+  retryDelayMs,
   SERVICE_UNAVAILABLE_ERROR,
 } from "./providers/demosjarco.js";
 import {
@@ -45,8 +46,11 @@ function unavailableResponse() {
   });
 }
 
-/** Skips the provider's retry wait so retries don't slow the test down. */
+/** Skips the provider's retry waits so retries don't slow the test down. */
 function skipRetryDelay() {
+  const retryDelays = new Set(
+    Array.from({ length: MAX_RETRIES }, (_, retry) => retryDelayMs(retry)),
+  );
   const realSetTimeout = globalThis.setTimeout;
   vi.spyOn(globalThis, "setTimeout").mockImplementation(((
     callback: () => void,
@@ -54,7 +58,7 @@ function skipRetryDelay() {
   ) =>
     realSetTimeout(
       callback,
-      ms === RETRY_DELAY_MS ? 0 : ms,
+      ms !== undefined && retryDelays.has(ms) ? 0 : ms,
     )) as typeof setTimeout);
 }
 

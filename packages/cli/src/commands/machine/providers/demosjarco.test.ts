@@ -5,7 +5,7 @@ import {
   MAX_CONCURRENT_REQUESTS,
   MAX_RETRIES,
   REQUEST_TIMEOUT_MS,
-  RETRY_DELAY_MS,
+  retryDelayMs,
   SERVICE_UNAVAILABLE_ERROR,
 } from "./demosjarco.js";
 
@@ -341,7 +341,7 @@ describe("createDemosjarcoTranslateProvider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  test("waits a fixed delay between attempts", async () => {
+  test("doubles the wait before each retry", async () => {
     vi.useFakeTimers();
     const fetchMock = vi
       .fn()
@@ -349,6 +349,11 @@ describe("createDemosjarcoTranslateProvider", () => {
         ok: false,
         status: 429,
         statusText: "Too Many Requests",
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Service Unavailable",
       })
       .mockResolvedValueOnce(okResponse("Hallo Welt"));
     vi.stubGlobal("fetch", fetchMock);
@@ -360,15 +365,28 @@ describe("createDemosjarcoTranslateProvider", () => {
       targetLocale: "de",
     });
 
-    await vi.advanceTimersByTimeAsync(RETRY_DELAY_MS - 1);
+    // 5s before the first retry...
+    await vi.advanceTimersByTimeAsync(4_999);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-
     await vi.advanceTimersByTimeAsync(1);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    // ...then 10s before the second.
+    await vi.advanceTimersByTimeAsync(9_999);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
     await expect(pending).resolves.toEqual({
       ok: true,
       translatedText: "Hallo Welt",
     });
+  });
+
+  test("keeps doubling the wait for later retries", () => {
+    expect([0, 1, 2, 3].map(retryDelayMs)).toEqual([
+      5_000, 10_000, 20_000, 40_000,
+    ]);
   });
 
   test("does not retry a client error or a malformed body", async () => {

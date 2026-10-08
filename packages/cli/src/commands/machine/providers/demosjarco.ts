@@ -32,10 +32,16 @@ export const MAX_CONCURRENT_REQUESTS = 6;
 export const MAX_RETRIES = 2;
 
 /**
- * Fixed wait between attempts. With the request timeout this bounds a single
- * translation to 3 x 20s attempts plus 2 x 10s waits (80s).
+ * Wait before the first retry, doubling for each retry after it (5s, 10s, ...).
+ * With the request timeout this bounds a single translation to 3 x 20s
+ * attempts plus 5s + 10s of waiting (75s).
  */
-export const RETRY_DELAY_MS = 10_000;
+export const RETRY_BASE_DELAY_MS = 5_000;
+
+/** How long to wait before the given retry (0-based). */
+export function retryDelayMs(retry: number) {
+  return RETRY_BASE_DELAY_MS * 2 ** retry;
+}
 
 /**
  * Shown when the community-operated service at translate.demosjarco.dev can't
@@ -146,7 +152,7 @@ export function createDemosjarcoTranslateProvider(
           return outcome.result;
         }
         if (retry < MAX_RETRIES) {
-          await sleep(RETRY_DELAY_MS);
+          await sleep(retryDelayMs(retry));
         }
       }
 
