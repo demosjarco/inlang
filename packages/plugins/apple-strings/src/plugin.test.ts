@@ -32,9 +32,9 @@ describe("Apple strings plugin", () => {
     const variants = imported.variants.map((variant, index) => ({
       ...variant,
       id: `variant-${index}`,
-      messageId: `message-${imported.messages.findIndex(
+      message_id: `message-${imported.messages.findIndex(
         (message) =>
-          message.bundleId === variant.messageBundleId &&
+          message.bundle_id === variant.messageBundleId &&
           message.locale === variant.messageLocale,
       )}`,
     }));
@@ -98,9 +98,9 @@ describe("Apple strings plugin", () => {
       variants: imported.variants.map((variant, index) => ({
         ...variant,
         id: `variant-${index}`,
-        messageId: messages.find(
+        message_id: messages.find(
           (message) =>
-            message.bundleId === variant.messageBundleId &&
+            message.bundle_id === variant.messageBundleId &&
             message.locale === variant.messageLocale,
         )!.id,
       })) as any,
@@ -144,7 +144,7 @@ describe("Apple strings plugin", () => {
       bundles: imported.bundles as any,
       messages: messages as any,
       variants: [
-        { ...imported.variants[0]!, id: "variant", messageId: "message" },
+        { ...imported.variants[0]!, id: "variant", message_id: "message" },
       ] as any,
     });
     expect(new TextDecoder().decode(file!.content)).toContain("%%@ %%d %%f %%");
@@ -168,7 +168,7 @@ describe("Apple strings plugin", () => {
         bundles: imported.bundles as any,
         messages: [{ ...imported.messages[0]!, id: "message" }] as any,
         variants: [
-          { ...imported.variants[0]!, id: "variant", messageId: "message" },
+          { ...imported.variants[0]!, id: "variant", message_id: "message" },
         ] as any,
       });
       expect(new TextDecoder().decode(file!.content)).toContain(`"${value}"`);
@@ -196,7 +196,7 @@ describe("Apple strings plugin", () => {
       expect(output).toContain('"typed/value" = "%2$lld / %1$.2f / %3$@";');
       expect(output).toContain('"Cancel" = "Cancel";');
       expect(
-        await project.db.selectFrom("message").selectAll().execute(),
+        await project.db.selectFrom("inlang_message").selectAll().execute(),
       ).toHaveLength(2);
     } finally {
       await project.close();
@@ -211,7 +211,7 @@ describe("Apple strings plugin", () => {
         messages: [
           {
             id: "message",
-            bundleId: "cart.items",
+            bundle_id: "cart.items",
             locale: "en",
             selectors: [{ type: "variable-reference", name: "countPlural" }],
           },

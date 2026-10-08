@@ -88,7 +88,7 @@ function parseBundle(
 			declarations,
 		},
 		message: {
-			bundleId: key,
+			bundle_id: key,
 			selectors,
 			locale: locale,
 		},

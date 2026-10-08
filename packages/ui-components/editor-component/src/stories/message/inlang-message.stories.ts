@@ -28,7 +28,7 @@ export const Example: StoryObj = {
 		entities: {
 			message: examplePlural.messages[1],
 			variants: examplePlural.variants.filter(
-				(v) => v.messageId === examplePlural.messages[1].id
+				(v) => v.message_id === examplePlural.messages[1].id
 			),
 		},
 		settings: mockSettings,
@@ -71,7 +71,7 @@ export const MessageInBundle: StoryObj = {
 		entities: {
 			message: examplePlural.messages[1],
 			variants: examplePlural.variants.filter(
-				(v) => v.messageId === examplePlural.messages[1].id
+				(v) => v.message_id === examplePlural.messages[1].id
 			),
 		},
 		settings: mockSettings,

@@ -46,8 +46,8 @@ export function createBundle(args: {
  * - the database has default values
  *
  * ```
- * await project.db.insertInto("message").values({
- * 		bundleId: "bundleId",
+ * await project.db.insertInto("inlang_message").values({
+ * 		bundle_id: "greeting",
  *    pattern: []
  * 		...
  * })
@@ -64,7 +64,7 @@ export function createMessage(args: {
 }): NewMessageNested {
 	const messageId = uuid();
 	return {
-		bundleId: args.bundleId,
+		bundle_id: args.bundleId,
 		id: messageId,
 		locale: args.locale,
 		selectors: [],
@@ -98,7 +98,7 @@ export function createVariant(args: {
 	pattern?: Variant["pattern"];
 }): Variant {
 	return {
-		messageId: args.messageId,
+		message_id: args.messageId,
 		id: args.id ? args.id : uuid(),
 		matches: args.matches ? args.matches : [],
 		pattern: args.pattern ? args.pattern : [toTextElement(args.text ?? "")],

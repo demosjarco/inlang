@@ -47,7 +47,7 @@ test("exports newly-created flat dotted keys without nesting them", async () => 
 		messages: [
 			{
 				id: "message-1",
-				bundleId: "test.test",
+				bundle_id: "test.test",
 				locale: "en",
 				selectors: [],
 			},
@@ -55,7 +55,7 @@ test("exports newly-created flat dotted keys without nesting them", async () => 
 		variants: [
 			{
 				id: "variant-1",
-				messageId: "message-1",
+				message_id: "message-1",
 				pattern: [{ type: "text", value: "Flat dotted key" }],
 			},
 		] as any,
@@ -172,7 +172,7 @@ test("exports renamed imported namespace keys using the current bundle id", asyn
 		],
 	});
 	imported.bundles[0]!.id = "About.heading";
-	imported.messages[0]!.bundleId = "About.heading";
+	imported.messages[0]!.bundle_id = "About.heading";
 	imported.variants[0]!.messageBundleId = "About.heading";
 
 	const exported = await runExportFiles(imported, {
@@ -201,7 +201,7 @@ test("exports bundle ids equal to a namespace as regular keys", async () => {
 		messages: [
 			{
 				id: "message-1",
-				bundleId: "About",
+				bundle_id: "About",
 				locale: "en",
 				selectors: [],
 			},
@@ -209,7 +209,7 @@ test("exports bundle ids equal to a namespace as regular keys", async () => {
 		variants: [
 			{
 				id: "variant-1",
-				messageId: "message-1",
+				message_id: "message-1",
 				pattern: [{ type: "text", value: "About us" }],
 			},
 		] as any,
@@ -236,13 +236,13 @@ test("exports sourceLanguageFilePath metadata for the SDK writer", async () => {
 		messages: [
 			{
 				id: "message-1",
-				bundleId: "title",
+				bundle_id: "title",
 				locale: "en",
 				selectors: [],
 			},
 			{
 				id: "message-2",
-				bundleId: "title",
+				bundle_id: "title",
 				locale: "de",
 				selectors: [],
 			},
@@ -250,12 +250,12 @@ test("exports sourceLanguageFilePath metadata for the SDK writer", async () => {
 		variants: [
 			{
 				id: "variant-1",
-				messageId: "message-1",
+				message_id: "message-1",
 				pattern: [{ type: "text", value: "Hello" }],
 			},
 			{
 				id: "variant-2",
-				messageId: "message-2",
+				message_id: "message-2",
 				pattern: [{ type: "text", value: "Hallo" }],
 			},
 		] as any,
@@ -291,9 +291,9 @@ async function runExportFiles(
 	}
 	for (const [index, variant] of imported.variants.entries()) {
 		(variant as any).id ??= `variant-${index}`;
-		(variant as any).messageId ??= imported.messages.find(
+		(variant as any).message_id ??= imported.messages.find(
 			(message) =>
-				message.bundleId === variant.messageBundleId &&
+				message.bundle_id === variant.messageBundleId &&
 				message.locale === variant.messageLocale
 		)?.id;
 	}

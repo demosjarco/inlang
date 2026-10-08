@@ -46,7 +46,7 @@ function importAppleStrings(
         )
           current.declarations.push({ type: "input-variable", name });
       bundles.set(key, current);
-      messages.push({ bundleId: key, locale: file.locale, selectors: [] });
+      messages.push({ bundle_id: key, locale: file.locale, selectors: [] });
       variants.push({
         messageBundleId: key,
         messageLocale: file.locale,
@@ -72,7 +72,7 @@ function exportAppleStrings({
         `Apple .strings cannot represent selectors or plurals (bundle "${bundle.id}")`,
       );
     const messageVariants = variants.filter(
-      (variant) => variant.messageId === message.id,
+      (variant) => variant.message_id === message.id,
     );
     if (
       messageVariants.length !== 1 ||
@@ -274,8 +274,10 @@ function applePrintfFormat(
 }
 
 function requiredBundle(bundles: Bundle[], message: Message) {
-  const bundle = bundles.find((candidate) => candidate.id === message.bundleId);
-  if (!bundle) throw new Error(`Missing bundle "${message.bundleId}"`);
+  const bundle = bundles.find(
+    (candidate) => candidate.id === message.bundle_id,
+  );
+  if (!bundle) throw new Error(`Missing bundle "${message.bundle_id}"`);
   return bundle;
 }
 function escapeString(value: string) {

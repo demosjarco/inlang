@@ -40,9 +40,9 @@ describe("Android resources plugin", () => {
       variants: imported.variants.map((variant, index) => ({
         ...variant,
         id: `variant-${index}`,
-        messageId: `message-${imported.messages.findIndex(
+        message_id: `message-${imported.messages.findIndex(
           (message) =>
-            message.bundleId === variant.messageBundleId &&
+            message.bundle_id === variant.messageBundleId &&
             message.locale === variant.messageLocale,
         )}`,
       })) as any,
@@ -184,7 +184,7 @@ describe("Android resources plugin", () => {
         "%2$d / %1$.2f / %3$s",
       );
       expect(
-        await project.db.selectFrom("message").selectAll().execute(),
+        await project.db.selectFrom("inlang_message").selectAll().execute(),
       ).toHaveLength(1);
     } finally {
       await project.close();
@@ -217,7 +217,7 @@ describe("Android resources plugin", () => {
         messages: [
           {
             id: "message",
-            bundleId: "greeting",
+            bundle_id: "greeting",
             locale: "en",
             selectors: [{ type: "variable-reference", name: "gender" }],
           },
@@ -235,12 +235,12 @@ describe("Android resources plugin", () => {
           settings,
           bundles: [{ id, declarations: [] }],
           messages: [
-            { id: "message", bundleId: id, locale: "en", selectors: [] },
+            { id: "message", bundle_id: id, locale: "en", selectors: [] },
           ],
           variants: [
             {
               id: "variant",
-              messageId: "message",
+              message_id: "message",
               matches: [],
               pattern: [{ type: "text", value: "value" }],
             },
@@ -264,9 +264,9 @@ function identify(
     variants: imported.variants.map((variant, index) => ({
       ...variant,
       id: `variant-${index}`,
-      messageId: messages.find(
+      message_id: messages.find(
         (message) =>
-          message.bundleId === variant.messageBundleId &&
+          message.bundle_id === variant.messageBundleId &&
           message.locale === variant.messageLocale,
       )!.id,
     })) as any,

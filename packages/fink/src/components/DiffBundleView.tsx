@@ -150,7 +150,7 @@ const queryNewBundle = async (
 	setOldBundle: (bundle: BundleNested) => void
 ) => {
 	const bundle = await selectBundleNested(project.db)
-		.where("bundle.id", "=", props.bundleId)
+		.where("inlang_bundle.id", "=", props.bundleId)
 		.executeTakeFirst();
 
 	if (bundle) {

@@ -81,16 +81,16 @@ test("keeps literal dotted and nested keys distinct through SDK import", async (
 		await project.importFiles({ pluginKey: plugin.key, files });
 
 		const messages = await project.db
-			.selectFrom("message")
+			.selectFrom("inlang_message")
 			.selectAll()
 			.execute();
 		const variants = await project.db
-			.selectFrom("variant")
+			.selectFrom("inlang_variant")
 			.selectAll()
 			.execute();
 		expect(messages).toHaveLength(2);
 		expect(variants).toHaveLength(2);
-		expect(new Set(variants.map((variant) => variant.messageId))).toEqual(
+		expect(new Set(variants.map((variant) => variant.message_id))).toEqual(
 			new Set(messages.map((message) => message.id))
 		);
 
@@ -158,7 +158,7 @@ test("uses the first legacy namespace for newly-created unprefixed bundles", asy
 		messages: [
 			{
 				id: "message-1",
-				bundleId: "new.message",
+				bundle_id: "new.message",
 				locale: "en",
 				selectors: [],
 			},
@@ -166,7 +166,7 @@ test("uses the first legacy namespace for newly-created unprefixed bundles", asy
 		variants: [
 			{
 				id: "variant-1",
-				messageId: "message-1",
+				message_id: "message-1",
 				matches: [],
 				pattern: [{ type: "text", value: "New message" }],
 			},
@@ -238,7 +238,7 @@ test("rejects constructs generic JSON cannot represent", async () => {
 			messages: [
 				{
 					id: "message-1",
-					bundleId: "message",
+					bundle_id: "message",
 					locale: "en",
 					selectors: [{ type: "variable-reference", name: "count" }],
 				},
@@ -256,7 +256,7 @@ test("rejects constructs generic JSON cannot represent", async () => {
 			messages: [
 				{
 					id: "message-1",
-					bundleId: "message",
+					bundle_id: "message",
 					locale: "en",
 					selectors: [],
 				},
@@ -264,7 +264,7 @@ test("rejects constructs generic JSON cannot represent", async () => {
 			variants: [
 				{
 					id: "variant-1",
-					messageId: "message-1",
+					message_id: "message-1",
 					matches: [{ type: "literal-match", key: "count", value: "one" }],
 					pattern: [{ type: "text", value: "One message" }],
 				},

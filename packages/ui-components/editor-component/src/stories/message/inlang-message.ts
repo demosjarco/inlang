@@ -284,7 +284,7 @@ export default class InlangMessage extends LitElement {
 								@click=${() => {
 									const variant: Variant = {
 										id: uuidV7(),
-										messageId: this.message.id,
+										message_id: this.message.id,
 										// combine the matches that are already present with the new category -> like a matrix
 										matches: this.message.selectors.map((selector) => ({
 											type: "literal-match",

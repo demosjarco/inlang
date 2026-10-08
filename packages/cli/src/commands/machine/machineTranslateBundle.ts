@@ -123,7 +123,7 @@ export async function machineTranslateBundle(
           } else {
             targetMessage.variants.push({
               id: randomUUID(),
-              messageId: targetMessage.id,
+              message_id: targetMessage.id,
               matches: sourceVariant.matches,
               pattern,
             } satisfies Variant);
@@ -137,7 +137,7 @@ export async function machineTranslateBundle(
             variants: [
               {
                 id: randomUUID(),
-                messageId: newMessageId,
+                message_id: newMessageId,
                 matches: sourceVariant.matches,
                 pattern,
               } satisfies Variant,

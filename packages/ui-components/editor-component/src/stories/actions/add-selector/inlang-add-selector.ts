@@ -290,7 +290,7 @@ export default class InlangAddSelector extends LitElement {
         const newVariant: Variant = {
 					id: v7(),
 					pattern: [],
-					messageId: this.message.id,
+					message_id: this.message.id,
 					matches: combination,
 				};
 

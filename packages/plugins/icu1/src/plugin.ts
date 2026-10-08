@@ -74,7 +74,7 @@ export const plugin: InlangPlugin<PluginConfig> = {
         bundles.set(key, bundle);
 
         messages.push({
-          bundleId: key,
+          bundle_id: key,
           locale: file.locale,
           selectors: parsed.selectors,
         });
@@ -90,10 +90,10 @@ export const plugin: InlangPlugin<PluginConfig> = {
     const result: Record<string, Record<string, string>> = {};
 
     for (const message of messages) {
-      const bundle = bundles.find((b) => b.id === message.bundleId);
+      const bundle = bundles.find((b) => b.id === message.bundle_id);
       if (!bundle) continue;
       const messageVariants = variants.filter(
-        (variant) => variant.messageId === message.id,
+        (variant) => variant.message_id === message.id,
       );
       const serialized = serializeMessage({
         bundle,
@@ -103,7 +103,7 @@ export const plugin: InlangPlugin<PluginConfig> = {
 
       result[message.locale] = {
         ...result[message.locale],
-        [message.bundleId]: serialized,
+        [message.bundle_id]: serialized,
       };
     }
 

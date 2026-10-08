@@ -113,7 +113,7 @@ function importCatalogs(
       const imported = importLocalization(id, localization);
       const existing = bundles.get(id) ?? { id, declarations: [] };
       bundles.set(id, mergeDeclarations(existing, imported.declarations));
-      messages.push({ bundleId: id, locale, selectors: imported.selectors });
+      messages.push({ bundle_id: id, locale, selectors: imported.selectors });
       for (const variant of imported.variants)
         variants.push({
           messageBundleId: id,
@@ -285,19 +285,19 @@ function exportCatalog({ bundles, messages, variants, settings }: ExportArgs) {
   const messageIds = new Set(messages.map((message) => message.id));
   const bundleIds = new Set(bundles.map((bundle) => bundle.id));
   for (const message of messages)
-    if (!bundleIds.has(message.bundleId))
+    if (!bundleIds.has(message.bundle_id))
       throw new Error(
-        `Apple .xcstrings message "${message.id}" references missing bundle "${message.bundleId}"`,
+        `Apple .xcstrings message "${message.id}" references missing bundle "${message.bundle_id}"`,
       );
   for (const variant of variants)
-    if (!messageIds.has(variant.messageId))
+    if (!messageIds.has(variant.message_id))
       throw new Error(
-        `Apple .xcstrings variant "${variant.id}" references missing message "${variant.messageId}"`,
+        `Apple .xcstrings variant "${variant.id}" references missing message "${variant.message_id}"`,
       );
   const stringEntries: Array<[string, Catalog["strings"][string]]> = [];
   for (const bundle of bundles) {
     const bundleMessages = messages.filter(
-      (message) => message.bundleId === bundle.id,
+      (message) => message.bundle_id === bundle.id,
     );
     if (bundleMessages.length === 0) continue;
     const localizations: Record<string, Localization> = {};
@@ -341,7 +341,7 @@ function exportLocalization(
   variants: Variant[],
 ): Localization {
   const messageVariants = variants.filter(
-    (variant) => variant.messageId === message.id,
+    (variant) => variant.message_id === message.id,
   );
   if (message.selectors.length === 0) {
     if (

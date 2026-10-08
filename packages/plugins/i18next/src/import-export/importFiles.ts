@@ -190,7 +190,7 @@ function parseMessage(args: {
 	};
 
 	const message: MessageImport = {
-		bundleId: bundleId,
+		bundle_id: bundleId,
 		selectors: [],
 		locale: args.locale,
 	};

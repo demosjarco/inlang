@@ -22,14 +22,14 @@ export const exportFiles: NonNullable<JsonPlugin["exportFiles"]> = async ({
 
 	for (const message of messages) {
 		const bundle = bundles.find(
-			(candidate) => candidate.id === message.bundleId
+			(candidate) => candidate.id === message.bundle_id
 		);
 		if (bundle === undefined) {
 			continue;
 		}
 
 		const messageVariants = variants.filter(
-			(candidate) => candidate.messageId === message.id
+			(candidate) => candidate.message_id === message.id
 		);
 		if (
 			message.selectors.length > 0 ||

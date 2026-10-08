@@ -22,9 +22,18 @@ export async function exportFiles(opts: {
 		});
 	}
 
-	const bundles = await opts.db.selectFrom("bundle").selectAll().execute();
-	const messages = await opts.db.selectFrom("message").selectAll().execute();
-	const variants = await opts.db.selectFrom("variant").selectAll().execute();
+	const bundles = await opts.db
+		.selectFrom("inlang_bundle")
+		.selectAll()
+		.execute();
+	const messages = await opts.db
+		.selectFrom("inlang_message")
+		.selectAll()
+		.execute();
+	const variants = await opts.db
+		.selectFrom("inlang_variant")
+		.selectAll()
+		.execute();
 
 	const files = await plugin.exportFiles({
 		settings: structuredClone(opts.settings),

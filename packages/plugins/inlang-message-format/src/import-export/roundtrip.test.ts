@@ -308,7 +308,7 @@ test("it handles detecting and adding selectors and declarations for complex mes
 			{ type: "variable-reference", name: "userGender" },
 		] satisfies Message["selectors"])
 	);
-	expect(imported.messages[0]?.bundleId).toStrictEqual("some_happy_cat");
+	expect(imported.messages[0]?.bundle_id).toStrictEqual("some_happy_cat");
 
 	expect(imported.variants[0]).toStrictEqual(
 		expect.objectContaining({
@@ -503,7 +503,7 @@ test("variants with a plural function are parsed correctly", async () => {
 			{ type: "variable-reference", name: "countPlural" },
 		] satisfies Message["selectors"])
 	);
-	expect(imported.messages[0]?.bundleId).toStrictEqual("some_happy_cat");
+	expect(imported.messages[0]?.bundle_id).toStrictEqual("some_happy_cat");
 
 	expect(imported.variants[0]).toStrictEqual(
 		expect.objectContaining({
@@ -861,7 +861,7 @@ test("roundtrip with new variants that have been created by apps", async () => {
 
 	imported1.messages.push({
 		id: "0j299j-3si02j0j4=s02-3js2",
-		bundleId: "green_box_atari",
+		bundle_id: "green_box_atari",
 		selectors: [],
 		locale: "en",
 	});
@@ -869,7 +869,7 @@ test("roundtrip with new variants that have been created by apps", async () => {
 	imported1.variants.push({
 		id: "929s",
 		matches: [],
-		messageId: "0j299j-3si02j0j4=s02-3js2",
+		message_id: "0j299j-3si02j0j4=s02-3js2",
 		pattern: [{ type: "text", value: "New variant" }],
 	});
 
@@ -1292,7 +1292,8 @@ async function runExportFiles(
 		if (message.id === undefined) {
 			message.id =
 				imported.messages.find(
-					(m) => m.bundleId === message.bundleId && m.locale === message.locale
+					(m) =>
+						m.bundle_id === message.bundle_id && m.locale === message.locale
 				)?.id ?? `${Math.random() * 1000}`;
 		}
 	}
@@ -1301,11 +1302,11 @@ async function runExportFiles(
 			// @ts-expect-error - variant is an VariantImport
 			variant.id = `${Math.random() * 1000}`;
 		}
-		if (variant.messageId === undefined) {
+		if (variant.message_id === undefined) {
 			// @ts-expect-error - variant is an VariantImport
-			variant.messageId = imported.messages.find(
+			variant.message_id = imported.messages.find(
 				(m: any) =>
-					m.bundleId === variant.messageBundleId &&
+					m.bundle_id === variant.messageBundleId &&
 					m.locale === variant.messageLocale
 			)?.id;
 		}

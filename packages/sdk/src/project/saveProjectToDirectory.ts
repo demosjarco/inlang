@@ -35,9 +35,21 @@ async function assertTranslationDataCanBeExported(project: InlangProject) {
 	}
 
 	const [bundle, message, variant] = await Promise.all([
-		project.db.selectFrom("bundle").select("id").limit(1).executeTakeFirst(),
-		project.db.selectFrom("message").select("id").limit(1).executeTakeFirst(),
-		project.db.selectFrom("variant").select("id").limit(1).executeTakeFirst(),
+		project.db
+			.selectFrom("inlang_bundle")
+			.select("id")
+			.limit(1)
+			.executeTakeFirst(),
+		project.db
+			.selectFrom("inlang_message")
+			.select("id")
+			.limit(1)
+			.executeTakeFirst(),
+		project.db
+			.selectFrom("inlang_variant")
+			.select("id")
+			.limit(1)
+			.executeTakeFirst(),
 	]);
 	if (bundle || message || variant) {
 		throw new Error(
@@ -165,15 +177,15 @@ export async function saveProjectToDirectory(args: {
 	for (const plugin of plugins) {
 		if (plugin.exportFiles) {
 			const bundles = await args.project.db
-				.selectFrom("bundle")
+				.selectFrom("inlang_bundle")
 				.selectAll()
 				.execute();
 			const messages = await args.project.db
-				.selectFrom("message")
+				.selectFrom("inlang_message")
 				.selectAll()
 				.execute();
 			const variants = await args.project.db
-				.selectFrom("variant")
+				.selectFrom("inlang_variant")
 				.selectAll()
 				.execute();
 			const files = await plugin.exportFiles({

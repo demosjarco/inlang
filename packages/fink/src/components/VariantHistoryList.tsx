@@ -38,9 +38,9 @@ const VariantHistoryList = (props: {
 		if (project) {
 			setLoading(zoned_date_time);
 			await project.db
-				.updateTable("variant")
+				.updateTable("inlang_variant")
 				.set(revertedVariant)
-				.where("variant.id", "=", revertedVariant.id)
+				.where("inlang_variant.id", "=", revertedVariant.id)
 				.execute();
 
 			setTimeout(() => {

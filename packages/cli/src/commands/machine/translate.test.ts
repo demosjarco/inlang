@@ -48,12 +48,12 @@ test("fails with a non-zero-triggering error when the fallback service is comple
     messages: [
       {
         id: "mock_en",
-        bundleId: "mock",
+        bundle_id: "mock",
         locale: "en",
         variants: [
           {
             id: "mock_en",
-            messageId: "mock_en",
+            message_id: "mock_en",
             pattern: [{ type: "text", value: "Hello World" }],
           },
         ],
@@ -85,12 +85,12 @@ test.runIf(process.env.INLANG_GOOGLE_TRANSLATE_API_KEY)(
       messages: [
         {
           id: "mock_en",
-          bundleId: "mock",
+          bundle_id: "mock",
           locale: "en",
           variants: [
             {
               id: "mock_en",
-              messageId: "mock_en",
+              message_id: "mock_en",
               pattern: [{ type: "text", value: "Hello World" }],
             },
           ],
@@ -152,12 +152,12 @@ test.runIf(process.env.INLANG_DEEPL_API_KEY)(
       messages: [
         {
           id: "mock_en",
-          bundleId: "mock",
+          bundle_id: "mock",
           locale: "en",
           variants: [
             {
               id: "mock_en",
-              messageId: "mock_en",
+              message_id: "mock_en",
               pattern: [{ type: "text", value: "Hello World" }],
             },
           ],

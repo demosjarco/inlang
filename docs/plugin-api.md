@@ -48,7 +48,7 @@ export const plugin: InlangPlugin = {
       for (const [key, value] of Object.entries(json)) {
         bundles.push({ id: key, declarations: [] });
         messages.push({
-          bundleId: key,
+          bundle_id: key,
           locale: file.locale,
           selectors: [],
         });
@@ -68,14 +68,14 @@ export const plugin: InlangPlugin = {
     const files: Record<string, Record<string, string>> = {};
 
     for (const message of messages) {
-      const variant = variants.find((v) => v.messageId === message.id);
+      const variant = variants.find((v) => v.message_id === message.id);
       const text = variant?.pattern
         .filter((p) => p.type === "text")
         .map((p) => p.value)
         .join("");
 
       if (!files[message.locale]) files[message.locale] = {};
-      files[message.locale][message.bundleId] = text ?? "";
+      files[message.locale][message.bundle_id] = text ?? "";
     }
 
     return Object.entries(files).map(([locale, content]) => ({
@@ -228,7 +228,7 @@ type BundleImport = {
 ```typescript
 type MessageImport = {
   id?: string; // auto-generated if omitted
-  bundleId: string;
+  bundle_id: string;
   locale: string;
   selectors: VariableReference[];
 };
@@ -240,13 +240,13 @@ Variants can reference messages by ID or by bundle/locale.
 
 Use `messageBundleId` plus `messageLocale` for most `importFiles()` implementations. The SDK can then generate or reuse message ids during import.
 
-Use `messageId` only when your plugin deliberately manages stable message ids and returns matching message ids in `messages`.
+Use `message_id` only when your plugin deliberately manages stable message ids and returns matching message ids in `messages`.
 
 ```typescript
 // By message ID
 type VariantImport = {
   id?: string;
-  messageId: string;
+  message_id: string;
   matches: Match[];
   pattern: Pattern;
 };

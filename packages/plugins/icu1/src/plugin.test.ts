@@ -93,13 +93,13 @@ function buildMessage(
     message: {
       en: {
         id: enMessageId,
-        bundleId: id,
+        bundle_id: id,
         locale: "en",
         selectors: parsedEn.selectors,
       },
       de: {
         id: deMessageId,
-        bundleId: id,
+        bundle_id: id,
         locale: "de",
         selectors: parsedDe.selectors,
       },
@@ -107,13 +107,13 @@ function buildMessage(
     variants: {
       en: parsedEn.variants.map((variant, index) => ({
         id: `${enMessageId}-${index}`,
-        messageId: enMessageId,
+        message_id: enMessageId,
         matches: variant.matches ?? [],
         pattern: variant.pattern ?? [],
       })),
       de: parsedDe.variants.map((variant, index) => ({
         id: `${deMessageId}-${index}`,
-        messageId: deMessageId,
+        message_id: deMessageId,
         matches: variant.matches ?? [],
         pattern: variant.pattern ?? [],
       })),

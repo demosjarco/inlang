@@ -331,7 +331,7 @@ test("roundtrip preserves cardinal zero beside ordinal zero", async () => {
 	const messages = [
 		...new Map(
 			imported.messages.map((message) => [
-				`${message.bundleId}/${message.locale}`,
+				`${message.bundle_id}/${message.locale}`,
 				message,
 			])
 		).values(),
@@ -339,9 +339,9 @@ test("roundtrip preserves cardinal zero beside ordinal zero", async () => {
 	const variants = imported.variants.map((variant, index) => ({
 		...variant,
 		id: `variant-${index}`,
-		messageId: messages.find(
+		message_id: messages.find(
 			(message) =>
-				message.bundleId === variant.messageBundleId &&
+				message.bundle_id === variant.messageBundleId &&
 				message.locale === variant.messageLocale
 		)!.id,
 	}));

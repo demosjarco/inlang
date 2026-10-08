@@ -214,9 +214,7 @@ export function compileLixQuery(
 }
 
 function prepareLixQuery(compiledSql: string): PreparedLixQuery {
-	const sql = ensureGeneratedPrimaryKey(
-		rewriteTableNames(omitPrimaryKeyAssignments(compiledSql))
-	);
+	const sql = ensureGeneratedPrimaryKey(omitPrimaryKeyAssignments(compiledSql));
 	const compacted = compactSqlParameters(sql);
 	return {
 		sql: compacted.sql,
@@ -258,16 +256,6 @@ function ensureGeneratedPrimaryKey(sql: string): string {
 	return sql;
 }
 
-function rewriteTableNames(sql: string): string {
-	return sql
-		.replaceAll('"file"', '"lix_file"')
-		.replaceAll('"bundle"', '"inlang_bundle"')
-		.replaceAll('"message"', '"inlang_message"')
-		.replaceAll('"variant"', '"inlang_variant"')
-		.replaceAll('"bundleId"', '"bundle_id"')
-		.replaceAll('"messageId"', '"message_id"');
-}
-
 function omitPrimaryKeyAssignments(sql: string): string {
 	const conflictMarker = " do update set ";
 	const conflictIndex = sql.toLowerCase().indexOf(conflictMarker);
@@ -282,7 +270,11 @@ function omitPrimaryKeyAssignments(sql: string): string {
 				? `${prefix} do nothing`
 				: `${prefix}${conflictMarker}${assignments.join(", ")}`;
 	}
-	if (/^update\s+"(?:bundle|message|variant)"\s+set\s+/i.test(sql)) {
+	if (
+		/^update\s+"(?:inlang_bundle|inlang_message|inlang_variant)"\s+set\s+/i.test(
+			sql
+		)
+	) {
 		const whereIndex = sql.search(/\s+where\s+/i);
 		const head = whereIndex === -1 ? sql : sql.slice(0, whereIndex);
 		const tail = whereIndex === -1 ? "" : sql.slice(whereIndex);
@@ -301,14 +293,10 @@ function publicRow(row: Record<string, unknown>): Record<string, unknown> {
 		Object.entries(row)
 			.filter(([column]) => !column.startsWith("lixcol_"))
 			.map(([column, value]) => [
-				column === "bundle_id"
-					? "bundleId"
-					: column === "message_id"
-						? "messageId"
-						: column,
+				column,
 				(isIdentityColumn(column) ||
-					column === "messageLocale" ||
-					column === "variantId") &&
+					column === "message_locale" ||
+					column === "variant_id") &&
 				typeof value === "string"
 					? decodeIdentity(value)
 					: value,

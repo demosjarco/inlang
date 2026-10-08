@@ -65,7 +65,7 @@ export const Example: StoryObj = {
     return html`<inlang-bundle .bundle=${bundles[0]} @change=${handleChange}>
       ${messages.map((message) => {
         const variantsOfMessage = variants.filter(
-          (v) => v.messageId === message.id
+          (v) => v.message_id === message.id
         );
         return html`<inlang-message
           slot="message"
@@ -162,7 +162,7 @@ export const Complex: StoryObj = {
     return html`<inlang-bundle .bundle=${bundles[0]} @change=${handleChange}>
       ${messages.map((message) => {
         const variantsOfMessage = variants.filter(
-          (v) => v.messageId === message.id
+          (v) => v.message_id === message.id
         );
         return html`<inlang-message
           slot="message"
@@ -227,7 +227,7 @@ export const Complex_Highlighted: StoryObj = {
       >
         ${messages.map((message) => {
           const variantsOfMessage = variants.filter(
-            (v) => v.messageId === message.id
+            (v) => v.message_id === message.id
           );
           return html` <inlang-message
             slot="message"
@@ -256,7 +256,7 @@ export const Complex_Highlighted: StoryObj = {
       >
         ${messages.map((message) => {
           const variantsOfMessage = variants.filter(
-            (v) => v.messageId === message.id
+            (v) => v.message_id === message.id
           );
           return html` <inlang-message
             slot="message"
@@ -288,7 +288,7 @@ export const Complex_Highlighted: StoryObj = {
       >
         ${messages.map((message) => {
           const variantsOfMessage = variants.filter(
-            (v) => v.messageId === message.id
+            (v) => v.message_id === message.id
           );
           return html` <inlang-message
             class="highlight-selector-red"
@@ -317,7 +317,7 @@ export const Complex_Highlighted: StoryObj = {
       >
         ${messages.map((message) => {
           const variantsOfMessage = variants.filter(
-            (v) => v.messageId === message.id
+            (v) => v.message_id === message.id
           );
           return html` <inlang-message
             slot="message"
@@ -405,7 +405,7 @@ export const Themed: StoryObj = {
       <inlang-bundle .bundle=${bundles[0]}>
         ${messages.map((message) => {
           const variantsOfMessage = variants.filter(
-            (v) => v.messageId === message.id
+            (v) => v.message_id === message.id
           );
           return html`<inlang-message
             slot="message"

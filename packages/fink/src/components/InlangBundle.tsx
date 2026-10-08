@@ -236,7 +236,7 @@ const InlangBundle = (props: {
 																	<SlMenuItem
 																		onClick={() => {
 																			project?.db
-																				.deleteFrom("variant")
+																				.deleteFrom("inlang_variant")
 																				.where("id", "=", variant.id)
 																				.execute();
 																		}}
@@ -320,7 +320,7 @@ const InlangBundle = (props: {
 									id: uuidv4(),
 									selectors: [],
 									locale,
-									bundleId: props.bundle.id,
+									bundle_id: props.bundle.id,
 								};
 								return (
 									<ReactInlangMessage
@@ -335,14 +335,14 @@ const InlangBundle = (props: {
 											onClick={async () => {
 												if (project) {
 													await project.db
-														.insertInto("message")
+														.insertInto("inlang_message")
 														.values(message)
 														.execute();
 
 													await project.db
-														.insertInto("variant")
+														.insertInto("inlang_variant")
 														.values({
-															messageId: message.id!,
+															message_id: message.id!,
 														})
 														.execute();
 												}

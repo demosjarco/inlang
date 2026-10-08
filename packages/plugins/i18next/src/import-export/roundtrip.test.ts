@@ -973,7 +973,7 @@ test("it should put new entities into the file without a namespace", async () =>
 
 	const newMessage: Message = {
 		id: "mock-29jas",
-		bundleId: "new_bundle",
+		bundle_id: "new_bundle",
 		locale: "en",
 		selectors: [],
 	};
@@ -981,7 +981,7 @@ test("it should put new entities into the file without a namespace", async () =>
 	const newVariant: Variant = {
 		id: "mock-111sss",
 		matches: [],
-		messageId: "mock-29jas",
+		message_id: "mock-29jas",
 		pattern: [{ type: "text", value: "elephant" }],
 	};
 
@@ -1081,7 +1081,7 @@ test("markup conflicts with angle bracket variable reference pattern", async () 
 		messages: [
 			{
 				id: "rich-en",
-				bundleId: "rich",
+				bundle_id: "rich",
 				locale: "en",
 				selectors: [],
 			},
@@ -1089,7 +1089,7 @@ test("markup conflicts with angle bracket variable reference pattern", async () 
 		variants: [
 			{
 				id: "rich-en-default",
-				messageId: "rich-en",
+				message_id: "rich-en",
 				matches: [],
 				pattern: [
 					{ type: "text", value: "Click " },
@@ -1135,11 +1135,11 @@ async function runExportFiles(
 			// @ts-expect-error - variant is an VariantImport
 			variant.id = `${Math.random() * 1000}`;
 		}
-		if (variant.messageId === undefined) {
+		if (variant.message_id === undefined) {
 			// @ts-expect-error - variant is an VariantImport
-			variant.messageId = imported.messages.find(
+			variant.message_id = imported.messages.find(
 				(m: any) =>
-					m.bundleId === variant.messageBundleId &&
+					m.bundle_id === variant.messageBundleId &&
 					m.locale === variant.messageLocale
 			)?.id;
 		}

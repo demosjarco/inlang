@@ -58,14 +58,14 @@ export function fromMessageV1(messageV1: MessageV1): BundleNested {
 				),
 				pattern: fromPatternV1(v1Variant.pattern),
 				id: messageId + "_" + variantIndex,
-				messageId: messageId,
+				message_id: messageId,
 			});
 			variantIndex += 1;
 		}
 
 		return {
 			id: messageId,
-			bundleId: bundleId,
+			bundle_id: bundleId,
 			locale: language,
 			selectors: [...selectors],
 			variants,

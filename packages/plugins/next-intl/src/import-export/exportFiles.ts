@@ -17,8 +17,8 @@ type Pattern = Array<
 	| { type: "markup-standalone"; name: string }
 >;
 type Bundle = { id: string };
-type Message = { id: string; bundleId: string; locale: string };
-type Variant = { messageId: string; pattern: Pattern };
+type Message = { id: string; bundle_id: string; locale: string };
+type Variant = { message_id: string; pattern: Pattern };
 
 export const exportFiles: NonNullable<
 	InlangPlugin<{ [PLUGIN_KEY]: PluginSettings }>["exportFiles"]
@@ -48,14 +48,14 @@ export const exportFiles: NonNullable<
 
 	for (const message of messages as Message[]) {
 		const bundle = bundles.find(
-			(bundle: Bundle) => bundle.id === message.bundleId
+			(bundle: Bundle) => bundle.id === message.bundle_id
 		);
 		if (bundle === undefined) {
 			continue;
 		}
 
 		const variantsOfMessage = (variants as Variant[]).filter(
-			(variant: Variant) => variant.messageId === message.id
+			(variant: Variant) => variant.message_id === message.id
 		);
 
 		for (const variant of variantsOfMessage) {

@@ -5,10 +5,16 @@ import {
 	VariableReference,
 } from "../json-schema/pattern.js";
 
+/**
+ * Kysely schema of the inlang tables exactly as Lix exposes them.
+ *
+ * Table and column names are the canonical SQL names. Queries compile to the
+ * SQL that Lix executes without any renaming in between.
+ */
 export type InlangDatabaseSchema = {
-	bundle: BundleTable;
-	message: MessageTable;
-	variant: VariantTable;
+	inlang_bundle: BundleTable;
+	inlang_message: MessageTable;
+	inlang_variant: VariantTable;
 };
 
 type BundleTable = {
@@ -18,14 +24,14 @@ type BundleTable = {
 
 type MessageTable = {
 	id: Generated<string>;
-	bundleId: string;
+	bundle_id: string;
 	locale: string;
 	selectors: Generated<Array<VariableReference>>;
 };
 
 type VariantTable = {
 	id: Generated<string>;
-	messageId: string;
+	message_id: string;
 	matches: Generated<Array<Match>>;
 	pattern: Generated<Pattern>;
 };

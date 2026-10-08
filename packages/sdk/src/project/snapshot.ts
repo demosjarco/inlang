@@ -140,19 +140,19 @@ function snapshotLixId(
 function nestLegacyBundles(snapshot: LegacySnapshot): BundleNested[] {
 	const variantsByMessage = new Map<string, Variant[]>();
 	for (const variant of snapshot.variants) {
-		const variants = variantsByMessage.get(variant.messageId) ?? [];
+		const variants = variantsByMessage.get(variant.message_id) ?? [];
 		variants.push(variant);
-		variantsByMessage.set(variant.messageId, variants);
+		variantsByMessage.set(variant.message_id, variants);
 	}
 
 	const messagesByBundle = new Map<string, BundleNested["messages"]>();
 	for (const message of snapshot.messages) {
-		const messages = messagesByBundle.get(message.bundleId) ?? [];
+		const messages = messagesByBundle.get(message.bundle_id) ?? [];
 		messages.push({
 			...message,
 			variants: variantsByMessage.get(message.id) ?? [],
 		});
-		messagesByBundle.set(message.bundleId, messages);
+		messagesByBundle.set(message.bundle_id, messages);
 	}
 
 	return snapshot.bundles.map((bundle) => ({

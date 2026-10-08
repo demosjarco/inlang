@@ -68,7 +68,7 @@ function importAndroidFiles(
         id,
         mergeBundle(bundles.get(id), id, parsed.variables, false),
       );
-      messages.push({ bundleId: id, locale: file.locale, selectors: [] });
+      messages.push({ bundle_id: id, locale: file.locale, selectors: [] });
       variants.push({
         messageBundleId: id,
         messageLocale: file.locale,
@@ -102,7 +102,7 @@ function importAndroidFiles(
         ),
       );
       messages.push({
-        bundleId: id,
+        bundle_id: id,
         locale: file.locale,
         selectors: [{ type: "variable-reference", name: "countPlural" }],
       });
@@ -134,7 +134,7 @@ function exportAndroidFiles({
     const bundle = requiredBundle(bundles, message);
     assertAndroidResourceName(bundle.id);
     const messageVariants = variants.filter(
-      (variant) => variant.messageId === message.id,
+      (variant) => variant.message_id === message.id,
     );
     const lines = files.get(message.locale) ?? [];
     if (message.selectors.length === 0) {
@@ -359,8 +359,10 @@ function printfFormat(
 }
 
 function requiredBundle(bundles: Bundle[], message: Message) {
-  const bundle = bundles.find((candidate) => candidate.id === message.bundleId);
-  if (!bundle) throw new Error(`Missing bundle "${message.bundleId}"`);
+  const bundle = bundles.find(
+    (candidate) => candidate.id === message.bundle_id,
+  );
+  if (!bundle) throw new Error(`Missing bundle "${message.bundle_id}"`);
   return bundle;
 }
 function pluralDeclaration(bundle: Bundle, selector: string) {
